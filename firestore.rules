@@ -1,0 +1,1032 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ========================================
+    // OPTIMIZED HELPER FUNCTIONS
+    // ========================================
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // ✅ OPTIMIZED: Single read, no exists() check
+    function getUserRole() {
+      return isSignedIn() 
+        ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role 
+        : null;
+    }
+    
+    // ✅ Direct role checks
+    function isAdmin() {
+      return isSignedIn() && getUserRole() == 'admin';
+    }
+
+    // ✅ NEW: OWNER ROLE (GOD MODE)
+    function isSiteOwner() {
+      return isSignedIn() && getUserRole() == 'owner';
+    }
+    
+    function isStaff() {
+      return isSignedIn() && getUserRole() in ['staff', 'admin', 'supervisor', 'direktur', 'owner'];
+    }
+    
+    function isSupervisor() {
+      return isSignedIn() && getUserRole() in ['supervisor', 'direktur', 'owner'];
+    }
+    
+    function isDirektur() {
+      return isSignedIn() && (getUserRole() == 'direktur' || getUserRole() == 'owner');
+    }
+
+    // ✅ NEW: MARKETING ROLES
+    function isAffiliator() {
+      return isSignedIn() && getUserRole() == 'affiliator';
+    }
+
+    function isBrandAmbassador() {
+      return isSignedIn() && getUserRole() == 'brand_ambassador';
+    }
+
+    function isInfluencer() {
+      return isSignedIn() && getUserRole() == 'influencer';
+    }
+    
+    function isTourLeader() {
+      return isSignedIn() && getUserRole() == 'tour-leader';
+    }
+    
+    function isMutawwif() {
+      return isSignedIn() && getUserRole() == 'mutawwif';
+    }
+    
+    function isJamaah() {
+      return isSignedIn() && getUserRole() in ['current-jamaah', 'alumni'];
+    }
+    
+    function isProspectiveJamaah() {
+      return isSignedIn() && getUserRole() == 'prospective-jamaah';
+    }
+    
+    // ✅ NEW: Agent role checker
+    function isAgent() {
+      return isSignedIn() && getUserRole() == 'agen';
+    }
+    
+    // ✅ NEW: Check if user can access referral program (Alumni, Agent, Affiliator, BA, Influencer)
+    function canAccessReferral() {
+      return isSignedIn() && getUserRole() in ['alumni', 'agen', 'affiliator', 'brand_ambassador', 'influencer'];
+    }
+    
+    function hasManagementAccess() {
+      return isStaff() || isSupervisor() || isDirektur() || isSiteOwner();
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // ========================================
+    // ADMINS COLLECTION
+    // ========================================
+    match /admins/{adminEmail} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isAdmin() || isDirektur();
+    }
+
+    // ========================================
+    // USERS COLLECTION
+    // ========================================
+    match /users/{userId} {
+      // ✅ Everyone can read (needed for getUserRole())
+      allow read: if true;
+      
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      
+      // ✅ ENHANCED: Allow alumni to self-upgrade to agen
+      allow update: if isSignedIn() && (
+        isOwner(userId) ||
+        hasManagementAccess() || // ✅ Admin can update all user fields including commissionBalance
+        // ✅ NEW: Alumni can upgrade themselves to agen
+        (isOwner(userId) && 
+         resource.data.role == 'alumni' && 
+         request.resource.data.role == 'agen') ||
+        // ✅ Prospective can upgrade to current-jamaah
+        (isOwner(userId) && 
+         resource.data.role == 'prospective-jamaah' && 
+         request.resource.data.role == 'current-jamaah')
+      );
+      
+      allow delete: if isSupervisor() || isDirektur();
+    }
+
+    // ========================================
+    // PACKAGES COLLECTION
+    // ========================================
+    match /packages/{packageId} {
+      allow read: if true;
+      allow create, update, delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // BOOKINGS COLLECTION
+    // ========================================
+    match /bookings/{bookingId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasManagementAccess() ||
+        (isTourLeader() && resource.data.tourLeaderId == request.auth.uid) ||
+        isMutawwif() // ✅ NEW: Muthawif can read all bookings (to count jamaah in their packages)
+      );
+      
+      allow create: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid;
+      
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasManagementAccess()
+      );
+      
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // CONSULTATIONS COLLECTION
+    // ========================================
+    match /consultations/{consultationId} {
+      allow read: if hasManagementAccess() || (isSignedIn() && resource.data.userId == request.auth.uid);
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow update: if hasManagementAccess();
+      allow delete: if isSupervisor() || isDirektur();
+    }
+
+    // ========================================
+    // EDUCATION RESOURCES COLLECTION
+    // ========================================
+    match /education/{educationId} {
+      allow read: if true;
+      allow create, update, delete: if hasManagementAccess();
+    }
+
+    match /educations/{educationId} {
+      allow read: if true;
+      allow create, update, delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // TESTIMONIALS COLLECTION
+    // ========================================
+    match /testimonials/{testimonialId} {
+      allow read: if true;
+      allow create: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid;
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasManagementAccess()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasManagementAccess()
+      );
+    }
+
+    // ========================================
+    // PROMOS COLLECTION
+    // ========================================
+    match /promos/{promoId} {
+      allow read: if true;
+      allow create, update, delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // ARTICLES COLLECTION
+    // ========================================
+    match /articles/{articleId} {
+      allow read: if true;
+      
+      // ✅ FIXED: Admin can create articles with any status (including 'approved')
+      // Regular users can only create 'draft' or 'pending'
+      allow create: if isSignedIn() && 
+        request.resource.data.author.id == request.auth.uid && (
+          hasManagementAccess() || // Admin can create with any status
+          request.resource.data.status in ['draft', 'pending'] // Users only draft/pending
+        );
+      
+      allow update: if isSignedIn() && (
+        (resource.data.author.id == request.auth.uid && resource.data.status in ['draft', 'pending']) ||
+        hasManagementAccess()
+      );
+      
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // REFERRALS COLLECTION
+    // ========================================
+    match /referrals/{referralId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasManagementAccess()
+      );
+      
+      allow create: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid;
+      
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasManagementAccess()
+      );
+      
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // BANNERS COLLECTION
+    // ========================================
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow create, update, delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // ANNOUNCEMENTS COLLECTION
+    // ========================================
+    match /announcements/{announcementId} {
+      allow read: if true;
+      allow create, update, delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // ITEM REQUESTS COLLECTION
+    // ========================================
+    match /itemRequests/{requestId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasManagementAccess()
+      );
+      
+      allow create: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid;
+      
+      allow update: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid && resource.data.status == 'pending') ||
+        hasManagementAccess()
+      );
+      
+      allow delete: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid && resource.data.status == 'pending') ||
+        hasManagementAccess()
+      );
+    }
+
+    // ========================================
+    // AVAILABLE ITEMS COLLECTION
+    // ========================================
+    match /availableItems/{itemId} {
+      allow read: if true;
+      allow create, update, delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // TRIPS COLLECTION
+    // ========================================
+    match /trips/{tripId} {
+      allow read: if isSignedIn() && (
+        (isTourLeader() && resource.data.tourLeaderId == request.auth.uid) ||
+        (isTourLeader() && resource.data.tourLeaderEmail == request.auth.email) ||
+        hasManagementAccess()
+      );
+      
+      allow create: if isSignedIn() && isTourLeader() && (
+        request.resource.data.tourLeaderId == request.auth.uid ||
+        request.resource.data.tourLeaderEmail == request.auth.email
+      );
+      
+      allow update: if isSignedIn() && (
+        (isTourLeader() && resource.data.tourLeaderId == request.auth.uid) ||
+        (isTourLeader() && resource.data.tourLeaderEmail == request.auth.email) ||
+        hasManagementAccess()
+      );
+      
+      allow delete: if isSignedIn() && (
+        (isTourLeader() && resource.data.tourLeaderId == request.auth.uid) ||
+        (isTourLeader() && resource.data.tourLeaderEmail == request.auth.email) ||
+        hasManagementAccess()
+      );
+    }
+
+    // ========================================
+    // ITINERARY COLLECTION (singular)
+    // ========================================
+    match /itinerary/{itineraryId} {
+      allow read: if isSignedIn() && (
+        (isTourLeader() && resource.data.tourLeaderId == request.auth.uid) ||
+        (isTourLeader() && resource.data.tourLeaderEmail == request.auth.email) ||
+        hasManagementAccess()
+      );
+      
+      allow create: if isSignedIn() && isTourLeader() && (
+        request.resource.data.tourLeaderId == request.auth.uid ||
+        request.resource.data.tourLeaderEmail == request.auth.email
+      );
+      
+      allow update: if isSignedIn() && (
+        (isTourLeader() && resource.data.tourLeaderId == request.auth.uid) ||
+        (isTourLeader() && resource.data.tourLeaderEmail == request.auth.email) ||
+        hasManagementAccess()
+      );
+      
+      allow delete: if isSignedIn() && (
+        (isTourLeader() && resource.data.tourLeaderId == request.auth.uid) ||
+        (isTourLeader() && resource.data.tourLeaderEmail == request.auth.email) ||
+        hasManagementAccess()
+      );
+    }
+
+    // ========================================
+    // ITINERARIES COLLECTION (plural) - ✅ ADDED!
+    // ========================================
+    match /itineraries/{itineraryId} {
+      // ✅ Admin/Management → Full CRUD (read includes list and get)
+      allow read, write: if hasManagementAccess();
+      
+      // ✅ Tour Leaders → Can LIST all itineraries (for filtering), and READ/UPDATE their own
+      allow list: if isSignedIn() && isTourLeader();
+      
+      // ✅ Tour Leaders → Can READ itineraries assigned to them (via UID or email)
+      allow get: if isSignedIn() && isTourLeader() && (
+        resource.data.tourLeaderId == request.auth.uid ||
+        resource.data.tourLeaderId == request.auth.token.email
+      );
+      
+      // ✅ Tour Leaders → Can UPDATE their assigned itineraries (for marking days complete)
+      allow update: if isSignedIn() && isTourLeader() && (
+        resource.data.tourLeaderId == request.auth.uid ||
+        resource.data.tourLeaderId == request.auth.token.email
+      );
+      
+      // ✅ Current Jamaah & Alumni → Can LIST all (for filtering), and READ their package's itinerary
+      allow list: if isSignedIn() && getUserRole() in ['current-jamaah', 'alumni'];
+      
+      allow get: if isSignedIn() && 
+        getUserRole() in ['current-jamaah', 'alumni'] &&
+        exists(/databases/$(database)/documents/payments/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/payments/$(request.auth.uid)).data.packageId == resource.data.packageId &&
+        get(/databases/$(database)/documents/payments/$(request.auth.uid)).data.status == 'approved';
+    }
+
+    // ========================================
+    // MESSAGES COLLECTION
+    // ========================================
+    match /messages/{messageId} {
+      allow read: if isSignedIn() && (
+        resource.data.senderId == request.auth.uid ||
+        resource.data.senderEmail == request.auth.email ||
+        (resource.data.recipients != null && request.auth.uid in resource.data.recipients) ||
+        (resource.data.recipientEmails != null && request.auth.email in resource.data.recipientEmails) ||
+        hasManagementAccess()
+      );
+      
+      allow create: if isSignedIn() && (
+        isTourLeader() && (
+          request.resource.data.senderId == request.auth.uid ||
+          request.resource.data.senderEmail == request.auth.email
+        )
+      );
+      
+      allow update: if isSignedIn() && (
+        (isTourLeader() && resource.data.senderId == request.auth.uid) ||
+        (isTourLeader() && resource.data.senderEmail == request.auth.email) ||
+        hasManagementAccess()
+      );
+      
+      allow delete: if isSignedIn() && (
+        (isTourLeader() && resource.data.senderId == request.auth.uid) ||
+        (isTourLeader() && resource.data.senderEmail == request.auth.email) ||
+        hasManagementAccess()
+      );
+    }
+
+    // ========================================
+    // TRIP PHOTOS COLLECTION
+    // ========================================
+    match /tripPhotos/{photoId} {
+      allow read: if isSignedIn() && (
+        (isTourLeader() && resource.data.uploadedBy == request.auth.uid) ||
+        (isTourLeader() && resource.data.uploaderEmail == request.auth.email) ||
+        hasManagementAccess()
+      );
+      
+      allow create: if isSignedIn() && isTourLeader() && (
+        request.resource.data.uploadedBy == request.auth.uid ||
+        request.resource.data.uploaderEmail == request.auth.email
+      );
+      
+      allow update: if isSignedIn() && (
+        (isTourLeader() && resource.data.uploadedBy == request.auth.uid) ||
+        (isTourLeader() && resource.data.uploaderEmail == request.auth.email) ||
+        hasManagementAccess()
+      );
+      
+      allow delete: if isSignedIn() && (
+        (isTourLeader() && resource.data.uploadedBy == request.auth.uid) ||
+        (isTourLeader() && resource.data.uploaderEmail == request.auth.email) ||
+        hasManagementAccess()
+      );
+    }
+
+    // ========================================
+    // EMERGENCY CONTACTS COLLECTION
+    // ========================================
+    match /emergencyContacts/{contactId} {
+      allow read: if isSignedIn() && (
+        isTourLeader() ||
+        hasManagementAccess()
+      );
+      
+      allow create: if hasManagementAccess();
+      allow update: if hasManagementAccess();
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // ACCOUNT APPROVALS COLLECTION
+    // ========================================
+    match /accountApprovals/{approvalId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasManagementAccess()
+      );
+      
+      // ✅ UPDATED: Added 'agen' to allowed roles
+      allow create: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.requestedRole in ['tour-leader', 'mutawwif', 'agen'] &&
+        request.resource.data.status == 'pending';
+      
+      allow update: if isSupervisor() || isDirektur();
+      allow delete: if isSupervisor() || isDirektur();
+    }
+
+    // ========================================
+    // UPGRADE REQUESTS COLLECTION
+    // ========================================
+    match /upgradeRequests/{requestId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasManagementAccess()
+      );
+      
+      allow create: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+      
+      allow update: if hasManagementAccess();
+      
+      allow delete: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid && resource.data.status == 'pending') ||
+        hasManagementAccess()
+      );
+    }
+
+    // ========================================
+    // ALUMNI UPGRADE REQUESTS COLLECTION
+    // ========================================
+    match /alumniUpgradeRequests/{requestId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasManagementAccess()
+      );
+      
+      allow create: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+      
+      allow update: if hasManagementAccess();
+      
+      allow delete: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid && resource.data.status == 'pending') ||
+        hasManagementAccess()
+      );
+    }
+
+    // ========================================
+    // PAYMENTS COLLECTION - ✅ HYBRID FIX!
+    // ========================================
+    match /payments/{paymentId} {
+      // ✅ ALL authenticated users can list/query payments
+      // (They can only READ documents they own via the 'get' rule)
+      allow list: if isSignedIn();
+      
+      // ✅ HYBRID: Support BOTH userId AND userEmail
+      allow get: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.userEmail == request.auth.token.email ||
+        hasManagementAccess() ||
+        isTourLeader()
+      );
+      
+      // ✅ Users can create their own payments (both initial and installment payments)
+      allow create: if isSignedIn() && (
+        request.resource.data.userId == request.auth.uid ||
+        request.resource.data.userEmail == request.auth.token.email
+      );
+        
+      // ✅ SECURITY FIX: Only management can update payments (for approve/reject)
+      // Users should NOT be able to modify payment data after submission
+      allow update: if hasManagementAccess();
+      
+      // ✅ Only management can delete
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // NOTIFICATIONS COLLECTION
+    // ========================================
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasManagementAccess()
+      );
+      allow create: if isSignedIn();
+      allow update: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasManagementAccess()
+      );
+      allow delete: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasManagementAccess()
+      );
+    }
+
+    // ========================================
+    // SETTINGS COLLECTION
+    // ========================================
+    match /settings/{settingId} {
+      allow read: if true;
+      allow create, update, delete: if isSupervisor() || isDirektur();
+    }
+
+    // ========================================
+    // ADMIN STATS COLLECTION
+    // ========================================
+    match /stats/{statId} {
+      allow read: if hasManagementAccess();
+      allow write: if hasManagementAccess();
+    }
+
+    // ========================================
+    // WHATSAPP CONTACTS COLLECTION (NEW!)
+    // ========================================
+    match /whatsappContacts/{contactId} {
+      // Everyone can read WhatsApp contacts
+      allow read: if true;
+      
+      // Only admin can create, update, or delete contacts
+      allow create, update, delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // PACKAGE ASSIGNMENTS COLLECTION (Muthawif Assignment) (NEW!)
+    // ========================================
+    match /packageAssignments/{assignmentId} {
+      // Everyone can read package assignments
+      allow read: if true;
+      
+      // Only admins can create, update, or delete assignments
+      allow create, update, delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // USER PROGRESS COLLECTION (Education Progress Tracking) (NEW!)
+    // ========================================
+    match /userProgress/{progressId} {
+      // Users can read their own progress, admins can read all
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        hasManagementAccess()
+      );
+      
+      // Users can create/update their own progress
+      allow create, update: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid;
+      
+      // Only admins can delete progress
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // MARKETPLACE ITEMS COLLECTION
+    // ========================================
+    match /marketplaceItems/{itemId} {
+      // Anyone can read active items
+      allow read: if true;
+      
+      // Only admin/management can create, update, delete
+      allow create, update, delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // MARKETPLACE ORDERS COLLECTION
+    // ========================================
+    match /marketplaceOrders/{orderId} {
+      // User can read their own orders, admin can read all
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid || 
+        resource.data.userEmail == request.auth.token.email ||
+        hasManagementAccess()
+      );
+      
+      // Users can create their own orders
+      allow create: if isSignedIn() && (
+        request.resource.data.userId == request.auth.uid ||
+        request.resource.data.userEmail == request.auth.token.email
+      );
+      
+      // Only admin can update (for status changes)
+      allow update: if hasManagementAccess();
+      
+      // Only admin can delete
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // TOUR LEADER PROFILES COLLECTION
+    // ========================================
+    match /tourLeaderProfiles/{profileId} {
+      // Everyone can read tour leader profiles
+      allow read: if true;
+      
+      // Tour leaders can create/update their own profile
+      allow create: if isSignedIn() && isTourLeader() && 
+        request.resource.data.userId == request.auth.uid;
+      
+      allow update: if isSignedIn() && (
+        (isTourLeader() && resource.data.userId == request.auth.uid) ||
+        hasManagementAccess()
+      );
+      
+      // Only admin can delete
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // MUTHAWIF PROFILES COLLECTION
+    // ========================================
+    match /muthawifProfiles/{profileId} {
+      // Everyone can read muthawif profiles
+      allow read: if true;
+      
+      // Muthawif can create/update their own profile
+      allow create: if isSignedIn() && isMutawwif() && 
+        request.resource.data.userId == request.auth.uid;
+      
+      allow update: if isSignedIn() && (
+        (isMutawwif() && resource.data.userId == request.auth.uid) ||
+        hasManagementAccess()
+      );
+      
+      // Only admin can delete
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // AGENT PROFILES COLLECTION (NEW!)
+    // ========================================
+    match /agentProfiles/{profileId} {
+      // Everyone can read agent profiles
+      allow read: if true;
+      
+      // Agents can create/update their own profile
+      allow create: if isSignedIn() && isAgent() && 
+        request.resource.data.userId == request.auth.uid;
+      
+      allow update: if isSignedIn() && (
+        (isAgent() && resource.data.userId == request.auth.uid) ||
+        hasManagementAccess()
+      );
+      
+      // Only admin can delete
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // ALUMNI REFERRALS COLLECTION
+    // ========================================
+    match /alumniReferrals/{referralId} {
+      // ✅ PUBLIC READ: Allow anyone to read (needed for referral code lookup during registration)
+      allow read: if true;
+      
+      // ✅ SECURE CREATE: User can create their own referral document OR admin can create for others
+      // Document ID = userId, contains fields: { alumniId, userId, referralCode, ... }
+      allow create: if isSignedIn() && (
+        referralId == request.auth.uid || // ✅ User creating for self (docId = userId)
+        hasManagementAccess() // ✅ Admin creating for others during approval
+      );
+      
+      // ✅ ENHANCED UPDATE: Owner, Admin, OR referral tracking system (for incrementing stats)
+      // Allow authenticated users to increment totalReferrals ONLY (read-only for other fields)
+      allow update: if isSignedIn() && (
+        referralId == request.auth.uid || // ✅ Owner can update all fields
+        hasManagementAccess() || // ✅ Admin can update all fields
+        (
+          // ✅ Referral tracking: Any authenticated user can increment totalReferrals
+          // This happens when someone registers with a referral code
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalReferrals', 'updatedAt']) &&
+          request.resource.data.totalReferrals > resource.data.totalReferrals // Only increment, not decrement
+        )
+      );
+      
+      // Only admin can delete
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // AGEN REFERRALS COLLECTION (NEW!)
+    // ========================================
+    match /agenReferrals/{referralId} {
+      // ✅ PUBLIC READ: Allow anyone to read (needed for referral code lookup during registration)
+      allow read: if true;
+      
+      // ✅ SECURE CREATE: User can create their own referral document OR admin can create for others
+      // Document ID = userId, contains fields: { agenId, userId, referralCode, ... }
+      allow create: if isSignedIn() && (
+        referralId == request.auth.uid || // ✅ User creating for self (docId = userId)
+        hasManagementAccess() // ✅ Admin creating for others during approval
+      );
+      
+      // ✅ ENHANCED UPDATE: Owner, Admin, OR referral tracking system (for incrementing stats)
+      // Allow authenticated users to increment totalReferrals ONLY (read-only for other fields)
+      allow update: if isSignedIn() && (
+        referralId == request.auth.uid || // ✅ Owner can update all fields
+        hasManagementAccess() || // ✅ Admin can update all fields
+        (
+          // ✅ Referral tracking: Any authenticated user can increment totalReferrals
+          // This happens when someone registers with a referral code
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalReferrals', 'updatedAt']) &&
+          request.resource.data.totalReferrals > resource.data.totalReferrals // Only increment, not decrement
+        )
+      );
+      
+      // Only admin can delete
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // REFERRAL USAGE COLLECTION
+    // ========================================
+    match /referralUsage/{usageId} {
+      // Users can read usage of their referral code, admin can read all
+      allow read: if isSignedIn() && (
+        resource.data.referrerId == request.auth.uid ||
+        hasManagementAccess()
+      );
+      
+      // Anyone can create usage record (when clicking referral link)
+      allow create: if true;
+      
+      // Only admin can update (when payment is approved to mark conversion)
+      allow update: if hasManagementAccess();
+      
+      // Only admin can delete
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // AGENT NOTIFICATIONS COLLECTION (NEW!)
+    // ========================================
+    match /agentNotifications/{notificationId} {
+      // ✅ Agents can read their own notifications, admin can read all
+      // IMPORTANT: 'list' permission allows queries with where()
+      allow list: if isSignedIn() && (
+        isAgent() || hasManagementAccess()
+      );
+      
+      // ✅ Get individual notification
+      allow get: if isSignedIn() && (
+        resource.data.agentId == request.auth.uid ||
+        hasManagementAccess()
+      );
+      
+      // ✅ System can create notifications (during referral usage and commission activation)
+      allow create: if isSignedIn();
+      
+      // ✅ Agents can update their own notifications (mark as read)
+      // Admin can update all
+      allow update: if isSignedIn() && (
+        resource.data.agentId == request.auth.uid ||
+        hasManagementAccess()
+      );
+      
+      // Only admin can delete
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // SAVINGS ACCOUNTS COLLECTION (NEW!)
+    // ========================================
+    match /savingsAccounts/{userId} {
+      // User can read their own balance
+      allow get: if isSignedIn() && (
+        request.auth.uid == userId ||
+        hasManagementAccess()
+      );
+      
+      // Only system/admin can create/update balance (crucial for security)
+      allow create, update: if hasManagementAccess();
+    }
+
+    // ========================================
+    // SAVINGS TRANSACTIONS COLLECTION (NEW!)
+    // ========================================
+    match /savingsTransactions/{transactionId} {
+      // User can list/read their own transactions
+      allow list: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        hasManagementAccess()
+      );
+      
+      allow get: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        hasManagementAccess()
+      );
+      
+      // User can CREATE a transaction (Upload Proof)
+      // Status must be 'pending' initially
+      allow create: if isSignedIn() && 
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+        
+      // Only Admin can UPDATE (Approve/Reject)
+      allow update: if hasManagementAccess();
+      
+      // Only Admin can DELETE
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // REFERRAL TRACKING COLLECTION
+    // ========================================
+    match /referralTracking/{trackingId} {
+      // Users can read tracking records where they are the referrer
+      allow read: if isSignedIn() && (
+        resource.data.referrerId == request.auth.uid ||
+        resource.data.referredUserId == request.auth.uid ||
+        hasManagementAccess()
+      );
+      
+      // ✅ UPDATED: Anyone can create tracking records during registration
+      // (System creates this during user registration with referral code)
+      allow create: if true;
+      
+      // Only admin can update (for status changes)
+      allow update: if hasManagementAccess();
+      
+      // Only admin can delete
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // COMMISSION WITHDRAWALS COLLECTION (NEW!)
+    // ========================================
+    match /commissionWithdrawals/{withdrawalId} {
+      // Users can read their own withdrawal requests, admin can read all
+      allow read: if isSignedIn() && (
+        resource.data.userId == request.auth.uid ||
+        hasManagementAccess()
+      );
+      
+      // Alumni and Agents can create withdrawal requests
+      allow create: if isSignedIn() && 
+        canAccessReferral() &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'pending';
+      
+      // Only admin can update (for approval/rejection)
+      allow update: if hasManagementAccess();
+      
+      // Users can delete their pending requests, admin can delete any
+      allow delete: if isSignedIn() && (
+        (resource.data.userId == request.auth.uid && resource.data.status == 'pending') ||
+        hasManagementAccess()
+      );
+    }
+
+    // ========================================
+    // REFERRAL CODES MASTER COLLECTION (O(1) LOOKUP) - SECURE!
+    // ========================================
+    match /referralCodes/{referralCode} {
+      // ✅ PUBLIC READ: Allow anyone to read for O(1) validation during registration
+      // Document ID = uppercase referral code (e.g., "SULTANAH-ABC123")
+      // Data: { ownerId, ownerEmail, ownerName, ownerRole, commissionPerPaidUser, isActive, createdAt }
+      allow read: if true;
+      
+      // ✅ SECURE CREATE: User can create their own referral code OR admin can create for others
+      // Prevents User A from creating referral codes for User B (unless admin)
+      allow create: if isSignedIn() && (
+        request.resource.data.ownerId == request.auth.uid || // ✅ User creating for self
+        hasManagementAccess() // ✅ Admin creating for others during approval
+      );
+      
+      // ✅ IMMUTABLE: Referral codes cannot be modified after creation
+      // Only admin can update (for rare edge cases like typos)
+      allow update: if hasManagementAccess();
+      
+      // ✅ Only admin can delete (for cleanup or data correction)
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // REFERRAL BALANCES COLLECTION - SECURE!
+    // ========================================
+    match /referralBalances/{userId} {
+      // ✅ READ: Users can read their own balance, admin can read all
+      allow read: if isSignedIn() && (
+        userId == request.auth.uid ||
+        hasManagementAccess()
+      );
+      
+      // ✅ SECURE CREATE: User can create THEIR OWN balance OR admin can create for others during commission processing
+      allow create: if isSignedIn() && (
+        userId == request.auth.uid ||
+        hasManagementAccess() // ✅ Admin can create balance for agents during first commission
+      );
+      
+      // ✅ SECURE UPDATE: 
+      // - Admin can update all fields (during commission processing)
+      // - User can ONLY DECREMENT their own balance (during withdrawal request)
+      allow update: if isSignedIn() && (
+        hasManagementAccess() ||
+        (
+          userId == request.auth.uid &&
+          // ✅ SECURITY: Only allow decrement (balance must decrease or updatedAt change only)
+          request.resource.data.balance <= resource.data.balance
+        )
+      );
+      
+      // ✅ Only admin can delete
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // TOUR LEADER FEEDBACKS COLLECTION (RATING TL)
+    // ========================================
+    match /tourLeaderFeedbacks/{feedbackId} {
+      // ✅ READ: All authenticated users can read feedbacks
+      // - Alumni/Jamaah: Read their own + all feedbacks (to see TL ratings)
+      // - Tour Leaders: Read feedbacks about them
+      // - Admin/Management: Read all
+      allow read: if isSignedIn();
+      
+      // ✅ CREATE: Only Alumni can submit feedback
+      // - Must be alumni role
+      // - Can only create with their own userId
+      // - Status must be 'submitted'
+      allow create: if isSignedIn() && 
+        getUserRole() == 'alumni' &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.status == 'submitted';
+      
+      // ✅ UPDATE: Feedbacks are IMMUTABLE after submission
+      // - No one can update (except admin for moderation)
+      allow update: if hasManagementAccess();
+      
+      // ✅ DELETE: Only admin can delete (for moderation)
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // USER DOCUMENTS COLLECTION (SEPARATE STORAGE FOR BASE64 IMAGES)
+    // ========================================
+    match /userDocuments/{userId} {
+      // ✅ READ: Users can read their own documents, admin can read all
+      allow read: if isSignedIn() && (
+        userId == request.auth.uid ||
+        hasManagementAccess()
+      );
+      
+      // ✅ CREATE: User can create THEIR OWN documents OR admin can create for others
+      allow create: if isSignedIn() && (
+        userId == request.auth.uid ||
+        hasManagementAccess()
+      );
+      
+      // ✅ UPDATE: User can update their own documents OR admin can update
+      allow update: if isSignedIn() && (
+        userId == request.auth.uid ||
+        hasManagementAccess()
+      );
+      
+      // ✅ DELETE: Only admin can delete
+      allow delete: if hasManagementAccess();
+    }
+
+    // ========================================
+    // DEFAULT: DENY ALL
+    // ========================================
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Sultanah Brand Turquoise Background -->
+  <rect width="400" height="400" fill="#1ac8db"/>
+  
+  <!-- Paper Plane (white, simple, modern) -->
+  <g transform="translate(280, 140) rotate(15)">
+    <polygon points="0,0 60,-30 65,-22 15,10" fill="#ffffff" opacity="0.95"/>
+    <polygon points="15,0 55,-20 58,-15 20,8" fill="#ffffff" opacity="0.85"/>
+  </g>
+  
+  <!-- Journey Arc (smile curve) -->
+  <path d="M 80 200 Q 200 165 320 200" 
+        stroke="#ffffff" 
+        stroke-width="6" 
+        fill="none" 
+        stroke-linecap="round" 
+        opacity="0.9"/>
+  
+  <!-- "sultanah" text (clean, bold) -->
+  <text x="200" y="280" 
+        font-family="Arial, Helvetica, sans-serif" 
+        font-size="75" 
+        font-weight="700" 
+        fill="#ffffff" 
+        text-anchor="middle"
+        letter-spacing="-1">sultanah</text>
+  
+  <!-- Subtitle -->
+  <text x="200" y="320" 
+        font-family="Arial, Helvetica, sans-serif" 
+        font-size="20" 
+        font-weight="300" 
+        fill="#ffffff" 
+        text-anchor="middle"
+        letter-spacing="3"
+        opacity="0.95">HAJJ - UMRAH | HOLIDAY</text>
+</svg>
