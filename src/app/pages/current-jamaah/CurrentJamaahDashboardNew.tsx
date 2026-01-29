@@ -23,6 +23,7 @@ import FloatingAnnouncementWidget from '../../components/FloatingAnnouncementWid
 import AdsBanner from '../../components/AdsBanner'; // ✅ NEW: Ads Banner
 // ✅ NEW: Shared components for unified UI
 import TestimonialSection from '../../components/shared/TestimonialSection';
+import WelcomeNotification from '../../components/WelcomeNotification'; // ✅ NEW: Post-payment notification
 import ArticleSection from '../../components/shared/ArticleSection';
 import { useAuth } from '../../../contexts/AuthContext';
 import { db } from '../../../config/firebase';
@@ -126,6 +127,10 @@ const CurrentJamaahDashboard = () => {
   const [showAllEducationPage, setShowAllEducationPage] = useState(false);
   const [showAllTestimonialsPage, setShowAllTestimonialsPage] = useState(false);
 
+  // ✅ NEW: Welcome notification state
+  const [showWelcomeNotification, setShowWelcomeNotification] = useState(false);
+  const [welcomeBookingData, setWelcomeBookingData] = useState<any>(null);
+
   // Refs for scroll
   const dashboardRef = useRef<HTMLDivElement>(null);
   const packagesRef = useRef<HTMLDivElement>(null);
@@ -134,6 +139,26 @@ const CurrentJamaahDashboard = () => {
   const newsRef = useRef<HTMLDivElement>(null);
   const testimonialsRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
+
+  // ✅ NEW: Check for welcome notification on mount
+  useEffect(() => {
+    const shouldShowWelcome = localStorage.getItem('showWelcomeNotification');
+    const bookingDataStr = localStorage.getItem('welcomeBookingData');
+
+    if (shouldShowWelcome === 'true' && bookingDataStr) {
+      try {
+        const bookingData = JSON.parse(bookingDataStr);
+        setWelcomeBookingData(bookingData);
+        setShowWelcomeNotification(true);
+
+        // Clear flags after showing
+        localStorage.removeItem('showWelcomeNotification');
+        localStorage.removeItem('welcomeBookingData');
+      } catch (error) {
+        console.error('Failed to parse booking data:', error);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     fetchPackages();
@@ -1748,6 +1773,15 @@ const CurrentJamaahDashboard = () => {
       {/* ✅ Itinerary Viewer Modal */}
       {showItinerary && (
         <ItineraryViewer onClose={() => setShowItinerary(false)} />
+      )}
+
+      {/* ✅ NEW: Welcome Notification for post-payment users */}
+      {welcomeBookingData && (
+        <WelcomeNotification
+          isOpen={showWelcomeNotification}
+          onClose={() => setShowWelcomeNotification(false)}
+          bookingData={welcomeBookingData}
+        />
       )}
 
       {/* ❌ REMOVED: Request Items and My Requests modals - Permintaan Item Paket feature deleted */}

@@ -76,6 +76,31 @@
   background: rgba(212, 175, 55, 0.5);
 }
 
+/* ✨ Custom Scrollbar for Booking Form */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(5, 150, 105, 0.3) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+  margin: 8px 0;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(5, 150, 105, 0.3);
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(5, 150, 105, 0.5);
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

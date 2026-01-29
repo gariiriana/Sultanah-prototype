@@ -18,7 +18,7 @@ import {
     Plus,
     Minus
 } from 'lucide-react';
-import { doc, getDoc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'; // Auth functions
 import { db, auth } from '../../../config/firebase'; // Ensure auth is exported
 import { Button } from '../../components/ui/button';
@@ -115,10 +115,11 @@ const BookingFlow: React.FC = () => {
 
             // 2. Open Snap Popup
             window.snap.pay(snapToken, {
-                onSuccess: function (_result: any) {
+                onSuccess: async function (result: any) {
                     toast.success("Pembayaran Berhasil!", { icon: "✅" });
-                    handlePaymentConfirm();
-                    setStep(3);
+
+                    // Register user and save booking
+                    await handlePaymentSuccess(orderId, grossAmount, result);
                 },
                 onPending: function (_result: any) {
                     toast.info("Menunggu pembayaran Anda...");
@@ -150,16 +151,75 @@ const BookingFlow: React.FC = () => {
         toast.info(`Data jamaah telah dihapus.`);
     };
 
-    const handlePaymentConfirm = async () => {
+    const handlePaymentSuccess = async (orderId: string, totalAmount: number, paymentResult: any) => {
         setIsProcessing(true);
-        // Simulate waiting for payment confirmation...
-        setTimeout(() => {
-            handleAutoRegister();
-            setStep(3);
-        }, 2000);
+        try {
+            // 1. Register user if new
+            const userId = await handleAutoRegister();
+
+            if (!userId) {
+                throw new Error("Gagal mendaftarkan user");
+            }
+
+            // 2. Save booking to Firestore
+            const bookingData = {
+                id: orderId,
+                userId: userId,
+                packageId: pkg.id,
+                packageName: pkg.name,
+                packagePrice: parseInt(pkg.price),
+                paxCount: formData.pax,
+                totalAmount: totalAmount,
+                status: 'paid',
+                paymentMethod: paymentResult.payment_type || 'unknown',
+                jamaah: [
+                    {
+                        name: formData.name,
+                        email: formData.email,
+                        phone: formData.phone,
+                        documentsUploaded: false
+                    },
+                    ...formData.additionalJamaah.map(j => ({
+                        name: j.name,
+                        phone: j.whatsapp,
+                        email: '',
+                        documentsUploaded: false
+                    }))
+                ],
+                createdAt: new Date(),
+                paidAt: new Date(),
+                midtransOrderId: orderId,
+                midtransTransactionId: paymentResult.transaction_id || '',
+                voucherCode: formData.voucherCode || null,
+                referralCode: formData.referralCode || null
+            };
+
+            await setDoc(doc(db, 'bookings', orderId), bookingData);
+
+            // 3. Store welcome notification data in localStorage
+            localStorage.setItem('showWelcomeNotification', 'true');
+            localStorage.setItem('welcomeBookingData', JSON.stringify({
+                packageName: pkg.name,
+                totalAmount: totalAmount,
+                paxCount: formData.pax,
+                orderId: orderId
+            }));
+
+            // 4. Redirect to dashboard
+            toast.success("Redirecting to dashboard...", { icon: "🚀" });
+            setTimeout(() => {
+                navigate('/dashboard');
+            }, 1000);
+
+        } catch (error: any) {
+            console.error("Error saving booking:", error);
+            toast.error("Pembayaran sukses, tapi gagal menyimpan data. Hubungi admin.");
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
-    const handleAutoRegister = async () => {
+    const handleAutoRegister = async (): Promise<string | null> => {
         try {
             // Attempt to create user with provided credentials
             const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
@@ -179,41 +239,29 @@ const BookingFlow: React.FC = () => {
                 status: 'active'
             });
 
-            // Create Booking
-            const bookingRef = doc(collection(db, 'bookings'));
-            await setDoc(bookingRef, {
-                userId,
-                packageId: pkg.id,
-                packageName: pkg.name,
-                pax: formData.pax,
-                additionalJamaah: formData.additionalJamaah, // ✅ Store additional jamaah data
-                totalPrice: parseInt(pkg.price) * formData.pax - (formData.voucherCode ? VOUCHER_DISCOUNT : 0),
-                referralCode: formData.referralCode || null,
-                voucherCode: formData.voucherCode || null,
-                discountAmount: formData.voucherCode ? VOUCHER_DISCOUNT : 0,
-                status: 'confirmed',
-                paymentStatus: 'paid',
-                contactCurrent: {
-                    name: formData.name,
-                    email: formData.email,
-                    phone: formData.phone
-                },
-                createdAt: serverTimestamp()
+            toast.success("Akun Anda berhasil dibuat! Selamat datang di Sultanah Travel 🕋", {
+                duration: 4000
             });
 
-            toast.success("Pembayaran Terkonfirmasi! Akun Anda telah aktif.", { icon: "✅" });
+            return userId;
 
         } catch (error: any) {
-            console.error("Auto Register Error:", error);
             if (error.code === 'auth/email-already-in-use') {
-                setRegError('email-exists');
-                toast.error("Email sudah terdaftar. Silakan login ke akun Anda.");
+                // Email is already in use, sign in and return userId
+                try {
+                    const { signInWithEmailAndPassword } = await import('firebase/auth');
+                    const signInCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+                    toast.info("Email sudah terdaftar. Login otomatis...");
+                    return signInCredential.user.uid;
+                } catch (signInError: any) {
+                    toast.error("Email sudah terdaftar dengan password berbeda. Silakan login.");
+                    return null;
+                }
             } else {
-                setRegError('generic');
-                toast.error("Gagal sinkronisasi akun otomatis.");
+                setRegError(error.message);
+                toast.error(`Gagal mendaftar: ${error.message}`);
+                return null;
             }
-        } finally {
-            setIsProcessing(false);
         }
     };
 
@@ -224,7 +272,7 @@ const BookingFlow: React.FC = () => {
     );
 
     return (
-        <div className="relative min-h-screen py-12 px-4 overflow-hidden">
+        <div className="relative min-h-screen py-12 px-4 overflow-y-auto">
             {/* Background Image with Overlay */}
             <div
                 className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
@@ -255,7 +303,7 @@ const BookingFlow: React.FC = () => {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch max-w-5xl mx-auto lg:h-[calc(100vh-180px)]">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch max-w-5xl mx-auto lg:min-h-[calc(100vh-180px)]">
                     {/* Ringkasan Pesanan (Top on Mobile) */}
                     {pkg && (
                         <div className="lg:hidden">
@@ -288,7 +336,7 @@ const BookingFlow: React.FC = () => {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: 20 }}
-                                    className="bg-white/90 backdrop-blur-xl p-5 rounded-2xl shadow-2xl border border-white/30 h-full flex flex-col"
+                                    className="bg-white/90 backdrop-blur-xl p-5 rounded-2xl shadow-2xl border border-white/30 h-full flex flex-col overflow-y-auto custom-scrollbar"
                                 >
                                     <h2 className="text-lg font-bold mb-3">Lengkapi Data Booking</h2>
                                     <div className="space-y-4 flex-1">
