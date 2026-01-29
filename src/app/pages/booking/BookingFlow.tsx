@@ -14,7 +14,9 @@ import {
     EyeOff,
     Trash2,
     Sparkles,
-    Heart
+    Heart,
+    Plus,
+    Minus
 } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp, collection } from 'firebase/firestore';
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth'; // Auth functions
@@ -103,7 +105,11 @@ const BookingFlow: React.FC = () => {
                 })
             });
 
-            if (!response.ok) throw new Error("Gagal menghubungi server pembayaran");
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.details || errorData.error || "Gagal menghubungi server pembayaran");
+            }
+
             const data = await response.json();
             const snapToken = data.token;
 
@@ -338,37 +344,91 @@ const BookingFlow: React.FC = () => {
                                                 />
                                             </div>
                                             <div className="md:col-span-2">
-                                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Jumlah Jamaah</label>
-                                                <input
-                                                    type="number"
-                                                    min="1"
-                                                    value={formData.pax}
-                                                    onChange={e => {
-                                                        const newPax = parseInt(e.target.value) || 1;
-                                                        const currentAdditional = [...formData.additionalJamaah];
-
-                                                        if (newPax > 1) {
-                                                            const needed = newPax - 1;
-                                                            if (currentAdditional.length < needed) {
-                                                                const toAdd = needed - currentAdditional.length;
-                                                                for (let i = 0; i < toAdd; i++) {
-                                                                    currentAdditional.push({ name: '', whatsapp: '' });
+                                                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Jumlah Jamaah</label>
+                                                <div className="flex items-center gap-3">
+                                                    {/* Minus Button */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newPax = Math.max(1, formData.pax - 1);
+                                                            if (newPax !== formData.pax) {
+                                                                const currentAdditional = [...formData.additionalJamaah];
+                                                                const needed = newPax - 1;
+                                                                if (needed > 0) {
+                                                                    currentAdditional.splice(needed);
+                                                                } else {
+                                                                    currentAdditional.length = 0;
                                                                 }
-                                                            } else if (currentAdditional.length > needed) {
-                                                                currentAdditional.splice(needed);
+                                                                setFormData({ ...formData, pax: newPax, additionalJamaah: currentAdditional });
                                                             }
-                                                        } else {
-                                                            currentAdditional.length = 0;
-                                                        }
+                                                        }}
+                                                        className="w-10 h-10 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:border-emerald-500 hover:text-emerald-600 transition-all active:scale-95 shadow-sm"
+                                                    >
+                                                        <Minus className="w-5 h-5" />
+                                                    </button>
 
-                                                        setFormData({
-                                                            ...formData,
-                                                            pax: newPax,
-                                                            additionalJamaah: currentAdditional
-                                                        });
-                                                    }}
-                                                    className="w-full p-2.5 rounded-xl border border-gray-200 bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm font-medium"
-                                                />
+                                                    {/* Input Field */}
+                                                    <div className="flex-1 relative">
+                                                        <input
+                                                            type="text"
+                                                            inputMode="numeric"
+                                                            pattern="[0-9]*"
+                                                            value={formData.pax === 0 ? '' : formData.pax}
+                                                            onChange={e => {
+                                                                const val = e.target.value;
+                                                                if (val === '') {
+                                                                    setFormData({ ...formData, pax: 0 });
+                                                                    return;
+                                                                }
+                                                                const newPax = parseInt(val);
+                                                                if (isNaN(newPax)) return;
+
+                                                                const currentAdditional = [...formData.additionalJamaah];
+                                                                const finalPax = Math.max(1, newPax);
+                                                                const needed = finalPax - 1;
+
+                                                                if (needed > 0) {
+                                                                    if (currentAdditional.length < needed) {
+                                                                        const toAdd = needed - currentAdditional.length;
+                                                                        for (let i = 0; i < toAdd; i++) {
+                                                                            currentAdditional.push({ name: '', whatsapp: '' });
+                                                                        }
+                                                                    } else if (currentAdditional.length > needed) {
+                                                                        currentAdditional.splice(needed);
+                                                                    }
+                                                                } else {
+                                                                    currentAdditional.length = 0;
+                                                                }
+
+                                                                setFormData({
+                                                                    ...formData,
+                                                                    pax: finalPax,
+                                                                    additionalJamaah: currentAdditional
+                                                                });
+                                                            }}
+                                                            onBlur={() => {
+                                                                if (formData.pax < 1) {
+                                                                    setFormData({ ...formData, pax: 1 });
+                                                                }
+                                                            }}
+                                                            className="w-full h-10 text-center border border-gray-200 rounded-xl bg-gray-50/50 focus:bg-white focus:ring-2 focus:ring-emerald-500 transition-all outline-none text-sm font-bold"
+                                                        />
+                                                    </div>
+
+                                                    {/* Plus Button */}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newPax = formData.pax + 1;
+                                                            const currentAdditional = [...formData.additionalJamaah];
+                                                            currentAdditional.push({ name: '', whatsapp: '' });
+                                                            setFormData({ ...formData, pax: newPax, additionalJamaah: currentAdditional });
+                                                        }}
+                                                        className="w-10 h-10 rounded-xl border border-gray-200 bg-white flex items-center justify-center text-gray-600 hover:border-emerald-500 hover:text-emerald-600 transition-all active:scale-95 shadow-sm"
+                                                    >
+                                                        <Plus className="w-5 h-5" />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
 
