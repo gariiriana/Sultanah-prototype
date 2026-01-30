@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import {
-    HeartPulse,
     AlertCircle,
     Pill,
     Stethoscope,
@@ -36,6 +35,7 @@ const MedicalSection: React.FC = () => {
     const [medicalRecords, setMedicalRecords] = useState<MedicalRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [filterAttention, setFilterAttention] = useState(false); // ✅ NEW: Filter for people with medical conditions
 
     useEffect(() => {
         const fetchMedicalData = async () => {
@@ -91,30 +91,47 @@ const MedicalSection: React.FC = () => {
         fetchMedicalData();
     }, [userProfile]);
 
-    const filteredRecords = medicalRecords.filter(record =>
-        record.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        record.conditions.some(c => c.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    const filteredRecords = medicalRecords.filter(record => {
+        const searchLower = searchTerm.toLowerCase().trim();
+
+        // Instant search logic (Live Search)
+        const matchesSearch = !searchLower ||
+            record.name.toLowerCase().includes(searchLower) ||
+            record.conditions.some(c => c.toLowerCase().includes(searchLower)) ||
+            record.medications.some(m => m.toLowerCase().includes(searchLower)) ||
+            record.bloodType?.toLowerCase().includes(searchLower) ||
+            record.emergencyContact.name.toLowerCase().includes(searchLower);
+
+        // Filter for "Memerlukan Perhatian" (has conditions or medications)
+        const matchesAttention = !filterAttention || record.conditions.length > 0 || record.medications.length > 0;
+
+        return matchesSearch && matchesAttention;
+    });
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                        <HeartPulse className="w-6 h-6 text-rose-500" />
-                        Catatan Medis Jamaah
-                    </h2>
-                    <p className="text-gray-500">Pantau kondisi kesehatan jamaah Anda</p>
-                </div>
-                <div className="relative w-full md:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <div className="flex flex-col md:flex-row justify-between items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <div className="flex-1 w-full relative">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
                         type="text"
-                        placeholder="Cari nama atau kondisi..."
-                        className="w-full pl-10 pr-4 py-2 border rounded-xl focus:ring-2 focus:ring-rose-500 focus:outline-none"
+                        placeholder="Cari nama jamaah, obat, atau kondisi..."
+                        className="w-full pl-12 pr-4 h-12 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder:text-gray-400 focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 focus:outline-none transition-all"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
+                </div>
+                <div className="flex gap-2 w-full md:w-auto">
+                    <button
+                        onClick={() => setFilterAttention(!filterAttention)}
+                        className={`flex-1 md:flex-none flex items-center justify-center gap-2 px-6 h-12 rounded-xl border-2 transition-all font-semibold ${filterAttention
+                            ? 'bg-rose-500 border-rose-500 text-white shadow-lg shadow-rose-200'
+                            : 'bg-white border-gray-200 text-gray-600 hover:border-rose-200'
+                            }`}
+                    >
+                        <AlertCircle className={`w-5 h-5 ${filterAttention ? 'text-white' : 'text-rose-500'}`} />
+                        Memerlukan Perhatian
+                    </button>
                 </div>
             </div>
 

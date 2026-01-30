@@ -244,21 +244,21 @@ const AlumniDashboard: React.FC<AlumniDashboardProps> = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {activeTab === 'overview' && (
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Welcome Card */}
             <Card className="border-2 border-[#D4AF37]/20 bg-gradient-to-br from-white to-[#FFF9F0]">
-              <CardContent className="p-6">
+              <CardContent className="p-4 sm:p-6">
                 <div className="flex items-start gap-4">
-                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
-                    <Award className="w-8 h-8 text-[#D4AF37]" />
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
+                    <Award className="w-6 h-6 sm:w-8 sm:h-8 text-[#D4AF37]" />
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-2xl font-bold mb-2">
+                    <h2 className="text-xl sm:text-2xl font-bold mb-2">
                       Assalamu'alaikum, {userProfile?.displayName || 'Guest'}!
                     </h2>
-                    <p className="text-gray-600 mb-4">
+                    <p className="text-sm sm:text-base text-gray-600 mb-3 sm:mb-4">
                       Terima kasih telah menyelesaikan perjalanan umrah bersama kami! Sebagai Alumni, Anda dapat
                       mengakses program referral, berbagi testimonial, dan mendapatkan benefit spesial untuk perjalanan berikutnya.
                     </p>
@@ -272,16 +272,16 @@ const AlumniDashboard: React.FC<AlumniDashboardProps> = () => {
             </Card>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               <Card>
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Total Referrals</p>
-                      <p className="text-3xl font-bold text-[#D4AF37]">{referralData?.totalReferrals || 0}</p>
+                      <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Referrals</p>
+                      <p className="text-2xl sm:text-3xl font-bold text-[#D4AF37]">{referralData?.totalReferrals || 0}</p>
                     </div>
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
-                      <Users className="w-6 h-6 text-blue-600" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center">
+                      <Users className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                     </div>
                   </div>
                 </CardContent>
@@ -317,16 +317,16 @@ const AlumniDashboard: React.FC<AlumniDashboardProps> = () => {
             </div>
 
             {/* Quick Actions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
               <Card className="border-2 border-[#D4AF37]/30 bg-gradient-to-br from-[#FFF9F0] to-white hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/referral')}>
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
-                      <Gift className="w-6 h-6 text-[#D4AF37]" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
+                      <Gift className="w-5 h-5 sm:w-6 sm:h-6 text-[#D4AF37]" />
                     </div>
                     <div>
-                      <h3 className="font-semibold mb-1">Program Referral 🎁</h3>
-                      <p className="text-sm text-gray-600">Ajak teman & dapatkan komisi!</p>
+                      <h3 className="text-sm sm:text-base font-semibold mb-1">Program Referral 🎁</h3>
+                      <p className="text-xs sm:text-sm text-gray-600">Ajak teman & dapatkan komisi!</p>
                     </div>
                   </div>
                 </CardContent>

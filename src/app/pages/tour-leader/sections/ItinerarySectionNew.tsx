@@ -11,17 +11,30 @@ import {
   CheckCircle2,
   Circle,
   Check,
+  Camera,
+  Image as ImageIcon,
+  X,
+  Search,
+  Filter,
 } from 'lucide-react';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { collection, query, where, getDocs, orderBy, doc, updateDoc, Timestamp, addDoc, getDoc } from 'firebase/firestore';
 import { db } from '../../../../config/firebase';
 import { toast } from 'sonner';
 
+interface ActivityPhoto {
+  imageBase64: string;
+  uploadedBy: string;
+  uploadedByName: string;
+  uploadedAt: string;
+}
+
 interface Activity {
   time: string;
   activity: string;
   location: string;
   description?: string;
+  photos?: ActivityPhoto[]; // ✅ NEW: Photo array
 }
 
 interface DaySchedule {
@@ -42,6 +55,7 @@ interface Itinerary {
   days: DaySchedule[];
   completedDays?: number[]; // ✅ NEW: Track which days are completed
   status?: 'ongoing' | 'completed'; // ✅ NEW: Overall status
+  jamaahNames?: string[]; // ✅ NEW: Names of jamaah in this package for searching
 }
 
 const ItinerarySectionNew: React.FC = () => {
@@ -50,6 +64,10 @@ const ItinerarySectionNew: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [expandedItineraryId, setExpandedItineraryId] = useState<string | null>(null);
   const [expandedDayNumber, setExpandedDayNumber] = useState<number | null>(null);
+  const [uploadingPhoto, setUploadingPhoto] = useState<string | null>(null); // activityKey
+  const [viewingPhotos, setViewingPhotos] = useState<ActivityPhoto[] | null>(null);
+  const [searchQuery, setSearchQuery] = useState(''); // ✅ NEW
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'upcoming' | 'completed'>('all'); // ✅ NEW
 
   useEffect(() => {
     fetchItineraries();
@@ -75,23 +93,40 @@ const ItinerarySectionNew: React.FC = () => {
       console.log('🔍 Tour Leader ID:', currentUserId);
       console.log('📧 Tour Leader Email:', currentUserEmail);
 
+      // \u2705 NEW: Fetch payments to link jamaah to packages
+      const paymentsQuery = query(
+        collection(db, 'payments'),
+        where('status', '==', 'approved')
+      );
+      const paymentsSnap = await getDocs(paymentsQuery);
+      const packageToJamaahMap = new Map<string, string[]>();
+
+      paymentsSnap.forEach(pDoc => {
+        const payment = pDoc.data();
+        if (payment.packageId && payment.userName) {
+          const names = packageToJamaahMap.get(payment.packageId) || [];
+          names.push(payment.userName.toLowerCase());
+          packageToJamaahMap.set(payment.packageId, names);
+        }
+      });
+
       itinerariesSnap.forEach((doc) => {
         const data = doc.data();
 
-        console.log('📋 Checking itinerary:', {
+        console.log('\uD83D\uDCCB Checking itinerary:', {
           packageName: data.packageName,
           tourLeaderId: data.tourLeaderId,
           tourLeaderName: data.tourLeaderName,
           match: data.tourLeaderId === currentUserId || data.tourLeaderId === currentUserEmail
         });
 
-        // ✅ Filter: Check if tourLeaderId matches either UID or email
+        // \u2705 Filter: Check if tourLeaderId matches either UID or email
         const isMyItinerary =
           data.tourLeaderId === currentUserId ||
           data.tourLeaderId === currentUserEmail;
 
         if (isMyItinerary) {
-          console.log('✅ Found itinerary:', data.packageName, 'Tour Leader:', data.tourLeaderId);
+          console.log('\u2705 Found itinerary:', data.packageName, 'Tour Leader:', data.tourLeaderId);
           itinerariesData.push({
             id: doc.id,
             packageId: data.packageId,
@@ -99,10 +134,11 @@ const ItinerarySectionNew: React.FC = () => {
             departureDate: data.departureDate,
             returnDate: data.returnDate,
             tourLeaderName: data.tourLeaderName,
-            tourLeaderId: data.tourLeaderId, // ✅ ADD: For debugging permissions
+            tourLeaderId: data.tourLeaderId, // \u2705 ADD: For debugging permissions
             days: data.days || [],
             completedDays: data.completedDays || [],
             status: data.status || 'ongoing',
+            jamaahNames: packageToJamaahMap.get(data.packageId) || [], // \u2705 NEW
           });
         }
       });
@@ -249,6 +285,126 @@ const ItinerarySectionNew: React.FC = () => {
     }
   };
 
+  // \u2705 NEW: Upload photo for activity
+  const handleActivityPhotoUpload = async (
+    itineraryId: string,
+    dayNumber: number,
+    activityIndex: number,
+    file: File
+  ) => {
+    try {
+      // Validate file
+      if (!file.type.startsWith('image/')) {
+        toast.error('Hanya file gambar yang diperbolehkan');
+        return;
+      }
+
+      if (file.size > 2 * 1024 * 1024) {
+        toast.error('Ukuran foto maksimal 2MB');
+        return;
+      }
+
+      const activityKey = `${itineraryId}-${dayNumber}-${activityIndex}`;
+      setUploadingPhoto(activityKey);
+
+      // Convert to Base64
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // Find itinerary and activity
+      const itinerary = itineraries.find(it => it.id === itineraryId);
+      if (!itinerary) {
+        toast.error('Jadwal tidak ditemukan');
+        return;
+      }
+
+      const day = itinerary.days.find(d => d.dayNumber === dayNumber);
+      if (!day || !day.activities[activityIndex]) {
+        toast.error('Aktivitas tidak ditemukan');
+        return;
+      }
+
+      const activity = day.activities[activityIndex];
+
+      // Create photo object
+      const newPhoto: ActivityPhoto = {
+        imageBase64: base64,
+        uploadedBy: userProfile?.id || '',
+        uploadedByName: userProfile?.displayName || 'Tour Leader',
+        uploadedAt: new Date().toISOString(),
+      };
+
+      // Update activity in days array
+      const updatedDays = itinerary.days.map(d => {
+        if (d.dayNumber === dayNumber) {
+          return {
+            ...d,
+            activities: d.activities.map((act, idx) => {
+              if (idx === activityIndex) {
+                return {
+                  ...act,
+                  photos: [...(act.photos || []), newPhoto]
+                };
+              }
+              return act;
+            })
+          };
+        }
+        return d;
+      });
+
+      // Update Firestore
+      const itineraryRef = doc(db, 'itineraries', itineraryId);
+      await updateDoc(itineraryRef, {
+        days: updatedDays,
+        updatedAt: Timestamp.now(),
+      });
+
+      // Update local state
+      setItineraries(prevItineraries =>
+        prevItineraries.map(it =>
+          it.id === itineraryId ? { ...it, days: updatedDays } : it
+        )
+      );
+
+      toast.success(`\u2705 Foto berhasil diupload untuk ${activity.activity}!`);
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      toast.error('Gagal mengupload foto');
+    } finally {
+      setUploadingPhoto(null);
+    }
+  };
+
+  // \u2705 NEW: Instant Filter Logic
+  const filteredItineraries = itineraries.filter(it => {
+    const searchLower = searchQuery.toLowerCase().trim();
+    const now = new Date();
+    const departureDate = new Date(it.departureDate);
+    const returnDate = new Date(it.returnDate);
+
+    // Instant search (Live Search) by Package Name or Jamaah Name
+    const matchesSearch = !searchLower ||
+      it.packageName.toLowerCase().includes(searchLower) ||
+      it.jamaahNames?.some(name => name.includes(searchLower));
+
+    // Status Filter logic
+    let matchesStatus = true;
+    if (statusFilter === 'active') {
+      matchesStatus = departureDate <= now && now <= returnDate && it.status !== 'completed';
+    } else if (statusFilter === 'upcoming') {
+      matchesStatus = departureDate > now;
+    } else if (statusFilter === 'completed') {
+      matchesStatus = it.status === 'completed' || returnDate < now;
+    }
+
+    return matchesSearch && matchesStatus;
+  });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -263,30 +419,64 @@ const ItinerarySectionNew: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3 pb-4 border-b border-gray-200">
-        <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-md">
-          <Calendar className="w-6 h-6 text-white" />
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-gray-200">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl flex items-center justify-center shadow-md">
+            <Calendar className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">Jadwal Perjalanan</h2>
+            <p className="text-gray-500 text-sm">{filteredItineraries.length} paket perjalanan</p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-2xl font-bold text-gray-900">Jadwal Perjalanan</h2>
-          <p className="text-gray-500 text-sm">Lihat jadwal perjalanan yang ditugaskan kepada Anda</p>
+      </div>
+
+      {/* \u2705 NEW: Search & Filters */}
+      <div className="flex flex-col md:flex-row gap-3">
+        {/* Search */}
+        <div className="flex-1 relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Cari berdasarkan nama paket..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-12 pr-4 h-12 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder:text-gray-400 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 focus:outline-none transition-all"
+          />
+        </div>
+
+        {/* Status Filter */}
+        <div className="relative md:w-48">
+          <Filter className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="w-full pl-12 pr-4 h-12 bg-white border border-gray-300 rounded-xl text-gray-900 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 focus:outline-none appearance-none cursor-pointer transition-all"
+          >
+            <option value="all">Semua Status</option>
+            <option value="active">Aktif</option>
+            <option value="upcoming">Akan Datang</option>
+            <option value="completed">Selesai</option>
+          </select>
         </div>
       </div>
 
       {/* Itineraries List */}
-      {itineraries.length === 0 ? (
+      {filteredItineraries.length === 0 ? (
         <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300">
           <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
             <Calendar className="w-8 h-8 text-gray-400" />
           </div>
-          <p className="text-gray-900 font-semibold text-lg mb-1">Tidak ada jadwal yang ditugaskan</p>
+          <p className="text-gray-900 font-semibold text-lg mb-1">
+            {searchQuery || statusFilter !== 'all' ? 'Tidak ada jadwal ditemukan' : 'Tidak ada jadwal yang ditugaskan'}
+          </p>
           <p className="text-sm text-gray-500">
-            Jadwal akan muncul di sini setelah admin menugaskan perjalanan kepada Anda
+            {searchQuery || statusFilter !== 'all' ? 'Coba sesuaikan pencarian atau filter Anda' : 'Jadwal akan muncul di sini setelah admin menugaskan perjalanan kepada Anda'}
           </p>
         </div>
       ) : (
         <div className="space-y-4">
-          {itineraries.map((itinerary) => {
+          {filteredItineraries.map((itinerary) => {
             const completedCount = itinerary.completedDays?.length || 0;
             const totalDays = itinerary.days.length;
             const allDaysCompleted = completedCount === totalDays && totalDays > 0;
@@ -510,39 +700,131 @@ const ItinerarySectionNew: React.FC = () => {
                                         </p>
                                       </div>
                                     ) : (
-                                      day.activities.map((activity, idx) => (
-                                        <div
-                                          key={idx}
-                                          className="flex gap-3 p-3 bg-gray-50 rounded-lg border border-gray-100 hover:border-[#D4AF37]/30 transition-colors"
-                                        >
-                                          <div className="flex-shrink-0">
-                                            <div className="w-12 h-12 bg-gradient-to-br from-[#C5A572] to-[#D4AF37] rounded-lg flex items-center justify-center shadow-sm">
-                                              <Clock className="w-5 h-5 text-white" />
+                                      day.activities.map((activity, idx) => {
+                                        const activityKey = `${itinerary.id}-${day.dayNumber}-${idx}`;
+                                        const isUploading = uploadingPhoto === activityKey;
+                                        const photos = activity.photos || [];
+
+                                        return (
+                                          <div
+                                            key={idx}
+                                            className="bg-gray-50 rounded-lg border border-gray-100 hover:border-[#D4AF37]/30 transition-colors overflow-hidden"
+                                          >
+                                            {/* Activity Info */}
+                                            <div className="flex gap-3 p-3">
+                                              <div className="flex-shrink-0">
+                                                <div className="w-12 h-12 bg-gradient-to-br from-[#C5A572] to-[#D4AF37] rounded-lg flex items-center justify-center shadow-sm">
+                                                  <Clock className="w-5 h-5 text-white" />
+                                                </div>
+                                              </div>
+                                              <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                  <span className="font-bold text-[#D4AF37]">
+                                                    {activity.time}
+                                                  </span>
+                                                </div>
+                                                <h5 className="font-semibold text-gray-900 mb-1">
+                                                  {activity.activity}
+                                                </h5>
+                                                {activity.location && (
+                                                  <p className="text-sm text-gray-600 flex items-center gap-1 mb-1">
+                                                    <MapPin className="w-3.5 h-3.5 text-red-500" />
+                                                    {activity.location}
+                                                  </p>
+                                                )}
+                                                {activity.description && (
+                                                  <p className="text-sm text-gray-700 mt-2 bg-white rounded-md p-2 border border-gray-100">
+                                                    {activity.description}
+                                                  </p>
+                                                )}
+                                              </div>
+                                            </div>
+
+                                            {/* ✅ NEW: Photo Upload & Display */}
+                                            <div className="px-3 pb-3 space-y-2">
+                                              {/* Upload Button */}
+                                              <div>
+                                                <input
+                                                  type="file"
+                                                  id={`photo-${activityKey}`}
+                                                  accept="image/*"
+                                                  className="hidden"
+                                                  onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                      handleActivityPhotoUpload(
+                                                        itinerary.id,
+                                                        day.dayNumber,
+                                                        idx,
+                                                        file
+                                                      );
+                                                      e.target.value = ''; // Reset
+                                                    }
+                                                  }}
+                                                />
+                                                <label
+                                                  htmlFor={`photo-${activityKey}`}
+                                                  className={`flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-lg border-2 border-dashed transition-all cursor-pointer ${isUploading
+                                                    ? 'border-[#D4AF37] bg-[#D4AF37]/10 cursor-wait'
+                                                    : 'border-gray-300 hover:border-[#D4AF37] hover:bg-[#D4AF37]/5'
+                                                    }`}
+                                                >
+                                                  {isUploading ? (
+                                                    <>
+                                                      <div className="w-4 h-4 border-2 border-[#D4AF37] border-t-transparent rounded-full animate-spin"></div>
+                                                      <span className="text-sm font-medium text-gray-700">
+                                                        Mengupload...
+                                                      </span>
+                                                    </>
+                                                  ) : (
+                                                    <>
+                                                      <Camera className="w-4 h-4 text-[#D4AF37]" />
+                                                      <span className="text-sm font-medium text-gray-700">
+                                                        {photos.length > 0 ? 'Tambah Foto' : 'Upload Foto Kegiatan'}
+                                                      </span>
+                                                    </>
+                                                  )}
+                                                </label>
+                                              </div>
+
+                                              {/* Photo Gallery */}
+                                              {photos.length > 0 && (
+                                                <div className="bg-white rounded-lg p-2 border border-gray-200">
+                                                  <div className="flex items-center gap-1.5 mb-2">
+                                                    <ImageIcon className="w-4 h-4 text-[#D4AF37]" />
+                                                    <span className="text-xs font-semibold text-gray-700">
+                                                      {photos.length} Foto
+                                                    </span>
+                                                  </div>
+                                                  <div className="grid grid-cols-3 gap-2">
+                                                    {photos.map((photo, photoIdx) => (
+                                                      <motion.div
+                                                        key={photoIdx}
+                                                        initial={{ opacity: 0, scale: 0.8 }}
+                                                        animate={{ opacity: 1, scale: 1 }}
+                                                        className="relative aspect-square rounded-lg overflow-hidden shadow-sm cursor-pointer group"
+                                                        onClick={() => setViewingPhotos(photos)}
+                                                      >
+                                                        <img
+                                                          src={photo.imageBase64}
+                                                          alt={`${activity.activity} - ${photoIdx + 1}`}
+                                                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                          <ImageIcon className="w-6 h-6 text-white" />
+                                                        </div>
+                                                      </motion.div>
+                                                    ))}
+                                                  </div>
+                                                  <p className="text-xs text-gray-500 mt-2">
+                                                    Klik foto untuk memperbesar
+                                                  </p>
+                                                </div>
+                                              )}
                                             </div>
                                           </div>
-                                          <div className="flex-1 min-w-0">
-                                            <div className="flex items-center gap-2 mb-1">
-                                              <span className="font-bold text-[#D4AF37]">
-                                                {activity.time}
-                                              </span>
-                                            </div>
-                                            <h5 className="font-semibold text-gray-900 mb-1">
-                                              {activity.activity}
-                                            </h5>
-                                            {activity.location && (
-                                              <p className="text-sm text-gray-600 flex items-center gap-1 mb-1">
-                                                <MapPin className="w-3.5 h-3.5 text-red-500" />
-                                                {activity.location}
-                                              </p>
-                                            )}
-                                            {activity.description && (
-                                              <p className="text-sm text-gray-700 mt-2 bg-white rounded-md p-2 border border-gray-100">
-                                                {activity.description}
-                                              </p>
-                                            )}
-                                          </div>
-                                        </div>
-                                      ))
+                                        );
+                                      })
                                     )}
                                   </motion.div>
                                 )}
@@ -559,6 +841,59 @@ const ItinerarySectionNew: React.FC = () => {
           })}
         </div>
       )}
+
+      {/* Photo Viewer Modal */}
+      <AnimatePresence>
+        {viewingPhotos && (
+          <div
+            className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setViewingPhotos(null)}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative max-w-4xl w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button */}
+              <button
+                onClick={() => setViewingPhotos(null)}
+                className="absolute -top-12 right-0 w-10 h-10 bg-white/10 hover:bg-white/20 backdrop-blur-sm text-white rounded-full flex items-center justify-center transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+
+              {/* Photo Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {viewingPhotos.map((photo, idx) => (
+                  <motion.div
+                    key={idx}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.1 }}
+                    className="bg-white rounded-xl overflow-hidden shadow-2xl"
+                  >
+                    <img
+                      src={photo.imageBase64}
+                      alt={`Photo ${idx + 1}`}
+                      className="w-full h-auto"
+                    />
+                    <div className="p-4 bg-gray-50">
+                      <p className="text-sm text-gray-600">
+                        <span className="font-medium">Diupload oleh:</span> {photo.uploadedByName}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        {new Date(photo.uploadedAt).toLocaleString('id-ID')}
+                      </p>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -1,23 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { 
-  User, 
-  Phone, 
-  Mail, 
-  MapPin, 
-  Award, 
+import {
+  User,
+  Phone,
+  Mail,
   Briefcase,
   Edit,
   ArrowLeft,
   Save,
   X,
-  Globe,
-  Users,
-  Calendar,
   Shield,
   AlertCircle,
-  CheckCircle,
-  Building
+  LogOut
 } from 'lucide-react';
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
@@ -51,13 +45,14 @@ interface ProfileData {
 }
 
 const TourLeaderProfilePage = () => {
-  const { userProfile } = useAuth();
+  const { userProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [profileData, setProfileData] = useState<ProfileData | null>(null);
   const [editData, setEditData] = useState<ProfileData | null>(null);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   useEffect(() => {
     if (userProfile?.uid) {
@@ -66,9 +61,11 @@ const TourLeaderProfilePage = () => {
   }, [userProfile]);
 
   const fetchProfileData = async () => {
+    if (!userProfile?.uid) return;
+
     try {
       setLoading(true);
-      const profileRef = doc(db, 'tourLeaderProfiles', userProfile!.uid);
+      const profileRef = doc(db, 'tourLeaderProfiles', userProfile.uid);
       const profileSnap = await getDoc(profileRef);
 
       if (profileSnap.exists()) {
@@ -109,9 +106,8 @@ const TourLeaderProfilePage = () => {
       setLoading(false);
     }
   };
-
   const handleSave = async () => {
-    if (!editData) return;
+    if (!editData || !userProfile?.uid) return;
 
     // Validation
     if (!editData.fullName || !editData.email || !editData.phoneNumber) {
@@ -123,11 +119,12 @@ const TourLeaderProfilePage = () => {
 
     try {
       setSaving(true);
+      const uid = userProfile.uid;
 
-      const profileRef = doc(db, 'tourLeaderProfiles', userProfile!.uid);
+      const profileRef = doc(db, 'tourLeaderProfiles', uid);
       const saveData = {
         ...editData,
-        userId: userProfile!.uid,
+        userId: uid,
         role: 'tour-leader',
         updatedAt: serverTimestamp()
       };
@@ -165,6 +162,16 @@ const TourLeaderProfilePage = () => {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      navigate('/login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+      toast.error('Gagal logout');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-white via-gray-50 to-[#D4AF37]/5 flex items-center justify-center">
@@ -185,7 +192,7 @@ const TourLeaderProfilePage = () => {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iI0Q0QUYzNyIgc3Ryb2tlLW9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')] opacity-30"></div>
         <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-[#D4AF37]/20 to-transparent rounded-full blur-3xl"></div>
 
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 relative">
           <Button
             onClick={() => navigate('/tour-leader-dashboard')}
             className="mb-6 bg-white/10 border border-white/20 text-white hover:bg-white/20"
@@ -194,34 +201,34 @@ const TourLeaderProfilePage = () => {
             Kembali ke Dashboard
           </Button>
 
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-6">
+            <div className="flex flex-col sm:flex-row items-center sm:items-center gap-4 sm:gap-6 text-center sm:text-left">
               {/* Avatar */}
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#C19B2B] flex items-center justify-center shadow-xl">
-                <span className="text-4xl font-bold text-white">
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#C19B2B] flex items-center justify-center shadow-xl flex-shrink-0">
+                <span className="text-3xl sm:text-4xl font-bold text-white">
                   {data?.fullName?.charAt(0).toUpperCase() || 'T'}
                 </span>
               </div>
-              
+
               {/* Info */}
-              <div>
-                <h1 className="text-3xl font-bold text-white mb-2">
+              <div className="flex flex-col items-center sm:items-start">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1 sm:mb-2">
                   {data?.fullName || 'Tour Leader'}
                 </h1>
-                <div className="flex items-center gap-4 text-white/80">
+                <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-white/80">
                   <div className="flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    <span className="text-sm">{data?.email || '-'}</span>
+                    <Mail className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                    <span className="text-xs sm:text-sm">{data?.email || '-'}</span>
                   </div>
                   {data?.phoneNumber && (
                     <div className="flex items-center gap-2">
-                      <Phone className="w-4 h-4" />
-                      <span className="text-sm">{data.phoneNumber}</span>
+                      <Phone className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <span className="text-xs sm:text-sm">{data.phoneNumber}</span>
                     </div>
                   )}
                 </div>
                 {data?.bio && !isEditing && (
-                  <p className="text-white/70 text-sm mt-2 max-w-2xl">{data.bio}</p>
+                  <p className="text-white/70 text-xs sm:text-sm mt-1 sm:mt-2 max-w-2xl text-center sm:text-left">{data.bio}</p>
                 )}
               </div>
             </div>
@@ -230,7 +237,7 @@ const TourLeaderProfilePage = () => {
             {!isEditing && (
               <Button
                 onClick={() => setIsEditing(true)}
-                className="bg-[#D4AF37] hover:bg-[#C19B2B] text-white"
+                className="bg-[#D4AF37] hover:bg-[#C19B2B] text-white w-full sm:w-auto text-xs sm:text-sm shadow-lg"
               >
                 <Edit className="w-4 h-4 mr-2" />
                 Edit Profil
@@ -268,7 +275,7 @@ const TourLeaderProfilePage = () => {
                 Data Pribadi
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InfoField
                   label="Nama Lengkap"
@@ -337,7 +344,7 @@ const TourLeaderProfilePage = () => {
                 Data Profesional
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InfoField
                   label="Nomor Sertifikat"
@@ -414,7 +421,7 @@ const TourLeaderProfilePage = () => {
                 Kontak Darurat
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <InfoField
                   label="Nama Kontak Darurat"
@@ -462,6 +469,54 @@ const TourLeaderProfilePage = () => {
               </Button>
             </div>
           )}
+
+          {/* Logout Section - At Bottom */}
+          {!isEditing && (
+            <div className="mt-8">
+              <div className="border-t border-gray-200 pt-6">
+                <Button
+                  onClick={() => setShowLogoutDialog(true)}
+                  className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 shadow-lg flex items-center justify-center gap-2"
+                >
+                  <LogOut className="w-5 h-5" />
+                  Logout
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Logout Confirmation Dialog */}
+          {showLogoutDialog && (
+            <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center px-4">
+              <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                    <LogOut className="w-6 h-6 text-red-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Konfirmasi Logout</h3>
+                    <p className="text-sm text-gray-600">Apakah Anda yakin ingin keluar?</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-6">
+                  <Button
+                    onClick={() => setShowLogoutDialog(false)}
+                    className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    onClick={handleLogout}
+                    className="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Ya, Logout
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -491,8 +546,8 @@ const InfoField: React.FC<InfoFieldProps> = ({
   onChange
 }) => {
   return (
-    <div>
-      <label className="block text-sm font-semibold text-gray-700 mb-2">
+    <div className="space-y-1.5 sm:space-y-2">
+      <label className="block text-xs sm:text-sm font-semibold text-gray-700">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {isEditing ? (
@@ -502,7 +557,7 @@ const InfoField: React.FC<InfoFieldProps> = ({
             onChange={(e) => onChange?.(e.target.value)}
             rows={4}
             placeholder={placeholder}
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#D4AF37] focus:outline-none transition-colors"
+            className="w-full px-3 py-2.5 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:border-[#D4AF37] focus:outline-none transition-colors"
           />
         ) : (
           <input
@@ -510,12 +565,12 @@ const InfoField: React.FC<InfoFieldProps> = ({
             value={value || ''}
             onChange={(e) => onChange?.(e.target.value)}
             placeholder={placeholder}
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-[#D4AF37] focus:outline-none transition-colors"
+            className="w-full px-3 py-2.5 sm:px-4 sm:py-3 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:border-[#D4AF37] focus:outline-none transition-colors"
           />
         )
       ) : (
-        <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg">
-          <p className="text-gray-900">{value || '-'}</p>
+        <div className="px-3 py-2.5 sm:px-4 sm:py-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <p className="text-sm sm:text-base text-gray-900">{value || '-'}</p>
         </div>
       )}
     </div>

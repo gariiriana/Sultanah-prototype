@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
 import {
-    TrendingUp,
     Users,
-    CreditCard,
     Calendar,
     Activity,
     DollarSign,
@@ -21,7 +18,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 
 const OwnerDashboard: React.FC = () => {
     const { userProfile, signOut } = useAuth();
-    const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         totalRevenue: 0,
         totalJamaah: 0,
@@ -35,7 +31,6 @@ const OwnerDashboard: React.FC = () => {
 
     const fetchStats = async () => {
         try {
-            setLoading(true);
 
             // 1. Calculate Revenue (Total Approved Payments)
             const paymentsQuery = query(collection(db, 'payments'), where('status', '==', 'approved'));
@@ -52,9 +47,9 @@ const OwnerDashboard: React.FC = () => {
             const totalBookings = bookingSnap.size;
 
             // 3. Count Active Trips (Packages with dates in range) - Simplified: Just count all packages for now
-            const packagesQuery = query(collection(db, 'packages'));
-            const packageSnap = await getDocs(packagesQuery);
-            const totalPackages = packageSnap.size;
+            // const packagesQuery = query(collection(db, 'packages'));
+            // const packageSnap = await getDocs(packagesQuery);
+            // const totalPackages = packageSnap.size;
 
             setStats({
                 totalRevenue: revenue,
@@ -65,8 +60,6 @@ const OwnerDashboard: React.FC = () => {
 
         } catch (error) {
             console.error("Error fetching owner stats:", error);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -82,37 +75,38 @@ const OwnerDashboard: React.FC = () => {
     return (
         <div className="min-h-screen bg-slate-50">
             {/* Topbar */}
-            <div className="bg-white border-b px-8 py-4 flex items-center justify-between sticky top-0 z-20">
+            <div className="bg-white border-b px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between sticky top-0 z-20">
                 <div>
-                    <h1 className="text-2xl font-bold text-slate-900">Owner Dashboard</h1>
-                    <p className="text-slate-500 text-sm">Overview of Sultanah's Performance</p>
+                    <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-slate-900">Owner Dashboard</h1>
+                    <p className="text-slate-500 text-xs sm:text-sm">Overview of Sultanah's Performance</p>
                 </div>
                 <div className="flex items-center gap-4">
                     <div className="text-right hidden md:block">
                         <p className="font-semibold text-slate-800">{userProfile?.displayName || 'Owner'}</p>
                         <p className="text-xs text-slate-500">Super Admin Access</p>
                     </div>
-                    <Button variant="outline" onClick={handleLogout} className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                        Logout
+                    <Button variant="outline" onClick={handleLogout} className="text-red-600 hover:text-red-700 hover:bg-red-50 text-xs sm:text-sm px-2 sm:px-4">
+                        <span className="hidden sm:inline">Logout</span>
+                        <span className="sm:hidden">Out</span>
                     </Button>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-8 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
                     <Card className="bg-white shadow-sm border-slate-200">
-                        <CardContent className="p-6">
+                        <CardContent className="p-4 sm:p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <div className="p-3 bg-emerald-100 rounded-xl">
-                                    <DollarSign className="w-6 h-6 text-emerald-600" />
+                                <div className="p-2 sm:p-3 bg-emerald-100 rounded-lg sm:rounded-xl">
+                                    <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-600" />
                                 </div>
                                 <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
                                     +{stats.monthlyGrowth}%
                                 </span>
                             </div>
-                            <p className="text-slate-500 text-sm font-medium">Total Revenue</p>
-                            <h3 className="text-3xl font-bold text-slate-900 mt-1">
+                            <p className="text-slate-500 text-xs sm:text-sm font-medium">Total Revenue</p>
+                            <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mt-1">
                                 Rp {stats.totalRevenue.toLocaleString('id-ID')}
                             </h3>
                         </CardContent>
@@ -162,7 +156,7 @@ const OwnerDashboard: React.FC = () => {
                 </div>
 
                 {/* Charts & Content Area - Skeleton for now */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                     <Card className="lg:col-span-2 shadow-sm">
                         <CardHeader>
                             <CardTitle>Revenue Analytics</CardTitle>

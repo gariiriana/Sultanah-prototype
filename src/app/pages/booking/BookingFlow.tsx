@@ -53,7 +53,6 @@ const BookingFlow: React.FC = () => {
 
     const [isProcessing, setIsProcessing] = useState(false);
     const [showPassword, setShowPassword] = useState(false); // ✅ NEW: Toggle password visibility
-    const [regError, setRegError] = useState<string | null>(null); // ✅ NEW: Track registration error
 
     useEffect(() => {
         const fetchPackage = async () => {
@@ -260,7 +259,6 @@ const BookingFlow: React.FC = () => {
                     return null;
                 }
             } else {
-                setRegError(error.message);
                 toast.error(`Gagal mendaftar: ${error.message}`);
                 return null;
             }

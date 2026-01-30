@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'motion/react';
 import {
     Users,
     Link,
@@ -13,13 +12,12 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import { Card, CardContent } from '../../components/ui/card';
 import { toast } from 'sonner';
 import FloatingAnnouncementWidget from '../../components/FloatingAnnouncementWidget';
 
 const AffiliatorDashboard: React.FC = () => {
     const { userProfile, signOut } = useAuth();
-    const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState({
         totalClicks: 0,
         totalSignups: 0,
@@ -38,12 +36,10 @@ const AffiliatorDashboard: React.FC = () => {
 
     const fetchStats = async () => {
         if (!userProfile?.referralCode) {
-            setLoading(false);
             return;
         }
 
         try {
-            setLoading(true);
 
             // 1. referrals count (Users who used this code)
             const referralsQuery = query(collection(db, 'users'), where('referredBy', '==', userProfile.referralCode));
@@ -70,7 +66,7 @@ const AffiliatorDashboard: React.FC = () => {
         } catch (error) {
             console.error("Error fetching affiliator stats:", error);
         } finally {
-            setLoading(false);
+            // Stats loaded
         }
     };
 
@@ -91,31 +87,31 @@ const AffiliatorDashboard: React.FC = () => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-white">
             {/* Header */}
-            <div className="bg-white border-b px-6 py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
+            <div className="bg-white border-b px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between sticky top-0 z-20 shadow-sm">
                 <div className="flex items-center gap-2">
-                    <div className="bg-emerald-600 p-2 rounded-lg text-white">
-                        <Link className="w-5 h-5" />
+                    <div className="bg-emerald-600 p-1.5 sm:p-2 rounded-lg text-white">
+                        <Link className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold text-slate-900">Affiliate Portal</h1>
-                        <p className="text-slate-500 text-xs">Partner Program</p>
+                        <h1 className="text-base sm:text-xl font-bold text-slate-900">Affiliate Portal</h1>
+                        <p className="text-slate-500 text-[10px] sm:text-xs">Partner Program</p>
                     </div>
                 </div>
-                <Button variant="ghost" onClick={handleLogout} className="text-slate-600">Logout</Button>
+                <Button variant="ghost" onClick={handleLogout} className="text-slate-600 text-xs sm:text-sm px-2 sm:px-4">Logout</Button>
             </div>
 
-            <div className="max-w-5xl mx-auto px-6 py-8">
+            <div className="max-w-5xl mx-auto px-4 sm:px-6 py-4 sm:py-6 lg:py-8">
 
                 {/* Welcome & Link Card */}
-                <Card className="bg-white shadow-lg border-emerald-100 mb-8 overflow-hidden">
+                <Card className="bg-white shadow-lg border-emerald-100 mb-4 sm:mb-6 lg:mb-8 overflow-hidden">
                     <div className="bg-emerald-600 p-1 h-1 w-full"></div>
-                    <CardContent className="p-8">
+                    <CardContent className="p-4 sm:p-6 lg:p-8">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                             <div>
-                                <h2 className="text-2xl font-bold text-slate-900 mb-2">
+                                <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">
                                     Halo, {userProfile?.displayName || 'Partner'}! 👋
                                 </h2>
-                                <p className="text-slate-600">
+                                <p className="text-sm sm:text-base text-slate-600">
                                     Bagikan link referral Anda dan dapatkan komisi menarik untuk setiap pendaftaran jamaah baru.
                                 </p>
                             </div>
@@ -136,14 +132,14 @@ const AffiliatorDashboard: React.FC = () => {
                 </Card>
 
                 {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
                     <Card className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-6">
+                        <CardContent className="p-4 sm:p-6">
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="p-2 bg-blue-100 rounded-lg text-blue-600"><Users className="w-5 h-5" /></div>
-                                <span className="text-sm text-slate-500">Total Signups</span>
+                                <div className="p-1.5 sm:p-2 bg-blue-100 rounded-lg text-blue-600"><Users className="w-4 h-4 sm:w-5 sm:h-5" /></div>
+                                <span className="text-xs sm:text-sm text-slate-500">Total Signups</span>
                             </div>
-                            <h3 className="text-3xl font-bold text-slate-800">{stats.totalSignups}</h3>
+                            <h3 className="text-2xl sm:text-3xl font-bold text-slate-800">{stats.totalSignups}</h3>
                             <p className="text-xs text-slate-400 mt-1">Jamaah mendaftar lewat link Anda</p>
                         </CardContent>
                     </Card>
@@ -172,9 +168,9 @@ const AffiliatorDashboard: React.FC = () => {
                 </div>
 
                 {/* Share Tools */}
-                <h3 className="text-lg font-bold text-slate-800 mb-4">Media Promosi</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Button variant="outline" className="h-24 flex flex-col gap-2 border-dashed border-2 hover:border-emerald-500 hover:bg-emerald-50">
+                <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-3 sm:mb-4">Media Promosi</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <Button variant="outline" className="h-20 sm:h-24 flex flex-col gap-2 border-dashed border-2 hover:border-emerald-500 hover:bg-emerald-50 text-xs sm:text-sm">
                         <Share2 className="w-6 h-6 text-slate-400" />
                         <span>Bagikan ke WhatsApp</span>
                     </Button>

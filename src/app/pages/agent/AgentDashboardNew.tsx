@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { db } from '../../../config/firebase';
@@ -9,7 +9,6 @@ import {
   where,
   getDocs,
   doc,
-  getDoc,
   onSnapshot
 } from 'firebase/firestore';
 import { toast } from 'sonner';
@@ -20,29 +19,26 @@ import {
   Copy,
   Check,
   Gift,
-  UserPlus,
   CheckCircle,
   Clock,
   Wallet,
   LogOut,
   Link as LinkIcon,
-  Share2,
   Award,
   Target,
   Sparkles,
   Crown,
-  Settings,
-  Bell
+  Settings
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
+import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
 import CommissionWithdrawalForm, { WithdrawalFormData } from '../../components/CommissionWithdrawalForm';
 import { copyToClipboard } from '../../../utils/clipboard';
 import { autoCreateReferralCode } from '../../../utils/autoCreateReferralCode';
-import ReferralDetailsTable from '../../components/ReferralDetailsTable';
+// import ReferralDetailsTable from '../../components/ReferralDetailsTable';
 
 // ✅ LOGO: Genuine Sultanah Logo
 const logoSultanah = '/images/logo.png';
@@ -84,7 +80,7 @@ interface WithdrawalRequest {
 }
 
 const AgentDashboardNew: React.FC = () => {
-  const { currentUser, userProfile, signOut } = useAuth();
+  const { userProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const [stats, setStats] = useState<ReferralStats>({
     referralCode: '',
@@ -152,7 +148,8 @@ const AgentDashboardNew: React.FC = () => {
           }
           setLoading(false);
         },
-        (error) => {
+        () => {
+          // console.error(error);
           setLoading(false);
         }
       );
@@ -180,7 +177,7 @@ const AgentDashboardNew: React.FC = () => {
             }));
           }
         },
-        (error) => {
+        () => {
           // ✅ SILENT FAIL: Permission denied is expected if doc doesn't exist yet or during role transition
           // No logging needed - just set default values
           setStats(prevStats => ({
@@ -665,10 +662,10 @@ const AgentDashboardNew: React.FC = () => {
                                 <tr
                                   key={request.id}
                                   className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${request.status === 'pending'
-                                      ? 'bg-amber-50/30'
-                                      : request.status === 'confirmed'
-                                        ? 'bg-green-50/30'
-                                        : 'bg-red-50/30'
+                                    ? 'bg-amber-50/30'
+                                    : request.status === 'confirmed'
+                                      ? 'bg-green-50/30'
+                                      : 'bg-red-50/30'
                                     }`}
                                 >
                                   <td className="py-4 px-4 text-sm font-medium text-gray-900">

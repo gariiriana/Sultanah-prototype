@@ -345,35 +345,20 @@ service cloud.firestore {
     }
 
     // ========================================
-    // ITINERARIES COLLECTION (plural) - ✅ ADDED!
+    // ITINERARIES COLLECTION (plural)
     // ========================================
     match /itineraries/{itineraryId} {
-      // ✅ Admin/Management → Full CRUD (read includes list and get)
-      allow read, write: if hasManagementAccess();
+      // ✅ PUBLIC READ: Keluarga jamaah bisa pantau tanpa login
+      allow read: if true;
       
-      // ✅ Tour Leaders → Can LIST all itineraries (for filtering), and READ/UPDATE their own
-      allow list: if isSignedIn() && isTourLeader();
+      // ✅ Admin/Management → Full Write Access
+      allow write: if hasManagementAccess();
       
-      // ✅ Tour Leaders → Can READ itineraries assigned to them (via UID or email)
-      allow get: if isSignedIn() && isTourLeader() && (
-        resource.data.tourLeaderId == request.auth.uid ||
-        resource.data.tourLeaderId == request.auth.token.email
-      );
-      
-      // ✅ Tour Leaders → Can UPDATE their assigned itineraries (for marking days complete)
+      // ✅ Tour Leaders → Can UPDATE their assigned itineraries (for marking days complete, upload photos)
       allow update: if isSignedIn() && isTourLeader() && (
         resource.data.tourLeaderId == request.auth.uid ||
         resource.data.tourLeaderId == request.auth.token.email
       );
-      
-      // ✅ Current Jamaah & Alumni → Can LIST all (for filtering), and READ their package's itinerary
-      allow list: if isSignedIn() && getUserRole() in ['current-jamaah', 'alumni'];
-      
-      allow get: if isSignedIn() && 
-        getUserRole() in ['current-jamaah', 'alumni'] &&
-        exists(/databases/$(database)/documents/payments/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/payments/$(request.auth.uid)).data.packageId == resource.data.packageId &&
-        get(/databases/$(database)/documents/payments/$(request.auth.uid)).data.status == 'approved';
     }
 
     // ========================================
@@ -432,6 +417,32 @@ service cloud.firestore {
       allow delete: if isSignedIn() && (
         (isTourLeader() && resource.data.uploadedBy == request.auth.uid) ||
         (isTourLeader() && resource.data.uploaderEmail == request.auth.email) ||
+        hasManagementAccess()
+      );
+    }
+
+    // ========================================
+    // TRIP GALLERY COLLECTION (Gallery photos from Tour Leaders)
+    // ========================================
+    match /tripGallery/{photoId} {
+      // Anyone can read gallery photos
+      allow read: if true;
+      
+      // Tour leaders can upload photos
+      allow create: if isSignedIn() && isTourLeader() && (
+        request.resource.data.uploadedBy == request.auth.uid ||
+        request.resource.data.uploadedByName != null
+      );
+      
+      // Tour leaders can update their own photos, admin can update all
+      allow update: if isSignedIn() && (
+        (isTourLeader() && resource.data.uploadedBy == request.auth.uid) ||
+        hasManagementAccess()
+      );
+      
+      // Tour leaders can delete their own photos, admin can delete all
+      allow delete: if isSignedIn() && (
+        (isTourLeader() && resource.data.uploadedBy == request.auth.uid) ||
         hasManagementAccess()
       );
     }

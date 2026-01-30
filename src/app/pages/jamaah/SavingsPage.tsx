@@ -5,11 +5,9 @@ import {
     Upload,
     History,
     Copy,
-    ArrowRight,
     CheckCircle,
     Clock,
     XCircle,
-    CreditCard,
     AlertCircle
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
@@ -20,8 +18,7 @@ import {
     where,
     orderBy,
     addDoc,
-    onSnapshot,
-    Timestamp
+    onSnapshot
 } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { SavingsTransaction } from '../../../types';
@@ -34,13 +31,12 @@ const SULTANAH_BSI_ACCOUNT = {
 };
 
 const SavingsPage: React.FC = () => {
-    const { user } = useAuth();
+    const { currentUser: user } = useAuth();
     const [activeTab, setActiveTab] = useState<'deposit' | 'history'>('deposit');
     const [amount, setAmount] = useState('');
     const [proofFile, setProofFile] = useState<File | null>(null);
     const [proofPreview, setProofPreview] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState(0);
     const [transactions, setTransactions] = useState<SavingsTransaction[]>([]);
     const [balance, setBalance] = useState(0);
     const [copied, setCopied] = useState(false);
@@ -175,8 +171,8 @@ const SavingsPage: React.FC = () => {
                     <button
                         onClick={() => setActiveTab('deposit')}
                         className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${activeTab === 'deposit'
-                                ? 'bg-emerald-50 text-emerald-700 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                            ? 'bg-emerald-50 text-emerald-700 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                             }`}
                     >
                         <Upload className="w-4 h-4" />
@@ -185,8 +181,8 @@ const SavingsPage: React.FC = () => {
                     <button
                         onClick={() => setActiveTab('history')}
                         className={`flex-1 py-3 px-4 rounded-lg text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 ${activeTab === 'history'
-                                ? 'bg-emerald-50 text-emerald-700 shadow-sm'
-                                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                            ? 'bg-emerald-50 text-emerald-700 shadow-sm'
+                            : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                             }`}
                     >
                         <History className="w-4 h-4" />
@@ -360,10 +356,10 @@ const SavingsPage: React.FC = () => {
                                         <div key={tx.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between">
                                             <div className="flex items-center gap-4">
                                                 <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.status === 'approved'
-                                                        ? 'bg-emerald-100 text-emerald-600'
-                                                        : tx.status === 'pending'
-                                                            ? 'bg-amber-100 text-amber-600'
-                                                            : 'bg-red-100 text-red-600'
+                                                    ? 'bg-emerald-100 text-emerald-600'
+                                                    : tx.status === 'pending'
+                                                        ? 'bg-amber-100 text-amber-600'
+                                                        : 'bg-red-100 text-red-600'
                                                     }`}>
                                                     {tx.status === 'approved' ? (
                                                         <CheckCircle className="w-5 h-5" />
@@ -391,10 +387,10 @@ const SavingsPage: React.FC = () => {
                                                     {tx.type === 'deposit' ? '+' : '-'} {formatIDR(tx.amount)}
                                                 </p>
                                                 <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full inline-block mt-1 ${tx.status === 'approved'
-                                                        ? 'bg-emerald-100 text-emerald-700'
-                                                        : tx.status === 'pending'
-                                                            ? 'bg-amber-100 text-amber-700'
-                                                            : 'bg-red-100 text-red-700'
+                                                    ? 'bg-emerald-100 text-emerald-700'
+                                                    : tx.status === 'pending'
+                                                        ? 'bg-amber-100 text-amber-700'
+                                                        : 'bg-red-100 text-red-700'
                                                     }`}>
                                                     {tx.status === 'pending' ? 'Menunggu Approval' :
                                                         tx.status === 'approved' ? 'Berhasil' : 'Ditolak'}

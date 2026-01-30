@@ -1,20 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Camera, 
+import {
+  Camera,
   Upload,
   Trash2,
   X,
-  Image as ImageIcon,
-  Download,
+  ImageIcon,
   Eye
 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { toast } from 'sonner';
-import { collection, addDoc, query, orderBy, getDocs, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, query, getDocs, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../../../config/firebase';
 import { useAuth } from '../../../../contexts/AuthContext';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../../components/ui/alert-dialog';
 
 interface TripPhoto {
   id: string;
@@ -36,7 +45,8 @@ const TripGallerySection: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<TripPhoto | null>(null);
   const [previewImage, setPreviewImage] = useState<string>('');
-  
+  const [deleteId, setDeleteId] = useState<string | null>(null); // ✅ NEW: For custom delete confirmation
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -52,17 +62,20 @@ const TripGallerySection: React.FC = () => {
   const fetchPhotos = async () => {
     try {
       setLoading(true);
-      const q = query(
-        collection(db, 'tripGallery'),
-        orderBy('uploadedAt', 'desc')
-      );
-      
+      // ✅ FIX: Remove orderBy to avoid Firestore index requirement
+      const q = query(collection(db, 'tripGallery'));
+
       const querySnapshot = await getDocs(q);
-      const photosData: TripPhoto[] = querySnapshot.docs.map(doc => ({
+      let photosData: TripPhoto[] = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       } as TripPhoto));
-      
+
+      // Sort client-side instead
+      photosData = photosData.sort((a, b) =>
+        new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+      );
+
       setPhotos(photosData);
     } catch (error) {
       console.error('Error fetching photos:', error);
@@ -147,16 +160,17 @@ const TripGallerySection: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this photo?')) return;
+  const handleDelete = async () => {
+    if (!deleteId) return;
 
     try {
-      await deleteDoc(doc(db, 'tripGallery', id));
-      toast.success('Photo deleted');
+      await deleteDoc(doc(db, 'tripGallery', deleteId));
+      toast.success('Foto berhasil dihapus');
+      setDeleteId(null);
       fetchPhotos();
     } catch (error) {
       console.error('Error deleting photo:', error);
-      toast.error('Failed to delete photo');
+      toast.error('Gagal menghapus foto');
     }
   };
 
@@ -418,7 +432,7 @@ const TripGallerySection: React.FC = () => {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDelete(photo.id);
+                            setDeleteId(photo.id);
                           }}
                           className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
                         >
@@ -509,6 +523,27 @@ const TripGallerySection: React.FC = () => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* \u2705 NEW: Custom Confirmation Dialog */}
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent className="bg-white rounded-2xl border-none shadow-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-xl font-bold text-gray-900">Konfirmasi Hapus</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-600">
+              Apakah Anda yakin ingin menghapus foto ini? Tindakan ini tidak dapat dibatalkan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel className="rounded-xl border-gray-200 hover:bg-gray-50 font-semibold">Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-red-500 hover:bg-red-600 text-white rounded-xl font-semibold shadow-lg shadow-red-100"
+            >
+              Hapus Foto
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

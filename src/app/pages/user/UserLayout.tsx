@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom'; // ✅ CLEANED
+import { useLocation, useNavigate } from 'react-router-dom'; // ✅ CLEANED
 import { doc, setDoc } from 'firebase/firestore'; // ✅ CLEANED
 import { db } from '../../../config/firebase';
 import { toast } from 'sonner'; // ✅ NEW
@@ -29,6 +29,7 @@ interface UserLayoutProps {
 
 const UserLayout: React.FC<UserLayoutProps> = ({ onShowProfile, onShowAuth }) => {
   const location = useLocation(); // ✅ NEW
+  const navigate = useNavigate(); // ✅ NEW
   const [currentView, setCurrentView] = useState<
     'home' |
     'packageDetail' |
@@ -103,6 +104,11 @@ const UserLayout: React.FC<UserLayoutProps> = ({ onShowProfile, onShowAuth }) =>
   }, [location]);
 
   const scrollToSection = (section: string) => {
+    if (section === 'family-tracking') {
+      navigate('/family-tracking');
+      return;
+    }
+
     const refs = {
       home: homeRef,
       promo: promoRef,

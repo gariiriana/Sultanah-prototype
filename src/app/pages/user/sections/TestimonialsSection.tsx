@@ -29,8 +29,6 @@ interface TestimonialsSectionProps {
 const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ onViewAllTestimonials }) => {
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [loading, setLoading] = useState(true);
-  const [averageRating, setAverageRating] = useState(0);
-  const [totalReviews, setTotalReviews] = useState(0);
   const [selectedTestimonial, setSelectedTestimonial] = useState<Testimonial | null>(null); // ✅ NEW: For modal
   const { currentUser, userProfile } = useAuth();
   const navigate = useNavigate();
@@ -56,7 +54,7 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ onViewAllTest
     ];
 
     // Check address (it's an object, not a string)
-    const address = userProfile.identityInfo?.address;
+    const address = userProfile.identityInfo?.address as any;
     const isAddressComplete = address &&
       typeof address === 'object' &&
       address.country &&
@@ -135,13 +133,6 @@ const TestimonialsSection: React.FC<TestimonialsSectionProps> = ({ onViewAllTest
       });
 
       setTestimonials(verifiedTestimonials);
-      setTotalReviews(verifiedTestimonials.length);
-
-      // Calculate average rating
-      if (verifiedTestimonials.length > 0) {
-        const avgRating = verifiedTestimonials.reduce((acc, t) => acc + t.rating, 0) / verifiedTestimonials.length;
-        setAverageRating(avgRating);
-      }
     } catch (error) {
       console.error('Error fetching testimonials:', error);
       // Don't show error toast, just fail silently

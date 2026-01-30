@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Bell, Volume2, AlertCircle } from 'lucide-react';
+import { X, Bell, Volume2 } from 'lucide-react';
 import { collection, query, where, onSnapshot, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { Announcement } from '../types/announcement';
@@ -16,9 +16,7 @@ export default function FloatingAnnouncementWidget({ userRole }: FloatingAnnounc
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [urgentAnnouncementsCount, setUrgentAnnouncementsCount] = useState(0);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [indexError, setIndexError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [unreadCount] = useState(0);
 
   useEffect(() => {
     // Determine user role for query
@@ -36,8 +34,6 @@ export default function FloatingAnnouncementWidget({ userRole }: FloatingAnnounc
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        // Clear error on successful query
-        setIndexError(null);
 
         const announcementsData: Announcement[] = [];
         let urgentCount = 0;
@@ -63,20 +59,15 @@ export default function FloatingAnnouncementWidget({ userRole }: FloatingAnnounc
 
         setAnnouncements(announcementsData);
         setUrgentAnnouncementsCount(urgentCount);
-        setLoading(false);
       },
       (error) => {
         // ✅ Handle transient connection errors gracefully
         if (error.code === 'unavailable' || error.message.includes('transport')) {
           console.log('Firestore temporarily unavailable, will retry...');
-          setLoading(false);
         } else if (error.code === 'failed-precondition') {
           console.log('Index required for announcements query');
-          setIndexError('Index required - check Firestore console');
-          setLoading(false);
         } else {
           console.error('Firestore listener error:', error);
-          setLoading(false);
         }
       }
     );
@@ -327,8 +318,8 @@ export default function FloatingAnnouncementWidget({ userRole }: FloatingAnnounc
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.1 }}
                     className={`mb-4 p-4 rounded-xl border-2 ${announcement.isUrgent
-                        ? 'border-red-500 bg-red-50'
-                        : 'border-gray-200 bg-gray-50'
+                      ? 'border-red-500 bg-red-50'
+                      : 'border-gray-200 bg-gray-50'
                       }`}
                   >
                     {/* Urgent Badge */}

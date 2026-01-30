@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, getDocs, orderBy, query } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
-import { ArrowLeft, BookOpen, Award, Clock } from 'lucide-react';
+import { ArrowLeft, BookOpen } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Button } from '../../components/ui/button';
 

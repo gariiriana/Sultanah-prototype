@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { 
-  Book, 
-  Users, 
-  Calendar, 
-  Package, 
-  UserCheck, 
+import {
+  Book,
+  Users,
+  Calendar,
+  Package,
+  UserCheck,
   ChevronRight,
   MapPin,
   Clock,
@@ -104,12 +104,12 @@ const MuthawifDashboard = () => {
       );
       const packagesSnapshot = await getDocs(packagesQuery);
       console.log('📦 Packages found:', packagesSnapshot.size);
-      
+
       // ✅ DIAGNOSTIC MODE: Fetch ALL bookings and payments to analyze structure
       let allBookings: any[] = [];
       let allPayments: any[] = [];
       let hasPermissionError = false;
-      
+
       try {
         console.log('\n🔬 DIAGNOSTIC MODE: Fetching ALL bookings...');
         const allBookingsSnapshot = await getDocs(collection(db, 'bookings'));
@@ -118,7 +118,7 @@ const MuthawifDashboard = () => {
           ...doc.data()
         }));
         console.log(`📋 Total bookings in database: ${allBookings.length}`);
-        
+
         if (allBookings.length > 0) {
           console.log('📋 Sample booking structure:', allBookings[0]);
           console.log('📋 Available fields in bookings:', Object.keys(allBookings[0]));
@@ -138,7 +138,7 @@ const MuthawifDashboard = () => {
           console.error('6. Paste ke editor');
           console.error('7. Klik "Publish"');
           console.error('8. Logout & login lagi di dashboard Muthawif');
-          
+
           toast.error('🚨 Firestore Rules Belum Di-Deploy!', {
             description: 'Muthawif tidak bisa akses bookings. Buka Console (F12) untuk instruksi deploy rules!',
             duration: 15000,
@@ -154,7 +154,7 @@ const MuthawifDashboard = () => {
           ...doc.data()
         }));
         console.log(`💳 Total payments in database: ${allPayments.length}`);
-        
+
         if (allPayments.length > 0) {
           console.log('💳 Sample payment structure:', allPayments[0]);
           console.log('💳 Available fields in payments:', Object.keys(allPayments[0]));
@@ -170,19 +170,19 @@ const MuthawifDashboard = () => {
       if (hasPermissionError) {
         console.error('\n⛔⛔⛔ CRITICAL: Cannot proceed due to permission errors ⛔⛔⛔');
         console.error('Action required: Deploy Firestore Rules to Firebase Console');
-        
+
         toast.error('⛔ Action Required!', {
           description: 'Deploy firestore.rules ke Firebase Console. Lihat Console (F12) untuk panduan lengkap.',
           duration: 20000,
         });
-        
+
         // Still show packages but with 0 jamaah
         const packagesData = packagesSnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data(),
           registeredJamaah: 0
         } as PackageData));
-        
+
         setPackages(packagesData);
         setLoading(false);
         return; // Stop processing
@@ -206,7 +206,7 @@ const MuthawifDashboard = () => {
           // ✅ AUTO-DETECT: Try all possible field name variations
           const possiblePackageIdFields = [
             'packageId',
-            'package_id', 
+            'package_id',
             'packageID',
             'package',
             'paketId',
@@ -224,8 +224,8 @@ const MuthawifDashboard = () => {
           ];
 
           const validStatuses = [
-            'active', 'confirmed', 'completed', 
-            'approved', 'paid', 'success', 
+            'active', 'confirmed', 'completed',
+            'approved', 'paid', 'success',
             'verified', 'done'
           ];
 
@@ -237,7 +237,7 @@ const MuthawifDashboard = () => {
               if (booking[field] === packageId) {
                 console.log(`  ✅ Found match using field "${field}"`);
                 console.log(`  📋 Booking data:`, booking);
-                
+
                 // Check status
                 let hasValidStatus = false;
                 for (const statusField of possibleStatusFields) {
@@ -248,11 +248,11 @@ const MuthawifDashboard = () => {
                     break;
                   }
                 }
-                
+
                 if (!hasValidStatus) {
                   console.log(`  ⚠️ Status check: no status field or invalid status`, booking);
                 }
-                
+
                 return true; // Include regardless of status for now
               }
             }
@@ -271,7 +271,7 @@ const MuthawifDashboard = () => {
                 if (payment[field] === packageId) {
                   console.log(`  ✅ Found match using field "${field}"`);
                   console.log(`  💳 Payment data:`, payment);
-                  
+
                   // Check status
                   let hasValidStatus = false;
                   for (const statusField of possibleStatusFields) {
@@ -282,11 +282,11 @@ const MuthawifDashboard = () => {
                       break;
                     }
                   }
-                  
+
                   if (!hasValidStatus) {
                     console.log(`  ⚠️ Status check: no status field or invalid status`, payment);
                   }
-                  
+
                   return true;
                 }
               }
@@ -305,11 +305,11 @@ const MuthawifDashboard = () => {
               const jamaahUsers = usersSnapshot.docs.filter(userDoc => {
                 const userData = userDoc.data();
                 // Check if user has this package assigned
-                return userData.packageId === packageId || 
-                       userData.assignedPackageId === packageId ||
-                       userData.package === packageId;
+                return userData.packageId === packageId ||
+                  userData.assignedPackageId === packageId ||
+                  userData.package === packageId;
               });
-              
+
               console.log(`👥 Users with this package: ${jamaahUsers.length}`);
               if (jamaahUsers.length > 0) {
                 jamaahUsers.forEach((userDoc, i) => {
@@ -343,7 +343,7 @@ const MuthawifDashboard = () => {
             console.log(`→ Check Firebase Console → Firestore`);
             console.log(`→ Look for documents with packageId/package_id field`);
             console.log(`→ Verify the package ID matches: "${packageId}"`);
-            
+
             toast.warning('⚠️ Tidak Ada Data Jamaah', {
               description: `Package "${packageData.name}" belum memiliki jamaah terdaftar. Check Console (F12) untuk detail.`,
               duration: 8000,
@@ -374,10 +374,10 @@ const MuthawifDashboard = () => {
         upcomingTrips
       });
 
-      console.log('\n📊 FINAL STATS:', { 
-        totalPackages: packagesData.length, 
-        totalJamaah, 
-        upcomingTrips 
+      console.log('\n📊 FINAL STATS:', {
+        totalPackages: packagesData.length,
+        totalJamaah,
+        upcomingTrips
       });
 
       // Show summary
@@ -393,7 +393,7 @@ const MuthawifDashboard = () => {
       console.error('\n❌ CRITICAL ERROR fetching muthawif data:', error);
       console.error('Error code:', error?.code);
       console.error('Error message:', error?.message);
-      
+
       // Show user-friendly error
       if (error?.code === 'permission-denied') {
         toast.error('⚠️ Akses Ditolak!', {
@@ -436,43 +436,43 @@ const MuthawifDashboard = () => {
       {/* Premium Header with Background Image */}
       <div className="relative bg-gradient-to-br from-[#1a1a2e] via-[#2d2d44] to-[#16213e] overflow-hidden">
         {/* Background Image - Kaaba */}
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20"
           style={{
             backgroundImage: `url('https://images.unsplash.com/photo-1720549973451-018d3623b55a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxrYWabiSUyMG1lY2NhJTIwc2F1ZGklMjBhcmFiaWF8ZW58MXx8fHwxNzY3MjU4NjU5fDA&ixlib=rb-4.1.0&q=80&w=1080')`
           }}
         ></div>
-        
+
         {/* Overlay Gradients */}
         <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a2e]/95 via-[#2d2d44]/90 to-[#16213e]/95"></div>
-        
+
         {/* Decorative Elements */}
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iI0Q0QUYzNyIgc3Ryb2tlLW9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')] opacity-30"></div>
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-[#D4AF37]/10 to-transparent rounded-full blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-[#D4AF37]/10 to-transparent rounded-full blur-3xl"></div>
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
           {/* Top Bar with Actions */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#C19B2B] flex items-center justify-center shadow-lg shadow-[#D4AF37]/20">
-                <Book className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between mb-6 sm:mb-8">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#C19B2B] flex items-center justify-center shadow-lg shadow-[#D4AF37]/20">
+                <Book className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white">Dashboard Muthawif</h1>
-                  <div className="px-3 py-1 rounded-full bg-gradient-to-r from-[#D4AF37]/20 to-[#C19B2B]/20 border border-[#D4AF37]/30">
+                  <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white">Dashboard Muthawif</h1>
+                  <div className="hidden sm:block px-3 py-1 rounded-full bg-gradient-to-r from-[#D4AF37]/20 to-[#C19B2B]/20 border border-[#D4AF37]/30">
                     <p className="text-xs font-semibold text-[#D4AF37]">MUTHAWIF</p>
                   </div>
                 </div>
-                <p className="text-sm text-gray-300 mt-1">
+                <p className="text-xs sm:text-sm text-gray-300 mt-1">
                   Selamat datang, <span className="font-semibold text-[#D4AF37]">{profileData?.fullName || userProfile?.displayName || 'Muthawif'}</span>
                 </p>
               </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Button
                 onClick={() => navigate('/muthawif-profile')}
                 className="hidden sm:flex bg-white/10 backdrop-blur-sm border border-[#D4AF37]/50 text-white hover:bg-[#D4AF37] hover:border-[#D4AF37] transition-all shadow-lg"
@@ -480,10 +480,10 @@ const MuthawifDashboard = () => {
                 <UserCheck className="w-4 h-4 mr-2" />
                 Lengkapi Profil
               </Button>
-              
+
               <Button
                 onClick={() => setShowLogoutConfirm(true)}
-                className="bg-white/10 backdrop-blur-sm border border-red-400/50 text-white hover:bg-red-500 hover:border-red-500 transition-all shadow-lg"
+                className="bg-white/10 backdrop-blur-sm border border-red-400/50 text-white hover:bg-red-500 hover:border-red-500 transition-all shadow-lg text-xs sm:text-sm px-2 sm:px-4"
               >
                 <LogOut className="w-4 h-4 sm:mr-2" />
                 <span className="hidden sm:inline">Logout</span>
@@ -492,7 +492,7 @@ const MuthawifDashboard = () => {
           </div>
 
           {/* Profile Quick Stats Bar */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -501,8 +501,8 @@ const MuthawifDashboard = () => {
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-400">Total Paket</p>
-                  <p className="text-3xl font-bold text-white mt-1">{stats.totalPackages}</p>
+                  <p className="text-xs sm:text-sm text-gray-400">Total Paket</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-white mt-1">{stats.totalPackages}</p>
                 </div>
                 <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center">
                   <Package className="w-6 h-6 text-blue-400" />
@@ -560,7 +560,7 @@ const MuthawifDashboard = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
         {/* Profile Info */}
         {profileData && (
           <motion.div
@@ -674,7 +674,7 @@ const MuthawifDashboard = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {packages.map((pkg, index) => (
                   <motion.div
                     key={pkg.id}
@@ -686,8 +686,8 @@ const MuthawifDashboard = () => {
                       {/* Package Image */}
                       {pkg.image && (
                         <div className="relative w-full h-56 overflow-hidden">
-                          <img 
-                            src={pkg.image} 
+                          <img
+                            src={pkg.image}
                             alt={pkg.name}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                           />
@@ -703,7 +703,7 @@ const MuthawifDashboard = () => {
                           </div>
                         </div>
                       )}
-                      
+
                       <CardContent className="p-6">
                         {!pkg.image && (
                           <div className="mb-4">
@@ -791,7 +791,7 @@ const MuthawifDashboard = () => {
       {/* Logout Confirmation Modal */}
       {showLogoutConfirm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden"
@@ -801,14 +801,14 @@ const MuthawifDashboard = () => {
               {/* Background Elements */}
               <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iI0Q0QUYzNyIgc3Ryb2tlLW9wYWNpdHk9Ii4xIi8+PC9nPjwvc3ZnPg==')] opacity-30"></div>
               <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#D4AF37]/20 to-transparent rounded-full blur-2xl"></div>
-              
+
               {/* Icon */}
               <div className="relative flex justify-center mb-4">
                 <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center shadow-lg shadow-red-500/30">
                   <LogOut className="w-8 h-8 text-white" />
                 </div>
               </div>
-              
+
               {/* Title */}
               <h3 className="relative text-2xl font-bold text-white text-center mb-2">
                 Konfirmasi Logout

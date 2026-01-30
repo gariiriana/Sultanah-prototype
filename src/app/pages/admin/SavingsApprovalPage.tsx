@@ -3,23 +3,17 @@ import { motion, AnimatePresence } from 'motion/react';
 import {
     CheckCircle,
     XCircle,
-    Search,
-    Filter,
     Eye,
-    AlertTriangle,
-    FileText,
-    DollarSign
+    FileText
 } from 'lucide-react';
 import { db } from '../../../config/firebase';
 import {
     collection,
     query,
-    where,
     orderBy,
     onSnapshot,
     doc,
     updateDoc,
-    serverTimestamp,
     getDoc,
     increment // ✅ Use increment for atomic update
 } from 'firebase/firestore';
@@ -28,7 +22,6 @@ import { Button } from '../../components/ui/button'; // Assuming this exists or 
 
 const SavingsApprovalPage: React.FC = () => {
     const [transactions, setTransactions] = useState<SavingsTransaction[]>([]);
-    const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
     const [selectedTx, setSelectedTx] = useState<SavingsTransaction | null>(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -45,7 +38,6 @@ const SavingsApprovalPage: React.FC = () => {
                 ...doc.data()
             })) as SavingsTransaction[];
             setTransactions(txs);
-            setLoading(false);
         });
 
         return () => unsubscribe();
@@ -140,8 +132,8 @@ const SavingsApprovalPage: React.FC = () => {
                             key={status}
                             onClick={() => setFilterStatus(status)}
                             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${filterStatus === status
-                                    ? 'bg-blue-50 text-blue-600'
-                                    : 'text-gray-600 hover:bg-gray-50'
+                                ? 'bg-blue-50 text-blue-600'
+                                : 'text-gray-600 hover:bg-gray-50'
                                 } capitalize`}
                         >
                             {status === 'all' ? 'Semua' : status}
@@ -173,8 +165,8 @@ const SavingsApprovalPage: React.FC = () => {
                                     </div>
                                 </div>
                                 <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${tx.status === 'pending' ? 'bg-amber-100 text-amber-700' :
-                                        tx.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
-                                            'bg-red-100 text-red-700'
+                                    tx.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                                        'bg-red-100 text-red-700'
                                     }`}>
                                     {tx.status}
                                 </span>

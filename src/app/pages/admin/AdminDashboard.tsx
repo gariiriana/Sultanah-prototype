@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '../../components/ui/card';
-import { Users, Package, BookOpen, Tag, CreditCard, Newspaper, Calendar, Store, Gift } from 'lucide-react'; // ❌ REMOVED: ShoppingCart - tidak ada card "Total Item Requests"
-import { useAuth } from '../../../contexts/AuthContext';
+import { useState, useEffect } from 'react';
+// import { Card, CardContent } from '../../components/ui/card'; // ❌ REMOVED: Unused imports
+import { LayoutDashboard } from 'lucide-react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
 import PackageManagement from './components/PackageManagement';
@@ -19,12 +18,11 @@ import MarketplaceManagement from './components/MarketplaceManagement'; // ✅ M
 import AdminReferralManagement from './AdminReferralManagement'; // ✅ NEW: Referral Management
 import CommissionWithdrawalManagement from './components/CommissionWithdrawalManagement'; // ✅ NEW: Commission Withdrawal
 import SavingsApprovalPage from './SavingsApprovalPage'; // ✅ NEW: Savings Approval
-import ReferralMigrationTool from './ReferralMigrationTool'; // ✅ NEW: Referral Migration Tool
+// import ReferralMigrationTool from './ReferralMigrationTool'; // ❌ REMOVED: File not found or deleted
 import AdminSidebar from '../../components/admin/AdminSidebar';
 import AdminTopbar from '../../components/admin/AdminTopbar';
 
 const AdminDashboard = () => {
-  const { userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState('packages');
   const [stats, setStats] = useState({
     totalUsers: 0,
@@ -162,80 +160,7 @@ const AdminDashboard = () => {
     fetchStats();
   }, []);
 
-  const statCards = [
-    {
-      title: 'Total Pengguna',
-      value: stats.totalUsers,
-      icon: Users,
-      gradient: 'from-blue-500 to-blue-600',
-      bgGradient: 'from-blue-50 to-blue-100',
-      iconBg: 'from-blue-100 to-blue-200',
-    },
-    {
-      title: 'Paket Aktif',
-      value: stats.activePackages,
-      icon: Package,
-      gradient: 'from-green-500 to-emerald-600',
-      bgGradient: 'from-green-50 to-emerald-100',
-      iconBg: 'from-green-100 to-emerald-200',
-    },
-    {
-      title: 'Total Pemasukan',
-      value: `Rp ${stats.netFlow.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
-      icon: CreditCard,
-      gradient: 'from-purple-500 to-purple-600',
-      bgGradient: 'from-purple-50 to-purple-100',
-      iconBg: 'from-purple-100 to-purple-200',
-    },
-    {
-      title: 'Total Edukasi',
-      value: stats.totalEducation,
-      icon: BookOpen,
-      gradient: 'from-orange-500 to-orange-600',
-      bgGradient: 'from-orange-50 to-orange-100',
-      iconBg: 'from-orange-100 to-orange-200',
-    },
-    {
-      title: 'Total Promo',
-      value: stats.totalPromos,
-      icon: Tag,
-      gradient: 'from-pink-500 to-pink-600',
-      bgGradient: 'from-pink-50 to-pink-100',
-      iconBg: 'from-pink-100 to-pink-200',
-    },
-    {
-      title: 'Total Artikel',
-      value: stats.totalArticles,
-      icon: Newspaper,
-      gradient: 'from-gray-500 to-gray-600',
-      bgGradient: 'from-gray-50 to-gray-100',
-      iconBg: 'from-gray-100 to-gray-200',
-    },
-    {
-      title: 'Total Itinerari',
-      value: stats.totalItineraries,
-      icon: Calendar,
-      gradient: 'from-indigo-500 to-indigo-600',
-      bgGradient: 'from-indigo-50 to-indigo-100',
-      iconBg: 'from-indigo-100 to-indigo-200',
-    },
-    {
-      title: 'Total Item Marketplace',
-      value: stats.totalMarketplaceItems,
-      icon: Store,
-      gradient: 'from-cyan-500 to-cyan-600',
-      bgGradient: 'from-cyan-50 to-cyan-100',
-      iconBg: 'from-cyan-100 to-cyan-200',
-    },
-    {
-      title: 'Total Referral',
-      value: stats.totalReferrals,
-      icon: Gift,
-      gradient: 'from-amber-500 to-amber-600',
-      bgGradient: 'from-amber-50 to-amber-100',
-      iconBg: 'from-amber-100 to-amber-200',
-    },
-  ];
+  // ❌ REMOVED: unused statCards variable
 
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-50 via-white to-[#FFF9F0]/30">
@@ -262,7 +187,7 @@ const AdminDashboard = () => {
                                     'Dashboard'}
           pageSubtitle="Kelola bisnis perjalanan Anda dengan mudah"
           stats={stats}
-          onNotificationClick={(type, itemId) => {
+          onNotificationClick={(type, _itemId) => {
             // ✅ Navigate to correct tab based on notification type
             if (type === 'payment') {
               setActiveTab('payments');

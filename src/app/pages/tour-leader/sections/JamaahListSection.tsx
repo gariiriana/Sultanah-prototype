@@ -7,7 +7,6 @@ import {
   MapPin,
   Search,
   Filter,
-  Download,
   User,
   AlertCircle,
   CheckCircle,
@@ -20,7 +19,6 @@ import {
   Star,
   Package
 } from 'lucide-react';
-import { Button } from '../../../components/ui/button';
 import { toast } from 'sonner';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../../config/firebase';
@@ -129,7 +127,7 @@ const JamaahListSection: React.FC = () => {
             packageId: paymentData?.packageId, // ✅ NEW: Package ID
             muthawifName: paymentData?.muthawifName, // ✅ NEW: Muthawif name
             departureDate: userData.jamaahInfo?.departureDate,
-            status: 'confirmed', // Approved payments means confirmed status
+            status: userData.jamaahInfo?.status || 'confirmed', // ✅ FIXED: Use actual status or fallback to confirmed
             profilePhoto: userData.profilePhoto,
             // Medical Information
             medicalConditions: userData.medicalInfo?.conditions,
@@ -155,9 +153,19 @@ const JamaahListSection: React.FC = () => {
   };
 
   const filteredJamaah = jamaahList.filter(jamaah => {
-    const matchesSearch = jamaah.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      jamaah.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      jamaah.phone.includes(searchQuery);
+    const searchLower = searchQuery.toLowerCase().trim();
+    if (!searchLower) return filterStatus === 'all' || jamaah.status === filterStatus;
+
+    // Normalize phone numbers for better searching (digits only)
+    const normalizedQueryPhone = searchLower.replace(/\D/g, '');
+    const normalizedJamaahPhone = jamaah.phone.replace(/\D/g, '');
+
+    const matchesSearch =
+      jamaah.fullName.toLowerCase().includes(searchLower) ||
+      jamaah.email.toLowerCase().includes(searchLower) ||
+      (normalizedQueryPhone !== '' && normalizedJamaahPhone.includes(normalizedQueryPhone)) ||
+      (jamaah.packageName?.toLowerCase().includes(searchLower)) ||
+      (jamaah.muthawifName?.toLowerCase().includes(searchLower));
 
     const matchesFilter = filterStatus === 'all' || jamaah.status === filterStatus;
 
@@ -198,29 +206,7 @@ const JamaahListSection: React.FC = () => {
     );
   };
 
-  const handleExportToCSV = () => {
-    const csvContent = [
-      ['Name', 'Email', 'Phone', 'Passport', 'Package', 'Departure', 'Status'],
-      ...filteredJamaah.map(j => [
-        j.fullName,
-        j.email,
-        j.phone,
-        j.passportNumber || '-',
-        j.packageName || '-',
-        j.departureDate || '-',
-        j.status
-      ])
-    ].map(row => row.join(',')).join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `jamaah-list-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-
-    toast.success('Daftar jamaah berhasil diekspor!');
-  };
+  // ❌ REMOVED: Export to CSV feature deleted per user request
 
   if (loading) {
     return (
@@ -246,14 +232,6 @@ const JamaahListSection: React.FC = () => {
             <p className="text-gray-500 text-sm">{filteredJamaah.length} jamaah</p>
           </div>
         </div>
-
-        <Button
-          onClick={handleExportToCSV}
-          className="bg-gradient-to-r from-[#C5A572] to-[#D4AF37] hover:opacity-90 text-white border-0 shadow-md font-medium"
-        >
-          <Download className="w-4 h-4 mr-2" />
-          Export CSV
-        </Button>
       </div>
 
       {/* Filters */}
