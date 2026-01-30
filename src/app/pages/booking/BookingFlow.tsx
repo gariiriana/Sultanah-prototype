@@ -205,11 +205,13 @@ const BookingFlow: React.FC = () => {
                 orderId: orderId
             }));
 
-            // 4. Redirect to dashboard
-            toast.success("Redirecting to dashboard...", { icon: "🚀" });
+            // 4. Show success page (Step 3) for 5 seconds, then redirect
+            setStep(3); // Show success message
+            toast.success("Pembayaran berhasil! Mengalihkan ke dashboard...", { icon: "✅", duration: 5000 });
+
             setTimeout(() => {
                 navigate('/dashboard');
-            }, 1000);
+            }, 5000); // 5 seconds delay
 
         } catch (error: any) {
             console.error("Error saving booking:", error);
@@ -683,38 +685,30 @@ const BookingFlow: React.FC = () => {
                                     animate={{ opacity: 1, scale: 1 }}
                                     className="bg-white/90 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white/30 text-center"
                                 >
-                                    <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6 animate-pulse">
                                         <CheckCircle className="w-10 h-10 text-emerald-600" />
                                     </div>
-                                    <h2 className="text-2xl font-bold mb-2">Pembayaran Berhasil!</h2>
-                                    <div className="bg-gray-50 p-4 rounded-xl mb-8 text-left">
-                                        <p className="text-gray-700 text-sm leading-relaxed">
-                                            Terima kasih <strong>{formData.name}</strong>, booking Anda sudah kami terima dan pembayaran lunas terverifikasi.
-                                            <br /><br />
-                                            {regError === 'email-exists' ? (
-                                                <>
-                                                    <strong className="text-amber-600">Catatan:</strong> Email Anda sudah pernah terdaftar sebelumnya. Booking ini akan otomatis masuk ke data akun lama Anda.
-                                                    <br /><br />
-                                                    <strong>Langkah Selanjutnya:</strong>
-                                                    <br />
-                                                    Silakan <strong>login menggunakan email tersebut</strong> di halaman utama untuk melengkapi dokumen.
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <strong>Langkah Selanjutnya:</strong>
-                                                    <br />
-                                                    Robot CS kami akan mem-follow up Anda via WA untuk segera <strong>login menggunakan email & password</strong> yang Anda buat tadi guna melengkapi dokumen paspor & berkas di halaman Profil.
-                                                </>
-                                            )}
+                                    <h2 className="text-2xl font-bold mb-2 text-emerald-600">Pembayaran Berhasil! ✅</h2>
+                                    <p className="text-gray-600 mb-6">
+                                        Terima kasih <strong>{formData.name}</strong>, booking Anda sudah kami terima dan pembayaran lunas terverifikasi.
+                                    </p>
+
+                                    <div className="bg-gradient-to-r from-emerald-50 to-teal-50 p-6 rounded-xl mb-6 border-2 border-emerald-200">
+                                        <div className="flex items-center justify-center gap-2 mb-3">
+                                            <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
+                                            <p className="text-emerald-700 font-semibold">
+                                                Anda akan dialihkan ke Akun Jamaah Umroh...
+                                            </p>
+                                        </div>
+                                        <p className="text-sm text-gray-700 leading-relaxed">
+                                            Silakan lengkapi <strong>dokumen perjalanan</strong> Anda (KTP, Paspor, Foto, dll)
+                                            di halaman profil untuk memproses keberangkatan.
                                         </p>
                                     </div>
 
-                                    <Button
-                                        className="bg-emerald-600 text-white w-full h-14 text-lg font-bold rounded-xl"
-                                        onClick={() => navigate('/')}
-                                    >
-                                        {regError ? 'Halaman Utama & Login' : 'Masuk ke Profil & Dokumen'}
-                                    </Button>
+                                    <div className="text-xs text-gray-500">
+                                        Redirect otomatis dalam <strong>5 detik</strong>...
+                                    </div>
                                 </motion.div>
                             )}
                         </AnimatePresence>
@@ -826,7 +820,7 @@ const BookingFlow: React.FC = () => {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 };
 

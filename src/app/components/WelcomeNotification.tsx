@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Package, Users, FileText, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button } from '../components/ui/button';
 
 interface WelcomeNotificationProps {
     isOpen: boolean;
