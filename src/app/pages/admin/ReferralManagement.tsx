@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { collection, getDocs, query, where, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
 import { toast } from 'sonner';
-import { Users, TrendingUp, DollarSign, Copy, Download, Filter, Search, CheckCircle, Eye, Award, Gift } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Users, DollarSign, Copy, Download, Filter, Search, CheckCircle, Eye, Award, Gift } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
-import { Badge } from '../../components/ui/badge';
 import { copyToClipboard } from '../../../utils/clipboard'; // ✅ Import safe clipboard utility
 
 interface ReferralData {

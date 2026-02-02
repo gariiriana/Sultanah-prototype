@@ -12,9 +12,7 @@ import {
   Wallet,
   Eye,
   X,
-  Calendar,
   Award,
-  Filter,
   XCircle,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -22,7 +20,7 @@ import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Label } from '../../components/ui/label';
 import { db } from '../../../config/firebase';
-import { collection, getDocs, doc, updateDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 interface ReferralData {
@@ -279,16 +277,6 @@ const AdminReferralManagement: React.FC = () => {
     toast.success('Data berhasil diekspor!');
   };
 
-  const formatDate = (date: any): string => {
-    if (!date) return '-';
-    if (date.toDate && typeof date.toDate === 'function') {
-      return date.toDate().toLocaleDateString('id-ID');
-    }
-    if (date instanceof Date) {
-      return date.toLocaleDateString('id-ID');
-    }
-    return new Date(date).toLocaleDateString('id-ID');
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 p-6">

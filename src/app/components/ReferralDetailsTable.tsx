@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../config/firebase';
-import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore'; // ✅ Remove orderBy - akan sort di client side
+import { collection, query, where, onSnapshot } from 'firebase/firestore'; // ✅ Remove orderBy - akan sort di client side
 import {
   Table,
   TableBody,
@@ -9,7 +9,6 @@ import {
   TableHeader,
   TableRow
 } from './ui/table';
-import { Badge } from './ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import {
   getReferralStatusDisplay,

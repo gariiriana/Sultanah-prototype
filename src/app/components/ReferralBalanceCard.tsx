@@ -53,7 +53,7 @@ const ReferralBalanceCard: React.FC<ReferralBalanceCardProps> = ({ userId, userR
         }
         setLoading(false);
       },
-      (error) => {
+      () => {
         // ✅ SILENT FAIL: Permission denied is expected if doc doesn't exist or user doesn't have access
         // No logging needed - just set default values
         setBalanceData({

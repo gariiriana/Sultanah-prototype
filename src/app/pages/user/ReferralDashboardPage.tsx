@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { doc, getDoc, collection, query, where, getDocs, setDoc, addDoc, orderBy, Timestamp } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
 import { toast } from 'sonner';
-import { Copy, CheckCircle, Users, DollarSign, TrendingUp, Share2, Link as LinkIcon, ArrowLeft, Gift, Check, Award, Wallet, Sparkles } from 'lucide-react';
+import { Copy, Users, TrendingUp, Share2, ArrowLeft, Gift, Check, Award, Wallet } from 'lucide-react';
 import { Button } from '../../components/ui/button';
-import { Card } from '../../components/ui/card';
-import { Badge } from '../../components/ui/badge';
 import UserLayout from './UserLayout';
 import { copyToClipboard } from '../../../utils/clipboard'; // ✅ Import safe clipboard utility
 import { Referral, ReferredUser } from '../../../types'; // ✅ Import types
@@ -19,14 +18,13 @@ interface ReferralDashboardPageProps {
 
 const ReferralDashboardPage: React.FC<ReferralDashboardPageProps> = ({ onBack }) => {
   const { currentUser, userProfile } = useAuth();
-  const [referralData, setReferralData] = useState<Referral | null>(null);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
   const [referralLink, setReferralLink] = useState('');
   const [showWithdrawalForm, setShowWithdrawalForm] = useState(false);
+  const [referralData, setReferralData] = useState<Referral | null>(null);
   const [commissionBalance, setCommissionBalance] = useState(0);
-  const [withdrawalHistory, setWithdrawalHistory] = useState<any[]>([]);
-  const [loadingWithdrawals, setLoadingWithdrawals] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -162,22 +160,12 @@ const ReferralDashboardPage: React.FC<ReferralDashboardPageProps> = ({ onBack })
     if (!currentUser) return;
 
     try {
-      setLoadingWithdrawals(true);
       const withdrawalsRef = collection(db, 'withdrawals');
       const q = query(withdrawalsRef, where('userId', '==', currentUser.uid), orderBy('createdAt', 'desc'));
-      const querySnapshot = await getDocs(q);
-
-      const history: any[] = [];
-      querySnapshot.forEach((doc) => {
-        history.push({ id: doc.id, ...doc.data() });
-      });
-
-      setWithdrawalHistory(history);
+      await getDocs(q);
     } catch (error) {
       console.error('Error loading withdrawal history:', error);
       toast.error('Gagal memuat riwayat pencairan');
-    } finally {
-      setLoadingWithdrawals(false);
     }
   };
 
@@ -193,7 +181,7 @@ const ReferralDashboardPage: React.FC<ReferralDashboardPageProps> = ({ onBack })
   }
 
   return (
-    <UserLayout>
+    <UserLayout onShowProfile={() => navigate('/agent/profile')}>
       {/* Header */}
       <div className="relative bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] text-white py-20">
         {/* Background Pattern */}
@@ -362,8 +350,8 @@ const ReferralDashboardPage: React.FC<ReferralDashboardPageProps> = ({ onBack })
             <Button
               onClick={copyReferralLink}
               className={`${copied
-                  ? 'bg-green-500 hover:bg-green-600'
-                  : 'bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] hover:opacity-90'
+                ? 'bg-green-500 hover:bg-green-600'
+                : 'bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] hover:opacity-90'
                 } text-white gap-2 px-6 py-3 rounded-xl transition-all`}
             >
               {copied ? (
@@ -486,7 +474,7 @@ const ReferralDashboardPage: React.FC<ReferralDashboardPageProps> = ({ onBack })
             // Create withdrawal request
             await addDoc(collection(db, 'commissionWithdrawals'), {
               userId: currentUser.uid,
-              userName: userProfile.fullName || userProfile.email,
+              userName: userProfile.displayName || userProfile.email,
               userEmail: userProfile.email,
               userType: userProfile.role === 'agen' ? 'agen' : 'alumni',
               amount: data.amount,

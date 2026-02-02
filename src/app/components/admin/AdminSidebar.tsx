@@ -4,7 +4,6 @@ import {
   Package,
   Tag,
   CreditCard,
-  ArrowUpCircle,
   Users,
   BookOpen,
   Newspaper,

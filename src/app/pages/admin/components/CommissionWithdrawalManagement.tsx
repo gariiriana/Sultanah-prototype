@@ -6,10 +6,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../components/ui/dialog';
 import { Textarea } from '../../../components/ui/textarea';
 import { Label } from '../../../components/ui/label';
-import { Wallet, Check, X, Eye, DollarSign, Users, TrendingUp, Upload, Image as ImageIcon, RefreshCw } from 'lucide-react';
-import { collection, getDocs, doc, updateDoc, Timestamp, getDoc, onSnapshot, orderBy } from 'firebase/firestore';
-import { ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
-import { db, storage } from '../../../../config/firebase';
+import { Wallet, Check, X, Eye, DollarSign, TrendingUp, Upload, Image as ImageIcon, RefreshCw } from 'lucide-react';
+import { collection, getDocs, doc, updateDoc, Timestamp, getDoc } from 'firebase/firestore';
+import { db } from '../../../../config/firebase';
 import { toast } from 'sonner';
 import imageCompression from 'browser-image-compression';
 import { recalculateAllBalances } from '../../../../utils/balanceRecalculator';

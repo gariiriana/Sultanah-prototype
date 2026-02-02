@@ -1,6 +1,6 @@
 import { db } from '../config/firebase';
 import { collection, query, where, getDocs, doc, getDoc, setDoc, updateDoc, increment, runTransaction } from 'firebase/firestore';
-import { REFERRAL_STATUS, getCommissionAmount } from '../constants/commissionRates'; // ✅ Import constants
+import { getCommissionAmount } from '../constants/commissionRates'; // ✅ Import constants
 import { createReferralUsedNotification, createPaymentApprovedNotification, createCommissionEarnedNotification } from './agentNotificationHelper'; // ✅ Import notification helper
 
 interface ReferralProcessResult {

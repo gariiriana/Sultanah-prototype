@@ -3,7 +3,7 @@ import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../config/firebase';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
-import { Users, Clock, CheckCircle, XCircle, TrendingUp } from 'lucide-react';
+import { Users, Clock, CheckCircle, TrendingUp } from 'lucide-react';
 import { formatCommission } from '../../constants/commissionRates';
 
 interface ReferralRecord {
@@ -98,7 +98,7 @@ const ReferralListRealtime: React.FC<ReferralListRealtimeProps> = ({ userId, use
         setReferrals(referralData);
         setLoading(false);
       },
-      (error) => {
+      () => {
         setReferrals([]);
         setLoading(false);
       }
@@ -314,10 +314,10 @@ const ReferralListRealtime: React.FC<ReferralListRealtimeProps> = ({ userId, use
             <div className="flex-1">
               <h4 className="font-semibold text-blue-900 mb-2">Informasi Profit</h4>
               <ul className="space-y-1 text-sm text-blue-800">
-                <li>• Komisi {getRoleTitle()}: {getCommissionAmount()} per referral sukses</li>
-                <li>• Komisi dihitung setelah Jamaah bayar paket & disetujui Admin</li>
+                <li>• Profit {getRoleTitle()}: {getCommissionAmount()} per referral sukses</li>
+                <li>• Profit dihitung setelah Jamaah bayar paket & disetujui Admin</li>
                 <li>• Referral yang belum bayar akan tetap tampil di daftar</li>
-                <li>• Saldo komisi dapat dicairkan kapan saja (minimum Rp50.000)</li>
+                <li>• Saldo profit dapat dicairkan kapan saja (minimum Rp50.000)</li>
               </ul>
             </div>
           </div>

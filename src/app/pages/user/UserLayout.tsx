@@ -25,9 +25,10 @@ import FloatingAnnouncementWidget from '../../components/FloatingAnnouncementWid
 interface UserLayoutProps {
   onShowAuth?: (tab?: 'login' | 'register') => void;
   onShowProfile: () => void;
+  children?: React.ReactNode;
 }
 
-const UserLayout: React.FC<UserLayoutProps> = ({ onShowProfile, onShowAuth }) => {
+const UserLayout: React.FC<UserLayoutProps> = ({ onShowProfile, onShowAuth, children }) => {
   const location = useLocation(); // ✅ NEW
   const navigate = useNavigate(); // ✅ NEW
   const [currentView, setCurrentView] = useState<
@@ -223,50 +224,58 @@ const UserLayout: React.FC<UserLayoutProps> = ({ onShowProfile, onShowAuth }) =>
         onShowAuth={onShowAuth}
       />
 
-      <div ref={homeRef}>
-        <HeroSection />
-      </div>
+      {children ? (
+        <div className="pt-16">
+          {children}
+        </div>
+      ) : (
+        <>
+          <div ref={homeRef}>
+            <HeroSection />
+          </div>
 
-      {/* NEW: Promo Banner - Easy access to promotions */}
-      <div ref={promoRef}>
-        <PromoBannerSection
-          onViewPromoDetail={handleViewPromoDetail}
-          onViewAllPromos={handleViewAllPromos}
-        />
-      </div>
+          {/* NEW: Promo Banner - Easy access to promotions */}
+          <div ref={promoRef}>
+            <PromoBannerSection
+              onViewPromoDetail={handleViewPromoDetail}
+              onViewAllPromos={handleViewAllPromos}
+            />
+          </div>
 
-      {/* Services Section - Why Choose Us + Journey Process */}
-      <div ref={servicesRef}>
-        {/* Step 1: Why Choose Us - 6 benefits cards */}
-        <ServicesSection />
+          {/* Services Section - Why Choose Us + Journey Process */}
+          <div ref={servicesRef}>
+            {/* Step 1: Why Choose Us - 6 benefits cards */}
+            <ServicesSection />
 
-        {/* Step 2: Journey Process - Clear step-by-step guide */}
-        <JourneyProcessSection />
-      </div>
+            {/* Step 2: Journey Process - Clear step-by-step guide */}
+            <JourneyProcessSection />
+          </div>
 
-      <div ref={packagesRef} data-section="packages">
-        <PackagesSection
-          onViewPackageDetail={handleViewPackageDetail}
-          onViewAllPackages={handleViewAllPackages}
-        />
-      </div>
+          <div ref={packagesRef} data-section="packages">
+            <PackagesSection
+              onViewPackageDetail={handleViewPackageDetail}
+              onViewAllPackages={handleViewAllPackages}
+            />
+          </div>
 
-      <div ref={educationRef}>
-        <EducationSection
-          onViewEducationDetail={handleViewEducationDetail}
-          onViewAllEducation={handleViewAllEducation}
-        />
-      </div>
+          <div ref={educationRef}>
+            <EducationSection
+              onViewEducationDetail={handleViewEducationDetail}
+              onViewAllEducation={handleViewAllEducation}
+            />
+          </div>
 
-      <div ref={testimonialsRef}>
-        <TestimonialsSection
-          onViewAllTestimonials={handleViewAllTestimonials}
-        />
-      </div>
+          <div ref={testimonialsRef}>
+            <TestimonialsSection
+              onViewAllTestimonials={handleViewAllTestimonials}
+            />
+          </div>
 
-      <div ref={contactRef} data-section="contact">
-        <ContactSection />
-      </div>
+          <div ref={contactRef} data-section="contact">
+            <ContactSection />
+          </div>
+        </>
+      )}
 
       <Footer onNavigate={scrollToSection} />
 
