@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Mail, Lock, User, Phone, Eye, EyeOff, ArrowLeft, Tag, UserCircle } from 'lucide-react';
-import { useAuth } from '../../../contexts/AuthContext';
+import { useAuth, SocialMediaProfile } from '../../../contexts/AuthContext';
 import { UserRole } from '../../../types';
 
 // Logo removed - using text branding instead
@@ -24,7 +24,10 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin, onRegist
     password: '',
     confirmPassword: '',
     role: 'prospective-jamaah' as UserRole,
-    referralCode: ''
+    referralCode: '',
+    followersCount: '',
+    socialMediaAccount: '',
+    socialMediaProfiles: [{ platform: 'Instagram', followers: '', link: '' }] as SocialMediaProfile[]
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -55,12 +58,15 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin, onRegist
         formData.name,
         formData.phone,
         formData.role,
-        formData.referralCode || undefined
+        formData.referralCode || undefined,
+        formData.role === 'influencer' ? formData.followersCount : undefined,
+        formData.role === 'influencer' ? formData.socialMediaAccount : undefined,
+        formData.role === 'influencer' ? formData.socialMediaProfiles : undefined
       );
 
       // ✅ FIX: For roles requiring approval, DON'T navigate away
       // Let AppContent routing handle the redirect to WaitingApprovalPage
-      const rolesRequiringApproval = ['agen', 'tour-leader', 'mutawwif', 'influencer'];
+      const rolesRequiringApproval = ['agen', 'brand_ambassador', 'tour-leader', 'mutawwif', 'influencer'];
       if (!rolesRequiringApproval.includes(formData.role)) {
         onRegisterSuccess();
       }
@@ -90,7 +96,6 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin, onRegist
 
   const roleOptions = [
     { value: 'prospective-jamaah', label: 'Calon Jamaah', description: 'Saya ingin mendaftar Umrah/Haji' },
-    { value: 'agen', label: 'Agen', description: 'Daftar sebagai agen travel (perlu persetujuan)' },
     { value: 'affiliator', label: 'Affiliator', description: 'Daftar program afiliasi (komisi per jamaah)' }, // ✅ NEW
     { value: 'influencer', label: 'Influencer', description: 'Kolaborasi media sosial (perlu persetujuan)' }, // ✅ NEW
     { value: 'tour-leader', label: 'Tour Leader', description: 'Daftar sebagai tour leader (perlu persetujuan)' },
@@ -298,7 +303,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin, onRegist
                 />
               </div>
               <p className="text-xs text-white/70 mt-1 ml-1">
-                Masukkan kode referral dari Alumni atau Agen untuk mendapatkan bonus
+                Masukkan kode referral dari Alumni atau Brand Ambassador untuk mendapatkan bonus
               </p>
             </div>
 
@@ -331,6 +336,93 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin, onRegist
                 </select>
               </div>
             </div>
+
+            {/* Influencer Specific Fields */}
+            {formData.role === 'influencer' && (
+              <div className="space-y-4 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-bold text-white uppercase tracking-wider">Social Media Profiles</h4>
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({
+                      ...prev,
+                      socialMediaProfiles: [...prev.socialMediaProfiles, { platform: 'Instagram', followers: '', link: '' }]
+                    }))}
+                    className="text-xs bg-white/20 hover:bg-white/30 text-white px-2 py-1 rounded-lg border border-white/30 transition-colors"
+                  >
+                    + Tambah Akun
+                  </button>
+                </div>
+
+                {formData.socialMediaProfiles.map((profile, index) => (
+                  <div key={index} className="p-4 bg-white/10 rounded-2xl border border-white/20 space-y-3 relative group">
+                    {formData.socialMediaProfiles.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({
+                          ...prev,
+                          socialMediaProfiles: prev.socialMediaProfiles.filter((_, i) => i !== index)
+                        }))}
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                      >
+                        ×
+                      </button>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-white/70 mb-1 ml-1">Platform</label>
+                        <select
+                          value={profile.platform}
+                          onChange={(e) => {
+                            const newProfiles = [...formData.socialMediaProfiles];
+                            newProfiles[index].platform = e.target.value;
+                            setFormData(prev => ({ ...prev, socialMediaProfiles: newProfiles }));
+                          }}
+                          className="w-full px-3 py-2 rounded-xl border border-white/20 bg-white/10 text-white text-xs outline-none focus:border-white/40"
+                        >
+                          <option value="Instagram" className="bg-gray-800">Instagram</option>
+                          <option value="TikTok" className="bg-gray-800">TikTok</option>
+                          <option value="YouTube" className="bg-gray-800">YouTube</option>
+                          <option value="Facebook" className="bg-gray-800">Facebook</option>
+                          <option value="Twitter/X" className="bg-gray-800">Twitter/X</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-[10px] uppercase font-bold text-white/70 mb-1 ml-1">Followers</label>
+                        <input
+                          type="text"
+                          value={profile.followers}
+                          onChange={(e) => {
+                            const newProfiles = [...formData.socialMediaProfiles];
+                            newProfiles[index].followers = e.target.value;
+                            setFormData(prev => ({ ...prev, socialMediaProfiles: newProfiles }));
+                          }}
+                          placeholder="e.g. 10K"
+                          required
+                          className="w-full px-3 py-2 rounded-xl border border-white/20 bg-white/10 text-white text-xs outline-none focus:border-white/40 placeholder:text-white/30"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase font-bold text-white/70 mb-1 ml-1">Profile Link</label>
+                      <input
+                        type="url"
+                        value={profile.link}
+                        onChange={(e) => {
+                          const newProfiles = [...formData.socialMediaProfiles];
+                          newProfiles[index].link = e.target.value;
+                          setFormData(prev => ({ ...prev, socialMediaProfiles: newProfiles }));
+                        }}
+                        placeholder="https://instagram.com/username"
+                        required
+                        className="w-full px-3 py-2 rounded-xl border border-white/20 bg-white/10 text-white text-xs outline-none focus:border-white/40 placeholder:text-white/30"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Submit Button */}
             <button

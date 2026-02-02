@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  X, User, Mail, Shield, Calendar, Hash, Award, Users, 
-  CheckCircle, XCircle, AlertCircle, Phone, MapPin, 
-  FileText, CreditCard, Image as ImageIcon, Heart, Download
+import {
+  X, User, Mail, Shield, Calendar, Hash, Award, Users,
+  CheckCircle, XCircle, AlertCircle, Phone, MapPin,
+  FileText, CreditCard, Image as ImageIcon, Heart, Tag
 } from 'lucide-react';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../../config/firebase';
@@ -62,6 +62,9 @@ interface UserProfileData {
     visaDocument?: string | { base64: string };
     healthCertificate?: string | { base64: string };
   };
+  followersCount?: string;
+  socialMediaAccount?: string;
+  socialMediaProfiles?: { platform: string; followers: string; link: string }[];
 }
 
 const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
@@ -91,12 +94,12 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
 
       // Get user document
       const userDoc = await getDoc(doc(db, 'users', userId));
-      
+
       // ✅ FIX: Check if document exists
       if (!userDoc.exists()) {
         throw new Error('User document not found');
       }
-      
+
       const userData = userDoc.data();
 
       // ✅ NEW: Fetch documents from userDocuments collection (where actual base64 images are stored)
@@ -136,6 +139,9 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
           visaDocument: documentsData.documents?.visaDocument,
           healthCertificate: documentsData.documents?.vaccinationCertificate,
         } : userData?.travelDocuments, // Fallback to legacy format
+        followersCount: userData?.followersCount,
+        socialMediaAccount: userData?.socialMediaAccount,
+        socialMediaProfiles: userData?.socialMediaProfiles,
       });
 
       // ✅ FIX: Initialize default stats (avoid querying non-existent collections)
@@ -153,13 +159,13 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
           where('userId', '==', userId)
         );
         const bookingsSnapshot = await getDocs(bookingsQuery);
-        
+
         const bookings = bookingsSnapshot.docs.map(doc => doc.data());
         totalOrders = bookings.length;
         completedOrders = bookings.filter(b => b.status === 'approved' || b.status === 'completed').length;
         pendingOrders = bookings.filter(b => b.status === 'pending').length;
         cancelledOrders = bookings.filter(b => b.status === 'rejected' || b.status === 'cancelled').length;
-        
+
         // Calculate from payments instead
         const paymentsQuery = query(
           collection(db, 'payments'),
@@ -177,13 +183,13 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
       // Get referrals if user has referral code
       let totalReferrals = 0;
       let referralCode = '-';
-      
+
       // ✅ FIX: Check referral code from proper collection based on role
       try {
         if (userRole === 'alumni' || userRole === 'agen') {
           const collectionName = userRole === 'alumni' ? 'alumniReferrals' : 'agenReferrals';
           const referralDoc = await getDoc(doc(db, collectionName, userId));
-          
+
           if (referralDoc.exists()) {
             const referralData = referralDoc.data();
             referralCode = referralData?.referralCode || '-';
@@ -207,7 +213,7 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
       // Get commissions
       let pendingCommission = 0;
       let totalCommissionEarned = 0;
-      
+
       if (userRole === 'alumni' || userRole === 'agen') {
         try {
           // Check referral balance
@@ -235,8 +241,8 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
         totalCommissionEarned,
         joinedDate: userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString('id-ID') : '-',
         lastLogin: userData?.updatedAt ? new Date(userData.updatedAt).toLocaleDateString('id-ID') : '-',
-        verificationStatus: userData?.approvalStatus === 'approved' ? 'verified' : 
-                          userData?.approvalStatus === 'pending' ? 'pending' : 'unverified',
+        verificationStatus: userData?.approvalStatus === 'approved' ? 'verified' :
+          userData?.approvalStatus === 'pending' ? 'pending' : 'unverified',
       });
 
     } catch (error: any) {
@@ -251,32 +257,58 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
 
   const getRoleLabel = (role: UserRole): string => {
     const roleMap: Record<UserRole, string> = {
-      super_admin: 'Super Admin',
+      travel_consultant: 'Travel Consultant',
+      content_creator: 'Content Creator',
+      'tour-leader': 'Tour Leader',
+      mutawwif: 'Mutawwif',
+      agen: 'Agen',
+      'prospective-jamaah': 'Calon Jamaah',
+      'current-jamaah': 'Jamaah',
+      alumni: 'Alumni',
+      influencer: 'Influencer',
+      affiliator: 'Affiliator',
+      brand_ambassador: 'Brand Ambassador',
+      staff: 'Staff',
+      supervisor: 'Supervisor',
+      direktur: 'Direktur',
+      owner: 'Owner',
       admin: 'Admin',
+      super_admin: 'Super Admin',
       jamaah: 'Jamaah',
       alumni_jamaah: 'Alumni Jamaah',
       reseller_agen: 'Reseller Agen',
       mitra_biro: 'Mitra Biro',
       influencer_affiliator: 'Influencer Affiliator',
       corporate_client: 'Corporate Client',
-      travel_consultant: 'Travel Consultant',
-      content_creator: 'Content Creator',
     };
     return roleMap[role] || role;
   };
 
   const getRoleBadgeColor = (role: UserRole): string => {
     const colorMap: Record<UserRole, string> = {
-      super_admin: 'bg-purple-100 text-purple-800',
+      travel_consultant: 'bg-teal-100 text-teal-800',
+      content_creator: 'bg-rose-100 text-rose-800',
+      'tour-leader': 'bg-amber-100 text-amber-800',
+      mutawwif: 'bg-teal-100 text-teal-800',
+      agen: 'bg-cyan-100 text-cyan-800',
+      'prospective-jamaah': 'bg-blue-100 text-blue-800',
+      'current-jamaah': 'bg-green-100 text-green-800',
+      alumni: 'bg-purple-100 text-purple-800',
+      influencer: 'bg-pink-100 text-pink-800',
+      affiliator: 'bg-indigo-100 text-indigo-800',
+      brand_ambassador: 'bg-cyan-100 text-cyan-800',
+      staff: 'bg-gray-100 text-gray-800',
+      supervisor: 'bg-indigo-100 text-indigo-800',
+      direktur: 'bg-pink-100 text-pink-800',
+      owner: 'bg-black text-white',
       admin: 'bg-blue-100 text-blue-800',
+      super_admin: 'bg-purple-100 text-purple-800',
       jamaah: 'bg-green-100 text-green-800',
       alumni_jamaah: 'bg-emerald-100 text-emerald-800',
       reseller_agen: 'bg-orange-100 text-orange-800',
       mitra_biro: 'bg-yellow-100 text-yellow-800',
       influencer_affiliator: 'bg-pink-100 text-pink-800',
       corporate_client: 'bg-indigo-100 text-indigo-800',
-      travel_consultant: 'bg-teal-100 text-teal-800',
-      content_creator: 'bg-rose-100 text-rose-800',
     };
     return colorMap[role] || 'bg-gray-100 text-gray-800';
   };
@@ -374,8 +406,8 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
                   <li>• User document tidak ada di Firestore</li>
                   <li>• Permission error - deploy rules dulu</li>
                 </ul>
-                <a 
-                  href="/DEPLOY-RULES-NOW.html" 
+                <a
+                  href="/DEPLOY-RULES-NOW.html"
                   target="_blank"
                   className="inline-block mt-3 text-sm text-blue-600 hover:text-blue-800 font-semibold"
                 >
@@ -429,6 +461,55 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
                     </p>
                   </div>
                 </div>
+
+                {/* Influencer Details (Social Media) */}
+                {userRole === 'influencer' && (profileData.socialMediaProfiles && profileData.socialMediaProfiles.length > 0) && (
+                  <div className="mt-6 pt-6 border-t border-amber-200">
+                    <h4 className="text-sm font-bold text-amber-800 uppercase tracking-wider mb-4">Influencer Social Media Profiles</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {profileData.socialMediaProfiles.map((profile, idx) => (
+                        <div key={idx} className="bg-white rounded-xl p-4 border border-amber-100 shadow-sm space-y-2 group hover:border-amber-300 transition-colors">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-amber-600 uppercase">{profile.platform}</span>
+                            <span className="text-xs font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">{profile.followers} Followers</span>
+                          </div>
+                          <a
+                            href={profile.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1 break-all bg-blue-50/50 p-2 rounded-lg border border-blue-100/50 group-hover:bg-blue-50 transition-colors"
+                          >
+                            <ImageIcon className="w-3 h-3 flex-shrink-0" />
+                            {profile.link}
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Legacy Influencer Details (Backwards Compatibility) */}
+                {userRole === 'influencer' && !profileData.socialMediaProfiles && (profileData.followersCount || profileData.socialMediaAccount) && (
+                  <div className="mt-6 pt-6 border-t border-amber-200">
+                    <h4 className="text-sm font-bold text-amber-800 uppercase tracking-wider mb-4">Influencer Social Media (Legacy)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-white rounded-lg p-3 border border-amber-100 shadow-sm">
+                        <p className="text-xs text-gray-500 mb-1">Followers Count</p>
+                        <p className="font-bold text-gray-900 flex items-center gap-2">
+                          <Users className="w-4 h-4 text-amber-600" />
+                          {profileData.followersCount || '-'}
+                        </p>
+                      </div>
+                      <div className="bg-white rounded-lg p-3 border border-amber-100 shadow-sm">
+                        <p className="text-xs text-gray-500 mb-1">Social Media Account</p>
+                        <p className="font-bold text-gray-900 flex items-center gap-2">
+                          <Tag className="w-4 h-4 text-amber-600" />
+                          {profileData.socialMediaAccount || '-'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* ✅ NEW: Identity Information */}
@@ -506,7 +587,7 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
                     <FileText className="w-5 h-5 text-purple-600" />
                     Travel Documents
                   </h3>
-                  
+
                   {/* Passport Info */}
                   {(profileData.travelDocuments.passportNumber || profileData.travelDocuments.passportExpiry) && (
                     <div className="mb-4 p-4 bg-white rounded-lg border border-gray-200">
@@ -537,7 +618,7 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
                           <ImageIcon className="w-4 h-4" />
                           KTP Photo
                         </p>
-                        <div 
+                        <div
                           onClick={() => setSelectedImage(getDocumentUrl(profileData.travelDocuments?.ktpPhoto))}
                           className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                         >
@@ -557,7 +638,7 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
                           <ImageIcon className="w-4 h-4" />
                           KK Photo
                         </p>
-                        <div 
+                        <div
                           onClick={() => setSelectedImage(getDocumentUrl(profileData.travelDocuments?.kkPhoto))}
                           className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                         >
@@ -577,7 +658,7 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
                           <ImageIcon className="w-4 h-4" />
                           Passport Photo
                         </p>
-                        <div 
+                        <div
                           onClick={() => setSelectedImage(getDocumentUrl(profileData.travelDocuments?.passportPhoto))}
                           className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                         >
@@ -597,7 +678,7 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
                           <ImageIcon className="w-4 h-4" />
                           Visa Document
                         </p>
-                        <div 
+                        <div
                           onClick={() => setSelectedImage(getDocumentUrl(profileData.travelDocuments?.visaDocument))}
                           className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                         >
@@ -617,7 +698,7 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
                           <ImageIcon className="w-4 h-4" />
                           Health Certificate
                         </p>
-                        <div 
+                        <div
                           onClick={() => setSelectedImage(getDocumentUrl(profileData.travelDocuments?.healthCertificate))}
                           className="relative aspect-video bg-gray-100 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                         >
@@ -724,7 +805,7 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
 
       {/* ✅ Image Preview Modal */}
       {selectedImage && (
-        <div 
+        <div
           onClick={() => setSelectedImage(null)}
           className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center z-[60] p-4 cursor-zoom-out"
         >

@@ -14,8 +14,9 @@ export const COMMISSION_RATES = {
   // Referral Affiliator (Alumni Jamaah Umroh)
   alumni: 200000, // Rp200.000
 
-  // Reseller Agen
+  // Reseller Agen / Brand Ambassador
   agen: 500000, // Rp500.000
+  brand_ambassador: 500000, // Rp500.000
 } as const;
 
 export type CommissionRole = keyof typeof COMMISSION_RATES;
@@ -26,8 +27,8 @@ export type CommissionRole = keyof typeof COMMISSION_RATES;
 export function getCommissionAmount(referrerRole: string): number {
   if (referrerRole === 'alumni') {
     return COMMISSION_RATES.alumni;
-  } else if (referrerRole === 'agen') {
-    return COMMISSION_RATES.agen;
+  } else if (referrerRole === 'agen' || referrerRole === 'brand_ambassador') {
+    return COMMISSION_RATES.brand_ambassador;
   }
   return 0; // No commission for other roles
 }
@@ -50,13 +51,13 @@ export function formatCommission(amount: number): string {
 export const REFERRAL_STATUS = {
   // Jamaah baru registrasi, belum bayar
   REGISTERED: 'registered',
-  
+
   // Jamaah sudah submit payment, menunggu approval
   PAYMENT_SUBMITTED: 'payment_submitted',
-  
+
   // Payment approved, komisi sudah dihitung
   CONVERTED: 'converted',
-  
+
   // Payment rejected
   PAYMENT_REJECTED: 'payment_rejected',
 } as const;

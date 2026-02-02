@@ -158,6 +158,8 @@ const AppContent = () => {
         destination = 'CURRENT JAMAAH DASHBOARD';
       } else if (userProfile.role === 'alumni') {
         destination = 'ALUMNI DASHBOARD';
+      } else if (userProfile.role === 'brand_ambassador' || userProfile.role === 'agen') {
+        destination = 'BRAND AMBASSADOR DASHBOARD';
       }
 
       console.log('🎯 Destination:', destination);
@@ -268,7 +270,7 @@ const AppContent = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </>
-      ) : userProfile?.role === 'agen' ? (
+      ) : userProfile?.role === 'brand_ambassador' || userProfile?.role === 'agen' ? (
         userProfile?.approvalStatus === 'approved' ? (
           <>
             {console.log('✅ Rendering Agent Dashboard')}

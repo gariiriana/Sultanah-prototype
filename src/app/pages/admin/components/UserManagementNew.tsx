@@ -1,24 +1,21 @@
-import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Users, 
-  Filter, 
+import {
+  Users,
+  Filter,
   Search,
   Eye,
   CheckCircle,
   XCircle,
   Clock,
   AlertCircle,
-  FileText,
   Shield,
   User,
   Award
 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
-import { Badge } from '../../../components/ui/badge';
 import { toast } from 'sonner';
-import { collection, getDocs, query, where, updateDoc, doc, Timestamp, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, updateDoc, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../../config/firebase';
 import { User as UserType, UserRole } from '../../../../types';
 import VerificationRequestModal from './VerificationRequestModal';
@@ -42,7 +39,7 @@ export default function UserManagementNew() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedUser, setSelectedUser] = useState<UserWithVerification | null>(null);
   const [showVerificationModal, setShowVerificationModal] = useState(false);
-  
+
   // ✅ NEW: State for approval confirmation dialog
   const [showApprovalConfirm, setShowApprovalConfirm] = useState(false);
   const [userToApprove, setUserToApprove] = useState<{ id: string; email: string; name: string; role: string } | null>(null);
@@ -58,16 +55,16 @@ export default function UserManagementNew() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      
+
       // ✅ FIX: Always fetch ALL users, then filter client-side
       const q = query(collection(db, 'users'));
-      
+
       const querySnapshot = await getDocs(q);
       const usersData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as UserWithVerification[];
-      
+
       // ✅ DEBUG: Log agen data to check approval status
       const agenUsers = usersData.filter(u => u.role === 'agen');
       if (agenUsers.length > 0) {
@@ -78,7 +75,7 @@ export default function UserManagementNew() {
           hasApprovalStatus: 'approvalStatus' in u
         })));
       }
-      
+
       // ✅ DEBUG: Log ALL user roles
       console.log('📊 ALL USERS ROLE BREAKDOWN:', {
         total: usersData.length,
@@ -90,7 +87,7 @@ export default function UserManagementNew() {
         mutawwif: usersData.filter(u => u.role === 'mutawwif').length,
         other: usersData.filter(u => !['prospective-jamaah', 'current-jamaah', 'alumni', 'agen', 'tour-leader', 'mutawwif', 'admin'].includes(u.role || '')).length
       });
-      
+
       // ✅ Filter out admin users and store ALL users
       setUsers(usersData.filter(u => u.role !== 'admin'));
     } catch (error) {
@@ -106,22 +103,22 @@ export default function UserManagementNew() {
       // Get user data first to get role and displayName
       const userDocRef = doc(db, 'users', userId);
       const userDoc = await getDoc(userDocRef);
-      
+
       if (!userDoc.exists()) {
         toast.error('User not found');
         return;
       }
-      
+
       const userData = userDoc.data();
       const userRole = userData.role;
       const displayName = userData.displayName || 'User';
-      
+
       // Update approval status
       await updateDoc(userDocRef, {
         approvalStatus: 'approved',
         approvedAt: new Date().toISOString(),
       });
-      
+
       // ✅ ENHANCED: Auto-create referral code for Alumni & Agen with better feedback
       if (userRole === 'alumni' || userRole === 'agen') {
         console.log('🔗 [ADMIN-APPROVAL] Auto-creating referral code for approved user...', {
@@ -130,20 +127,20 @@ export default function UserManagementNew() {
           userRole,
           displayName
         });
-        
+
         const result = await autoCreateReferralCode(userId, userRole, displayName, userEmail);
-        
+
         if (result) {
           console.log('✅ [ADMIN-APPROVAL] Referral code auto-created successfully!');
           toast.success(`Account approved for ${userEmail} with referral code!`);
         } else {
           console.warn('⚠️ [ADMIN-APPROVAL] Failed to auto-create referral code, but approval still succeeded');
-          toast.success(`Account approved for ${userEmail} (Referral code will be created on first login)`);
+          toast.success(`Account approved for ${userEmail}(Referral code will be created on first login)`);
         }
       } else {
         toast.success(`Account approved for ${userEmail}`);
       }
-      
+
       fetchUsers();
     } catch (error) {
       console.error('Error approving account:', error);
@@ -158,7 +155,7 @@ export default function UserManagementNew() {
         rejectionReason: reason,
         rejectedAt: new Date().toISOString(),
       });
-      
+
       toast.success(`Account rejected for ${userEmail}`);
       fetchUsers();
     } catch (error) {
@@ -175,12 +172,12 @@ export default function UserManagementNew() {
   const filteredUsers = users.filter(user => {
     // ✅ FIX: Filter by role first
     const matchesRole = selectedRole === 'all' || user.role === selectedRole;
-    
-    const matchesSearch = 
+
+    const matchesSearch =
       user.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.phoneNumber?.includes(searchQuery);
-    
+
     return matchesRole && matchesSearch;
   });
 
@@ -195,7 +192,14 @@ export default function UserManagementNew() {
       'staff': { label: 'Staff', color: 'bg-gray-100 text-gray-700', icon: Shield },
       'supervisor': { label: 'Supervisor', color: 'bg-indigo-100 text-indigo-700', icon: Shield },
       'direktur': { label: 'Direktur', color: 'bg-pink-100 text-pink-700', icon: Shield },
-      'agen': { label: 'Agen', color: 'bg-cyan-100 text-cyan-700', icon: Shield },
+      'brand_ambassador': { label: 'Brand Ambassador', color: 'bg-cyan-100 text-cyan-700', icon: Shield },
+      'agen': { label: 'Agen', color: 'bg-cyan-100 text-cyan-700', icon: Shield }, // Corrected label for 'agen'
+      'super_admin': { label: 'Super Admin', color: 'bg-black text-white', icon: Shield },
+      'jamaah': { label: 'Jamaah', color: 'bg-slate-100 text-slate-700', icon: Users },
+      'alumni_jamaah': { label: 'Alumni', color: 'bg-purple-100 text-purple-700', icon: Award },
+      'reseller_agen': { label: 'Brand Ambassador', color: 'bg-cyan-100 text-cyan-700', icon: Shield },
+      'mitra_biro': { label: 'Mitra Biro', color: 'bg-blue-100 text-blue-700', icon: Shield },
+      'influencer_affiliator': { label: 'Influencer', color: 'bg-indigo-100 text-indigo-700', icon: Award },
     };
 
     const { label, color, icon: Icon } = config[role] || config['prospective-jamaah'];
@@ -231,9 +235,9 @@ export default function UserManagementNew() {
     if (!user.verificationRequest) return null;
 
     const { status, type } = user.verificationRequest;
-    
+
     const typeLabel = type === 'upgrade-to-current' ? 'Upgrade → Jamaah' : 'Upgrade → Alumni';
-    
+
     const config = {
       pending: { color: 'bg-amber-100 text-amber-700 border-amber-300', icon: Clock },
       approved: { color: 'bg-green-100 text-green-700 border-green-300', icon: CheckCircle },
@@ -258,7 +262,8 @@ export default function UserManagementNew() {
     { value: 'alumni', label: '🏆 Alumni Jamaah', count: users.filter(u => u.role === 'alumni').length },
     { value: 'tour-leader', label: '🧑‍✈️ Tour Leader', count: users.filter(u => u.role === 'tour-leader').length },
     { value: 'mutawwif', label: '📿 Mutawwif', count: users.filter(u => u.role === 'mutawwif').length },
-    { value: 'agen', label: '💼 Agen', count: users.filter(u => u.role === 'agen').length },
+    { value: 'brand_ambassador', label: '💠 Brand Ambassador', count: users.filter(u => u.role === 'brand_ambassador').length },
+    { value: 'agen', label: '💼 Agen (Legacy)', count: users.filter(u => u.role === 'agen').length },
   ];
 
   if (loading) {
@@ -277,7 +282,7 @@ export default function UserManagementNew() {
           <h3 className="text-2xl font-bold text-gray-900">User Management</h3>
           <p className="text-sm text-gray-600 mt-1">Manage all users and approval requests</p>
         </div>
-        
+
         {/* ✅ NEW: Refresh Button */}
         <Button
           onClick={() => {
@@ -388,8 +393,8 @@ export default function UserManagementNew() {
                     {/* Account Status */}
                     <td className="px-6 py-4">
                       <div className="space-y-1">
-                        {/* For Tour Leader, Mutawwif & Agen - show approval status */}
-                        {(user.role === 'tour-leader' || user.role === 'mutawwif' || user.role === 'agen') && (
+                        {/* For Tour Leader, Mutawwif & Brand Ambassador - show approval status */}
+                        {(user.role === 'tour-leader' || user.role === 'mutawwif' || user.role === 'agen' || user.role === 'brand_ambassador') && (
                           <>
                             {/* ✅ FIXED: Show "Setup Required" if no approvalStatus */}
                             {!user.approvalStatus ? (
@@ -409,24 +414,23 @@ export default function UserManagementNew() {
                             )}
                           </>
                         )}
-                        
+
                         {/* For regular jamaah - show profile completion */}
-                        {!['tour-leader', 'mutawwif', 'agen'].includes(user.role) && (() => {
+                        {!['tour-leader', 'mutawwif', 'agen', 'brand_ambassador'].includes(user.role) && (() => {
                           // ✅ CRITICAL FIX: Proper complete/incomplete logic
                           // - prospective-jamaah: Check profileCompleted field
                           // - current-jamaah: ALWAYS complete (can't become current-jamaah without completing profile)
                           // - alumni: ALWAYS complete (upgraded from current-jamaah who already completed)
-                          const isComplete = 
-                            user.role === 'current-jamaah' || 
-                            user.role === 'alumni' || 
-                            user.profileCompleted === true;
-                          
+                          const isComplete =
+                            user.role === 'current-jamaah' ||
+                            user.role === 'alumni' ||
+                            user.profileComplete === true;
+
                           return (
-                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${
-                              isComplete 
-                                ? 'bg-green-100 text-green-700' 
-                                : 'bg-gray-100 text-gray-700'
-                            }`}>
+                            <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${isComplete
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-gray-100 text-gray-700'
+                              }`}>
                               {isComplete ? (
                                 <>
                                   <CheckCircle className="w-3 h-3" />
@@ -452,8 +456,8 @@ export default function UserManagementNew() {
                     {/* Actions */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        {/* ✅ FIXED: Setup button for agen/tour-leader/mutawwif without approvalStatus */}
-                        {(user.role === 'tour-leader' || user.role === 'mutawwif' || user.role === 'agen') && !user.approvalStatus && (
+                        {/* ✅ FIXED: Setup button for agen/BA/tour-leader/mutawwif without approvalStatus */}
+                        {(user.role === 'tour-leader' || user.role === 'mutawwif' || user.role === 'agen' || user.role === 'brand_ambassador') && !user.approvalStatus && (
                           <Button
                             onClick={async () => {
                               try {
@@ -476,8 +480,8 @@ export default function UserManagementNew() {
                           </Button>
                         )}
 
-                        {/* Approve/Reject for Tour Leader, Mutawwif & Agen */}
-                        {(user.role === 'tour-leader' || user.role === 'mutawwif' || user.role === 'agen') && user.approvalStatus === 'pending' && (
+                        {/* Approve/Reject for Tour Leader, Mutawwif & Brand Ambassador */}
+                        {(user.role === 'tour-leader' || user.role === 'mutawwif' || user.role === 'agen' || user.role === 'brand_ambassador') && user.approvalStatus === 'pending' && (
                           <>
                             <Button
                               onClick={() => {
@@ -600,7 +604,7 @@ export default function UserManagementNew() {
                   <p className="text-gray-700">
                     Apakah Anda yakin ingin menyetujui akun berikut?
                   </p>
-                  
+
                   <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 space-y-2 border border-gray-200">
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Nama:</span>
@@ -613,7 +617,7 @@ export default function UserManagementNew() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Role:</span>
                       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                        {userToApprove.role === 'tour-leader' ? '🧑‍✈️ Tour Leader' : userToApprove.role === 'mutawwif' ? '📿 Mutawwif' : '💼 Agen'}
+                        {userToApprove.role === 'tour-leader' ? '🧑‍✈️ Tour Leader' : userToApprove.role === 'mutawwif' ? '📿 Mutawwif' : '💠 Brand Ambassador'}
                       </span>
                     </div>
                   </div>
@@ -662,7 +666,7 @@ export default function UserManagementNew() {
         <UserProfileDetailModal
           userId={profileDetailUser.userId}
           userEmail={profileDetailUser.email}
-          userRole={profileDetailUser.role}
+          userRole={profileDetailUser.role as UserRole}
           userName={profileDetailUser.name}
           isOpen={showProfileDetail}
           onClose={() => {

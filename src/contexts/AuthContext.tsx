@@ -13,6 +13,12 @@ import { UserRole } from '../types'; // ✅ Import UserRole type
 import { processReferralCode } from '../utils/referralProcessor'; // ✅ NEW: Import referral processor
 import { autoCreateReferralCode } from '../utils/autoCreateReferralCode'; // ✅ NEW: Auto-create referral code on login
 
+export interface SocialMediaProfile {
+  platform: string;
+  followers: string;
+  link: string;
+}
+
 interface UserProfile {
   uid?: string; // Firebase user UID
   id?: string; // Alias for uid (backward compatibility)
@@ -60,6 +66,9 @@ interface UserProfile {
   rejectionReason?: string;
   referralCode?: string; // ✅ NEW: User's own referral code
   referredBy?: string; // ✅ NEW: Who referred this user
+  followersCount?: string; // ✅ NEW: Influencer followers count
+  socialMediaAccount?: string; // ✅ NEW: Influencer social media handle
+  socialMediaProfiles?: SocialMediaProfile[]; // ✅ NEW: Detailed influencer profiles
   createdAt: string;
 }
 
@@ -67,7 +76,17 @@ interface AuthContextType {
   currentUser: User | null;
   userProfile: UserProfile | null;
   loading: boolean;
-  signUp: (email: string, password: string, displayName?: string, phoneNumber?: string, role?: UserRole, referralCode?: string) => Promise<void>; // ✅ Added referralCode parameter
+  signUp: (
+    email: string,
+    password: string,
+    displayName?: string,
+    phoneNumber?: string,
+    role?: UserRole,
+    referralCode?: string,
+    followersCount?: string,
+    socialMediaAccount?: string,
+    socialMediaProfiles?: SocialMediaProfile[]
+  ) => Promise<void>; // ✅ Enhanced influencer fields
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -237,7 +256,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return unsubscribe;
   }, []);
 
-  const signUp = async (email: string, password: string, displayName?: string, phoneNumber?: string, role?: UserRole, referralCode?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    displayName?: string,
+    phoneNumber?: string,
+    role?: UserRole,
+    referralCode?: string,
+    followersCount?: string,
+    socialMediaAccount?: string,
+    socialMediaProfiles?: SocialMediaProfile[]
+  ) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
 
     const selectedRole = role || 'prospective-jamaah';
@@ -257,6 +286,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       ...(requiresApproval && {
         approvalStatus: 'pending',
         approvalRequestedAt: new Date().toISOString(),
+      }),
+      // ✅ Set influencer specific fields
+      ...(selectedRole === 'influencer' && {
+        followersCount,
+        socialMediaAccount,
+        socialMediaProfiles,
       }),
     };
 

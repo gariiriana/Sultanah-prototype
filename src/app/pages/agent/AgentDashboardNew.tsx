@@ -62,7 +62,7 @@ interface WithdrawalRequest {
   userId: string;
   userName: string;
   userEmail: string;
-  userType: 'alumni' | 'agen';
+  userType: 'alumni' | 'agen' | 'brand_ambassador';
   amount: number;
   status: 'pending' | 'confirmed' | 'rejected'; // ✅ Changed 'approved' to 'confirmed'
   requestDate: Date;
@@ -101,7 +101,7 @@ const AgentDashboardNew: React.FC = () => {
   useEffect(() => {
     if (userProfile?.uid) {
       // ✅ FIX: Only initialize referral if user is actually an agent
-      if (userProfile.role === 'agen') {
+      if (userProfile.role === 'agen' || userProfile.role === 'brand_ambassador') {
         initializeReferral();
         loadWithdrawalRequests();
       }
@@ -117,7 +117,7 @@ const AgentDashboardNew: React.FC = () => {
       // Auto-create referral code
       const success = await autoCreateReferralCode(
         userProfile.uid,
-        'agen',
+        userProfile.role as any,
         userProfile.displayName || 'AGEN',
         userProfile.email
       );
@@ -301,10 +301,10 @@ const AgentDashboardNew: React.FC = () => {
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
                   <Crown className="w-7 h-7" />
-                  Dashboard Agen Premium
+                  Dashboard Brand Ambassador
                 </h1>
                 <p className="text-amber-100 text-sm mt-1">
-                  Selamat datang, <span className="font-semibold">{userProfile?.displayName || 'Agen'}</span>
+                  Selamat datang, <span className="font-semibold">{userProfile?.displayName || 'Brand Ambassador'}</span>
                 </p>
               </div>
             </div>
@@ -579,7 +579,7 @@ const AgentDashboardNew: React.FC = () => {
                   <p className="text-gray-600 mt-1">Track semua referral dan komisi Anda</p>
                 </div>
                 <div className="p-6">
-                  <ReferralListRealtime userId={userProfile?.uid || ''} userRole="agen" />
+                  <ReferralListRealtime userId={userProfile?.uid || ''} userRole={userProfile?.role as any || 'brand_ambassador'} />
                 </div>
               </Card>
             </motion.div>
@@ -607,7 +607,7 @@ const AgentDashboardNew: React.FC = () => {
                 <div className="p-8">
                   {/* Balance Summary */}
                   <div className="mb-8">
-                    <ReferralBalanceCard userId={userProfile?.uid || ''} userRole="agen" />
+                    <ReferralBalanceCard userId={userProfile?.uid || ''} userRole={userProfile?.role as any || 'brand_ambassador'} />
                   </div>
 
                   {/* Withdrawal Form */}
@@ -737,7 +737,7 @@ const AgentDashboardNew: React.FC = () => {
         open={showWithdrawalForm}
         onClose={() => setShowWithdrawalForm(false)}
         maxAmount={stats.approvedCommission}
-        userType="agen"
+        userType={userProfile?.role as any || 'brand_ambassador'}
         onSubmit={async (data: WithdrawalFormData) => {
           console.log('Withdrawal request:', data);
           toast.success('Permintaan pencairan berhasil diajukan!');

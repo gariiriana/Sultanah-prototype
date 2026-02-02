@@ -22,7 +22,8 @@ const WaitingApprovalPage: React.FC = () => {
     const roleMap: Record<string, string> = {
       'tour-leader': 'Tour Leader',
       'mutawwif': 'Mutawwif',
-      'agen': 'Agen'
+      'agen': 'Brand Ambassador',
+      'brand_ambassador': 'Brand Ambassador'
     };
     return roleMap[role] || role;
   };
@@ -115,7 +116,7 @@ const WaitingApprovalPage: React.FC = () => {
                   Akun Berhasil Dibuat
                 </h3>
                 <p className="text-white/80 text-sm leading-relaxed">
-                  Selamat! Akun Anda dengan role <span className="font-semibold text-white">{getRoleLabel(userProfile?.role || 'Tour Leader')}</span> telah berhasil terdaftar di sistem Sultanah Travel.
+                  Selamat! Akun Anda dengan role <span className="font-semibold text-white">{getRoleLabel(userProfile?.role || 'Brand Ambassador')}</span> telah berhasil terdaftar di sistem Sultanah Travel.
                 </p>
               </div>
             </div>

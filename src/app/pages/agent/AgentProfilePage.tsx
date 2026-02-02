@@ -187,7 +187,7 @@ const AgentProfilePage: React.FC = () => {
 
             {/* Title */}
             <div>
-              <h1 className="text-3xl font-bold mb-1 drop-shadow-lg">Profil Agen</h1>
+              <h1 className="text-3xl font-bold mb-1 drop-shadow-lg">Profil Brand Ambassador</h1>
               <p className="text-amber-100 text-sm">Lengkapi informasi profil Anda</p>
             </div>
           </div>
