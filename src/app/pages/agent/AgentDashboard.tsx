@@ -28,7 +28,7 @@ import {
   Share2
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardDescription } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
@@ -78,6 +78,12 @@ interface WithdrawalRequest {
 const AgentDashboard: React.FC = () => {
   const { currentUser, userProfile, signOut } = useAuth();
   const navigate = useNavigate(); // ✅ Use useNavigate hook
+
+  // Get commission amount based on role
+  const getCommissionAmount = () => {
+    if (userProfile?.role === 'influencer') return '300.000';
+    return (userProfile?.role === 'alumni' || userProfile?.role === 'affiliator') ? '200.000' : '500.000';
+  };
   const [stats, setStats] = useState<ReferralStats>({
     referralCode: '',
     totalReferrals: 0,
@@ -422,10 +428,12 @@ const AgentDashboard: React.FC = () => {
       </div>
 
       <div className="container mx-auto px-4 py-8 relative z-10">{/* Stats Cards - PREMIUM GLASSMORPHISM */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-8">
           <Card className="border-t-4 border-t-blue-500 bg-white/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Total Referral</CardTitle>
+              <h3 className="text-sm font-medium text-slate-600">
+                {userProfile?.role === 'influencer' ? 'Total Voucher Digunakan' : 'Total Referral'}
+              </h3>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
@@ -439,7 +447,7 @@ const AgentDashboard: React.FC = () => {
 
           <Card className="border-t-4 border-t-green-500 bg-white/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Total Saldo</CardTitle>
+              <h3 className="text-sm font-medium text-slate-600">Total Saldo</h3>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
@@ -455,7 +463,7 @@ const AgentDashboard: React.FC = () => {
 
           <Card className="border-t-4 border-t-amber-500 bg-white/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Profit Disetujui</CardTitle>
+              <h3 className="text-sm font-medium text-slate-600">Profit Disetujui</h3>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
@@ -471,7 +479,7 @@ const AgentDashboard: React.FC = () => {
 
           <Card className="border-t-4 border-t-purple-500 bg-white/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Total Konversi</CardTitle>
+              <h3 className="text-sm font-medium text-slate-600">Total Konversi</h3>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
@@ -495,9 +503,9 @@ const AgentDashboard: React.FC = () => {
             {/* Referral Code Card */}
             <Card className="mb-6">
               <CardHeader>
-                <CardTitle>Kode Referral Anda</CardTitle>
+                <h3 className="text-lg font-bold text-gray-900">Kode Referral Anda</h3>
                 <CardDescription>
-                  Bagikan kode referral Anda untuk mendapatkan profit Rp500.000 per referral sukses
+                  Bagikan kode referral Anda untuk mendapatkan profit Rp{getCommissionAmount()} per referral sukses
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -549,7 +557,9 @@ const AgentDashboard: React.FC = () => {
 
                 {/* Referral Info */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="font-semibold text-blue-900 mb-2">Cara Kerja Program Referral</h3>
+                  <h3 className="font-semibold text-blue-900 mb-2">
+                    {userProfile?.role === 'influencer' ? 'Cara Kerja Voucher Diskon' : 'Cara Kerja Program Referral'}
+                  </h3>
                   <ul className="space-y-2 text-sm text-blue-800">
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 mt-0.5 text-blue-600" />
@@ -561,7 +571,7 @@ const AgentDashboard: React.FC = () => {
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 mt-0.5 text-blue-600" />
-                      <span>Profit Rp500.000 diberikan setelah pembayaran disetujui admin</span>
+                      <span>Profit Rp{getCommissionAmount()} diberikan setelah jamaah melakukan pembayaran</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 mt-0.5 text-blue-600" />
@@ -597,7 +607,7 @@ const AgentDashboard: React.FC = () => {
               {/* Request Withdrawal Form */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Ajukan Pencairan Profit</CardTitle>
+                  <h3 className="text-lg font-bold text-gray-900">Ajukan Pencairan Profit</h3>
                   <CardDescription>
                     Profit tersedia: <span className="text-green-600 font-semibold">
                       Rp {stats.approvedCommission.toLocaleString('id-ID')}
@@ -624,7 +634,7 @@ const AgentDashboard: React.FC = () => {
               {/* Withdrawal History */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Riwayat Pencairan</CardTitle>
+                  <h3 className="text-lg font-bold text-gray-900">Riwayat Pencairan</h3>
                   <CardDescription>Daftar permintaan pencairan profit Anda</CardDescription>
                 </CardHeader>
                 <CardContent>

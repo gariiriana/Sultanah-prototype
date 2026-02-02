@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../config/firebase';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader } from './ui/card';
 import { Badge } from './ui/badge';
 import { Users, Clock, CheckCircle, TrendingUp } from 'lucide-react';
 import { formatCommission } from '../../constants/commissionRates';
@@ -50,6 +50,8 @@ const ReferralListRealtime: React.FC<ReferralListRealtimeProps> = ({ userId, use
   // Get commission amount based on role
   const getCommissionAmount = () => {
     switch (userRole) {
+      case 'influencer':
+        return 'Rp300.000';
       case 'affiliator':
         return 'Rp200.000';
       case 'alumni':
@@ -153,13 +155,15 @@ const ReferralListRealtime: React.FC<ReferralListRealtimeProps> = ({ userId, use
   return (
     <div className="space-y-6">
       {/* Stats Summary */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card className="border-blue-200 bg-blue-50">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <Users className="w-8 h-8 text-blue-600" />
               <div>
-                <p className="text-sm text-gray-600">Total Referral</p>
+                <h3 className="text-sm font-medium text-slate-600">
+                  {userRole === 'influencer' ? 'Total Voucher Digunakan' : 'Total Referral'}
+                </h3>
                 <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
               </div>
             </div>
@@ -208,10 +212,10 @@ const ReferralListRealtime: React.FC<ReferralListRealtimeProps> = ({ userId, use
       {/* Referral List */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="w-5 h-5 text-amber-600" />
-            Daftar Referral
-          </CardTitle>
+          <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2 px-6 pt-6 pb-2">
+            <Users className="w-6 h-6 text-blue-600" />
+            {userRole === 'influencer' ? 'Riwayat Penggunaan Voucher' : 'Daftar Referral Anda'}
+          </h3>
         </CardHeader>
         <CardContent>
           {referrals.length === 0 ? (
@@ -315,7 +319,7 @@ const ReferralListRealtime: React.FC<ReferralListRealtimeProps> = ({ userId, use
               <h4 className="font-semibold text-blue-900 mb-2">Informasi Profit</h4>
               <ul className="space-y-1 text-sm text-blue-800">
                 <li>• Profit {getRoleTitle()}: {getCommissionAmount()} per referral sukses</li>
-                <li>• Profit dihitung setelah Jamaah bayar paket & disetujui Admin</li>
+                <li>• Profit dihitung setelah Jamaah melakukan pembayaran</li>
                 <li>• Referral yang belum bayar akan tetap tampil di daftar</li>
                 <li>• Saldo profit dapat dicairkan kapan saja (minimum Rp50.000)</li>
               </ul>

@@ -30,7 +30,7 @@ import {
     Settings
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
-import { Card, CardContent } from '../../components/ui/card';
+import { Card, CardContent, CardHeader, CardDescription } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../components/ui/tabs';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
@@ -99,7 +99,8 @@ const AffiliatorDashboardNew: React.FC = () => {
 
     useEffect(() => {
         if (userProfile?.uid) {
-            // ✅ FIX: Support all agent-like roles
+            // ✅ FIXED: Use centralized auto-create system
+            console.log(`🔧 [${userProfile.role.toUpperCase()} REFERRAL] Initializing referral system...`);
             const isAgent = ['agen', 'brand_ambassador', 'influencer', 'affiliator'].includes(userProfile.role);
             if (isAgent) {
                 initializeReferral();
@@ -136,6 +137,18 @@ const AffiliatorDashboardNew: React.FC = () => {
                 (snapshot) => {
                     if (snapshot.exists()) {
                         const data = snapshot.data();
+                        // This block seems to be a mix-up from a previous edit or a different context.
+                        // The original code was:
+                        // setStats(prevStats => ({
+                        //     ...prevStats,
+                        //     referralCode: data.referralCode || '',
+                        //     totalReferrals: data.totalReferrals || 0,
+                        //     totalCommission: data.totalCommission || 0,
+                        //     pendingCommission: data.pendingCommission || 0,
+                        //     conversions: data.totalConversions || 0,
+                        //     totalClicks: data.totalClicks || 0,
+                        // }));
+                        // I will restore the original logic for this onSnapshot callback.
                         setStats(prevStats => ({
                             ...prevStats,
                             referralCode: data.referralCode || '',
@@ -241,7 +254,7 @@ const AffiliatorDashboardNew: React.FC = () => {
         const success = await copyToClipboard(stats.referralCode);
         if (success) {
             setCopySuccess(true);
-            toast.success('Kode referral berhasil disalin!');
+            toast.success(`${userProfile?.role === 'influencer' ? 'Voucher' : 'Kode referral'} berhasil disalin!`);
             setTimeout(() => setCopySuccess(false), 2000);
         }
     };
@@ -268,6 +281,7 @@ const AffiliatorDashboardNew: React.FC = () => {
 
     // Get commission amount based on role
     const getCommissionAmount = () => {
+        if (userProfile?.role === 'influencer') return '300.000';
         return userProfile?.role === 'affiliator' ? '200.000' : '500.000';
     };
 
@@ -370,7 +384,9 @@ const AffiliatorDashboardNew: React.FC = () => {
                                         <TrendingUp className="w-3 h-3 sm:w-4 sm:h-5 text-white/70" />
                                     </div>
                                     <div>
-                                        <p className="text-blue-100 text-[10px] sm:text-xs md:text-sm font-medium leading-tight">Total Referral</p>
+                                        <p className="text-blue-100 text-[10px] sm:text-xs md:text-sm font-medium leading-tight">
+                                            {userProfile?.role === 'influencer' ? 'Total Voucher Digunakan' : 'Total Referral'}
+                                        </p>
                                         <p className="text-base sm:text-2xl md:text-3xl font-bold mt-0.5">{stats.totalReferrals}</p>
                                         <p className="text-blue-100 text-[8px] sm:text-[10px] md:text-xs mt-0.5 line-clamp-1">{stats.totalClicks} klik</p>
                                     </div>
@@ -457,15 +473,21 @@ const AffiliatorDashboardNew: React.FC = () => {
                                                 <Crown className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                                             </div>
                                             <div>
-                                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Kode Referral Anda</h2>
-                                                <p className="text-white/90 text-xs sm:text-sm">Bagikan untuk mendapatkan profit Rp{getCommissionAmount()}/referral</p>
+                                                <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">
+                                                    {userProfile?.role === 'influencer' ? 'Voucher Diskon Anda' : 'Kode Referral Anda'}
+                                                </h2>
+                                                <p className="text-white/90 text-xs sm:text-sm">
+                                                    Bagikan untuk mendapatkan profit Rp{getCommissionAmount()}/referral
+                                                </p>
                                             </div>
                                         </div>
 
                                         <div className="bg-white rounded-2xl p-4 sm:p-5 md:p-6 shadow-xl">
                                             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
                                                 <div>
-                                                    <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2 font-medium">Kode Referral Anda</p>
+                                                    <p className="text-xs sm:text-sm text-gray-600 mb-1 sm:mb-2 font-medium">
+                                                        {userProfile?.role === 'influencer' ? 'Voucher Diskon Anda' : 'Kode Referral Anda'}
+                                                    </p>
                                                     <p className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-[#D4AF37] to-[#FFD700] bg-clip-text text-transparent break-all">
                                                         {stats.referralCode}
                                                     </p>
@@ -481,34 +503,36 @@ const AffiliatorDashboardNew: React.FC = () => {
                                                     ) : (
                                                         <>
                                                             <Copy className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                                                            Salin Kode
+                                                            {userProfile?.role === 'influencer' ? 'Salin Voucher' : 'Salin Kode'}
                                                         </>
                                                     )}
                                                 </Button>
                                             </div>
 
-                                            <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-3 sm:p-4 border-2 border-amber-200">
-                                                <p className="text-xs sm:text-sm text-gray-600 mb-2 font-medium">Link Referral</p>
-                                                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
-                                                    <code className="flex-1 text-xs sm:text-sm bg-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-amber-200 text-gray-700 font-mono overflow-x-auto">
-                                                        {referralLink}
-                                                    </code>
-                                                    <Button
-                                                        onClick={handleCopyLink}
-                                                        variant="outline"
-                                                        className="border-amber-300 text-amber-700 hover:bg-amber-100 rounded-lg px-4 sm:px-6 text-sm w-full sm:w-auto">
-                                                        <LinkIcon className="w-4 h-4 mr-2" />
-                                                        Salin Link
-                                                    </Button>
+                                            {userProfile?.role !== 'influencer' && (
+                                                <div className="bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl p-3 sm:p-4 border-2 border-amber-200">
+                                                    <p className="text-xs sm:text-sm text-gray-600 mb-2 font-medium">Link Referral</p>
+                                                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+                                                        <code className="flex-1 text-xs sm:text-sm bg-white px-3 sm:px-4 py-2 sm:py-3 rounded-lg border border-amber-200 text-gray-700 font-mono overflow-x-auto">
+                                                            {referralLink}
+                                                        </code>
+                                                        <Button
+                                                            onClick={handleCopyLink}
+                                                            variant="outline"
+                                                            className="border-amber-300 text-amber-700 hover:bg-amber-100 rounded-lg px-4 sm:px-6 text-sm w-full sm:w-auto">
+                                                            <LinkIcon className="w-4 h-4 mr-2" />
+                                                            Salin Link
+                                                        </Button>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            )}
                                         </div>
                                     </div>
 
                                     <div className="p-4 sm:p-6 md:p-8 bg-gradient-to-br from-gray-50 to-white rounded-b-2xl">
                                         <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6 flex items-center gap-2">
                                             <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
-                                            Cara Kerja Program Referral
+                                            {userProfile?.role === 'influencer' ? 'Cara Kerja Voucher Diskon' : 'Cara Kerja Program Referral'}
                                         </h3>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                             <div className="flex items-start gap-3 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm border border-gray-200">
@@ -516,8 +540,14 @@ const AffiliatorDashboardNew: React.FC = () => {
                                                     1
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-gray-900 mb-1">Bagikan Kode Referral</p>
-                                                    <p className="text-sm text-gray-600">Bagikan kode atau link referral Anda kepada calon jamaah</p>
+                                                    <p className="font-semibold text-gray-900 mb-1">
+                                                        {userProfile?.role === 'influencer' ? 'Bagikan Voucher Diskon' : 'Bagikan Kode Referral'}
+                                                    </p>
+                                                    <p className="text-sm text-gray-600">
+                                                        {userProfile?.role === 'influencer'
+                                                            ? 'Bagikan voucher diskon Anda kepada calon jamaah'
+                                                            : 'Bagikan kode atau link referral Anda kepada calon jamaah'}
+                                                    </p>
                                                 </div>
                                             </div>
                                             <div className="flex items-start gap-3 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm border border-gray-200">
@@ -526,7 +556,9 @@ const AffiliatorDashboardNew: React.FC = () => {
                                                 </div>
                                                 <div>
                                                     <p className="font-semibold text-gray-900 mb-1">Jamaah Mendaftar & Booking</p>
-                                                    <p className="text-sm text-gray-600">Setiap pembelian paket dengan kode Anda tercatat otomatis</p>
+                                                    <p className="text-sm text-gray-600">
+                                                        Setiap pembelian paket dengan {userProfile?.role === 'influencer' ? 'voucher' : 'kode'} Anda tercatat otomatis
+                                                    </p>
                                                 </div>
                                             </div>
                                             <div className="flex items-start gap-3 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm border border-gray-200">
@@ -534,8 +566,8 @@ const AffiliatorDashboardNew: React.FC = () => {
                                                     3
                                                 </div>
                                                 <div>
-                                                    <p className="font-semibold text-gray-900 mb-1">Admin Approve Pembayaran</p>
-                                                    <p className="text-sm text-gray-600">Profit Rp{getCommissionAmount()} otomatis aktif setelah pembayaran disetujui</p>
+                                                    <p className="font-semibold text-gray-900 mb-1">Jamaah Melakukan Pembayaran</p>
+                                                    <p className="text-sm text-gray-600">Profit Rp{getCommissionAmount()} otomatis aktif setelah jamaah melakukan pembayaran</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-start gap-3 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm border border-gray-200">
@@ -558,13 +590,15 @@ const AffiliatorDashboardNew: React.FC = () => {
                                 animate={{ y: 0, opacity: 1 }}
                                 transition={{ delay: 0.2 }}>
                                 <Card className="border-0 shadow-xl">
-                                    <div className="p-6 border-b border-gray-100">
-                                        <h3 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                                            <Users className="w-6 h-6 text-amber-600" />
-                                            Daftar Referral Anda
+                                    <CardHeader className="pb-0 px-4 sm:px-6 pt-6 sm:pt-8">
+                                        <h3 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                                            <Users className="w-5 h-5 sm:w-6 sm:h-6 text-amber-600" />
+                                            {userProfile?.role === 'influencer' ? 'Riwayat Penggunaan Voucher' : 'Daftar Referral Anda'}
                                         </h3>
-                                        <p className="text-gray-600 mt-1">Track semua referral dan profit Anda</p>
-                                    </div>
+                                        <CardDescription className="text-sm text-gray-600 mt-1">
+                                            {userProfile?.role === 'influencer' ? 'Track semua jamaah yang menggunakan voucher Anda' : 'Track semua referral dan profit Anda'}
+                                        </CardDescription>
+                                    </CardHeader>
                                     <div className="p-6">
                                         <ReferralListRealtime userId={userProfile?.uid || ''} userRole={userProfile?.role as any || 'brand_ambassador'} />
                                     </div>
