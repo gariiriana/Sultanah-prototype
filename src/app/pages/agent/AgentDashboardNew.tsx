@@ -62,7 +62,7 @@ interface WithdrawalRequest {
   userId: string;
   userName: string;
   userEmail: string;
-  userType: 'alumni' | 'agen' | 'brand_ambassador';
+  userType: 'alumni' | 'agen' | 'brand_ambassador' | 'affiliator' | 'influencer';
   amount: number;
   status: 'pending' | 'confirmed' | 'rejected'; // ✅ Changed 'approved' to 'confirmed'
   requestDate: Date;
@@ -100,8 +100,9 @@ const AgentDashboardNew: React.FC = () => {
 
   useEffect(() => {
     if (userProfile?.uid) {
-      // ✅ FIX: Only initialize referral if user is actually an agent
-      if (userProfile.role === 'agen' || userProfile.role === 'brand_ambassador') {
+      // ✅ FIX: Support all agent-like roles
+      const isAgent = ['agen', 'brand_ambassador', 'influencer', 'affiliator'].includes(userProfile.role);
+      if (isAgent) {
         initializeReferral();
         loadWithdrawalRequests();
       }
@@ -301,10 +302,19 @@ const AgentDashboardNew: React.FC = () => {
               <div>
                 <h1 className="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
                   <Crown className="w-7 h-7" />
-                  Dashboard Brand Ambassador
+                  Dashboard {
+                    userProfile?.role === 'affiliator' ? 'Affiliator' :
+                      userProfile?.role === 'influencer' ? 'Influencer' :
+                        userProfile?.role === 'agen' ? 'Agen Syiar' :
+                          'Brand Ambassador'
+                  }
                 </h1>
                 <p className="text-amber-100 text-sm mt-1">
-                  Selamat datang, <span className="font-semibold">{userProfile?.displayName || 'Brand Ambassador'}</span>
+                  Selamat datang, <span className="font-semibold">{userProfile?.displayName ||
+                    (userProfile?.role === 'affiliator' ? 'Affiliator' :
+                      userProfile?.role === 'influencer' ? 'Influencer' :
+                        userProfile?.role === 'agen' ? 'Agen' : 'Mitra')
+                  }</span>
                 </p>
               </div>
             </div>

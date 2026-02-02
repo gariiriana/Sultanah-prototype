@@ -106,11 +106,18 @@ const LoginPage: React.FC<LoginPageProps> = ({ onNavigateToRegister, onLoginSucc
         </div>
 
         {/* Glassmorphism Card */}
-        <div className="bg-white/20 backdrop-blur-2xl rounded-3xl shadow-2xl p-10 pt-20 border border-white/30"
+        <div className="bg-white/20 backdrop-blur-2xl rounded-3xl shadow-2xl p-10 border border-white/30"
           style={{
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
           }}
         >
+          {/* Info Banner for Jamaah */}
+          <div className="mb-8 p-4 rounded-2xl bg-blue-500/20 border border-blue-400/30 backdrop-blur-md">
+            <p className="text-xs text-white leading-relaxed text-center font-medium">
+              💡 <span className="text-blue-200 font-bold underline">Khusus Jamaah:</span> Jika belum melunasi paket, akun Anda belum aktif. Gunakan Email & Password yang Anda daftarkan saat membeli paket untuk Masuk.
+            </p>
+          </div>
+
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold text-white mb-2">

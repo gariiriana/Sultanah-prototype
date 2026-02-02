@@ -23,7 +23,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin, onRegist
     phone: '',
     password: '',
     confirmPassword: '',
-    role: 'prospective-jamaah' as UserRole,
+    role: 'affiliator' as UserRole,
     referralCode: '',
     followersCount: '',
     socialMediaAccount: '',
@@ -66,7 +66,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin, onRegist
 
       // ✅ FIX: For roles requiring approval, DON'T navigate away
       // Let AppContent routing handle the redirect to WaitingApprovalPage
-      const rolesRequiringApproval = ['agen', 'brand_ambassador', 'tour-leader', 'mutawwif', 'influencer'];
+      const rolesRequiringApproval = ['agen', 'brand_ambassador', 'tour-leader', 'mutawwif', 'influencer', 'affiliator'];
       if (!rolesRequiringApproval.includes(formData.role)) {
         onRegisterSuccess();
       }
@@ -95,9 +95,8 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin, onRegist
   };
 
   const roleOptions = [
-    { value: 'prospective-jamaah', label: 'Calon Jamaah', description: 'Saya ingin mendaftar Umrah/Haji' },
-    { value: 'affiliator', label: 'Affiliator', description: 'Daftar program afiliasi (komisi per jamaah)' }, // ✅ NEW
-    { value: 'influencer', label: 'Influencer', description: 'Kolaborasi media sosial (perlu persetujuan)' }, // ✅ NEW
+    { value: 'affiliator', label: 'Affiliator', description: 'Daftar program afiliasi (komisi per jamaah)' },
+    { value: 'influencer', label: 'Influencer', description: 'Kolaborasi media sosial (perlu persetujuan)' },
     { value: 'tour-leader', label: 'Tour Leader', description: 'Daftar sebagai tour leader (perlu persetujuan)' },
     { value: 'mutawwif', label: 'Mutawwif', description: 'Daftar sebagai mutawwif (perlu persetujuan)' },
   ];
@@ -148,6 +147,13 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin, onRegist
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
           }}
         >
+          {/* Info Banner for Jamaah */}
+          <div className="mb-6 p-4 rounded-2xl bg-blue-500/20 border border-blue-400/30 backdrop-blur-md">
+            <p className="text-xs text-white leading-relaxed text-center font-medium">
+              💡 <span className="text-blue-200 font-bold underline">Khusus Jamaah:</span> Anda tidak perlu daftar di sini. Silakan langsung pilih & beli paket di menu depan. Akun Anda aktif otomatis setelah pembelian.
+            </p>
+          </div>
+
           {/* Header */}
           <div className="text-center mb-6">
             <h1 className="text-2xl font-bold text-white mb-2">

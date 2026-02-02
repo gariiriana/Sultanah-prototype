@@ -23,8 +23,11 @@ export async function autoCreateReferralCode(
   userEmail?: string
 ): Promise<boolean> {
   try {
-    // Only create for Alumni & Agen
-    if (userRole !== 'alumni' && userRole !== 'agen') {
+    const agentRoles = ['agen', 'brand_ambassador', 'influencer', 'affiliator'];
+    const allEligibleRoles = ['alumni', ...agentRoles];
+
+    // Only create for Alumni & Agen types
+    if (!allEligibleRoles.includes(userRole)) {
       console.log('⚠️ [AUTO-REFERRAL] Role not eligible for referral:', userRole);
       return false;
     }
@@ -38,14 +41,13 @@ export async function autoCreateReferralCode(
 
     // ✅ ENHANCED: Allow Admin to create referral codes for other users
     // This is needed for Admin approval flow (Admin approves Agen → auto-create referral code)
-    const isCreatingForSelf = currentUser.uid === userId;
     const isAdminCreatingForOthers = currentUser.uid !== userId;
-    
+
     if (isAdminCreatingForOthers) {
       // Check if current user is admin
       const currentUserDoc = await getDoc(doc(db, 'users', currentUser.uid));
       const currentUserRole = currentUserDoc.exists() ? currentUserDoc.data().role : null;
-      
+
       if (currentUserRole !== 'admin') {
         console.error('❌ [AUTO-REFERRAL] User ID mismatch! Only admin can create referral codes for other users.', {
           currentUser: currentUser.uid,
@@ -54,7 +56,7 @@ export async function autoCreateReferralCode(
         });
         return false;
       }
-      
+
       console.log('✅ [AUTO-REFERRAL] Admin creating referral code for another user:', {
         adminUid: currentUser.uid,
         adminEmail: currentUser.email,
@@ -80,21 +82,21 @@ export async function autoCreateReferralCode(
     }
 
     // Check if referral code already exists in alumniReferrals
-    const collectionName = userRole === 'agen' ? 'agenReferrals' : 'alumniReferrals';
+    const collectionName = userRole === 'alumni' ? 'alumniReferrals' : 'agenReferrals';
     const referralRef = doc(db, collectionName, userId);
     const referralSnap = await getDoc(referralRef);
 
     if (referralSnap.exists()) {
       const existingCode = referralSnap.data().referralCode;
       console.log('✅ [AUTO-REFERRAL] Referral already exists:', existingCode);
-      
+
       // ✅ Ensure it also exists in referralCodes master collection
       const codeRef = doc(db, 'referralCodes', existingCode);
       const codeSnap = await getDoc(codeRef);
-      
+
       if (!codeSnap.exists()) {
         // Create in master collection if missing (migration case)
-        const commissionAmount = userRole === 'agen' ? 500000 : 200000;
+        const commissionAmount = userRole === 'alumni' ? 200000 : 500000;
         await setDoc(codeRef, {
           code: existingCode,
           ownerId: userId,
@@ -108,14 +110,14 @@ export async function autoCreateReferralCode(
         });
         console.log('✅ [AUTO-REFERRAL] Migrated existing code to master collection:', existingCode);
       }
-      
+
       return true;
     }
 
     // Generate new referral code
     const referralCode = await generateUniqueReferralCode(displayName);
-    const commissionAmount = userRole === 'agen' ? 500000 : 200000;
-    
+    const commissionAmount = userRole === 'alumni' ? 200000 : 500000;
+
     console.log('🔧 [AUTO-REFERRAL] Creating NEW referral code...', {
       userId,
       userRole,
@@ -142,7 +144,7 @@ export async function autoCreateReferralCode(
         updatedAt: new Date().toISOString(),
       });
       console.log('✅ [AUTO-REFERRAL] Step 1/2: Created in referralCodes collection');
-      
+
       // 2. Create in role-specific collection (alumniReferrals OR agenReferrals)
       const roleRef = doc(db, collectionName, userId);
       await setDoc(roleRef, {
@@ -161,12 +163,12 @@ export async function autoCreateReferralCode(
         approvedCommission: 0,
       }, { merge: false }); // ✅ Explicit: Don't merge, create new document
       console.log(`✅ [AUTO-REFERRAL] Step 2/2: Created in ${collectionName} collection`);
-      
+
     } catch (createError: any) {
       console.error('❌ [AUTO-REFERRAL] Error during document creation:', createError);
       console.error('❌ Error code:', createError.code);
       console.error('❌ Error message:', createError.message);
-      
+
       // ✅ DETAILED ERROR LOGGING for debugging
       if (createError.code === 'permission-denied') {
         console.error('🚨 PERMISSION DENIED! Possible causes:');
@@ -184,10 +186,10 @@ export async function autoCreateReferralCode(
           ownerId: userId,
         });
       }
-      
+
       throw createError; // Re-throw to be caught by outer try-catch
     }
-    
+
     console.log('✅ [AUTO-REFERRAL] Referral code created successfully in BOTH collections!');
     console.log(`✅ Collections: referralCodes + ${collectionName}`);
     console.log(
@@ -231,18 +233,18 @@ async function generateUniqueReferralCode(displayName: string, maxRetries: numbe
     const prefix = firstName.substring(0, 3).toUpperCase();
     const randomNum = Math.floor(1000 + Math.random() * 9000);
     const code = `SULTANAH-${prefix}${randomNum}`;
-    
+
     // Check if code already exists
     const codeRef = doc(db, 'referralCodes', code);
     const codeSnap = await getDoc(codeRef);
-    
+
     if (!codeSnap.exists()) {
       return code; // Code is unique
     }
-    
+
     console.log('⚠️ [AUTO-REFERRAL] Code collision, regenerating...', code);
   }
-  
+
   // Fallback: use timestamp
   const timestamp = Date.now().toString().slice(-4);
   return `SULTANAH-USR${timestamp}`;
