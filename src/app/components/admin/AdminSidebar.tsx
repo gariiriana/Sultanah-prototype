@@ -62,7 +62,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChange }) =
       items: [
         { id: 'item-requests', label: 'Pesanan Marketplace', icon: ShoppingCart }, // ✅ Menu untuk approval pesanan marketplace
         { id: 'savings-approval', label: 'Approval Tabungan', icon: Wallet }, // ✅ NEW
-        { id: 'upgrade-requests', label: 'Calon → Jamaah', icon: ArrowUpCircle },
       ]
     },
     {

@@ -189,8 +189,7 @@ const TourLeaderDashboard = () => {
                     }}
                     className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl font-semibold transition-all bg-white text-gray-700 hover:bg-gray-100 border border-gray-200"
                   >
-                    <User className="w-5 h-5" />
-                    <span>Profile</span>
+                    <span>Profil</span>
                   </button>
                 </div>
 

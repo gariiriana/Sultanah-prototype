@@ -1326,7 +1326,7 @@ const ProspectiveJamaahDashboard = () => {
               </div>
               <div className="hidden sm:block">
                 <h1 className="font-bold text-gray-900 text-sm">Calon Jamaah Sultanah</h1>
-                <p className="text-xs text-gray-500">Welcome, {userProfile?.displayName || 'Guest'}</p>
+                <p className="text-xs text-gray-500">Selamat datang, {userProfile?.displayName || 'Tamu'}</p>
               </div>
             </div>
 
@@ -1336,49 +1336,49 @@ const ProspectiveJamaahDashboard = () => {
                 onClick={() => scrollToSection(dashboardRef)}
                 className="text-gray-700 hover:text-[#D4AF37] transition-all text-sm font-medium relative group whitespace-nowrap px-2.5"
               >
-                <span className="relative z-10">Dashboard</span>
+                <span className="relative z-10">Beranda</span>
                 <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </button>
               <button
                 onClick={() => scrollToSection(packagesRef)}
                 className="text-gray-700 hover:text-[#D4AF37] transition-all text-sm font-medium relative group whitespace-nowrap px-2.5"
               >
-                <span className="relative z-10">Packages</span>
+                <span className="relative z-10">Paket</span>
                 <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </button>
               <button
                 onClick={() => scrollToSection(promosRef)}
                 className="text-gray-700 hover:text-[#D4AF37] transition-all text-sm font-medium relative group whitespace-nowrap px-2.5"
               >
-                <span className="relative z-10">Promos</span>
+                <span className="relative z-10">Promo</span>
                 <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </button>
               <button
                 onClick={() => scrollToSection(educationRef)}
                 className="text-gray-700 hover:text-[#D4AF37] transition-all text-sm font-medium relative group whitespace-nowrap px-2.5"
               >
-                <span className="relative z-10">Education</span>
+                <span className="relative z-10">Edukasi</span>
                 <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </button>
               <button
                 onClick={() => scrollToSection(newsRef)}
                 className="text-gray-700 hover:text-[#D4AF37] transition-all text-sm font-medium relative group whitespace-nowrap px-2.5"
               >
-                <span className="relative z-10">News & Articles</span>
+                <span className="relative z-10">Artikel</span>
                 <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </button>
               <button
                 onClick={() => scrollToSection(testimonialsRef)}
                 className="text-gray-700 hover:text-[#D4AF37] transition-all text-sm font-medium relative group whitespace-nowrap px-2.5"
               >
-                <span className="relative z-10">Testimonials</span>
+                <span className="relative z-10">Testimoni</span>
                 <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </button>
               <button
                 onClick={() => scrollToSection(contactRef)}
                 className="text-gray-700 hover:text-[#D4AF37] transition-all text-sm font-medium relative group whitespace-nowrap px-2.5"
               >
-                <span className="relative z-10">Contact Us</span>
+                <span className="relative z-10">Kontak Kami</span>
                 <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </button>
             </div>

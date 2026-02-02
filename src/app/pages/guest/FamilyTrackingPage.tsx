@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Users, MapPin, Clock, X, ArrowLeft, Camera, Calendar, Info, CheckCircle2 } from 'lucide-react';
+import { Search, Users, MapPin, Clock, X, ArrowLeft, Camera, Calendar, Info, CheckCircle2, Image } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { useNavigate } from 'react-router-dom';
@@ -70,7 +70,7 @@ const FamilyTrackingPage = () => {
     const [itinerary, setItinerary] = useState<ItineraryData | null>(null);
     const [loadingItinerary, setLoadingItinerary] = useState(false);
     const [tripPhotos, setTripPhotos] = useState<TripPhoto[]>([]);
-    const [loadingPhotos, setLoadingPhotos] = useState(false);
+
     const [selectedDay, setSelectedDay] = useState<number | null>(null);
     const [activeGalleryTab, setActiveGalleryTab] = useState<'all' | TripPhoto['category']>('all');
     const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
@@ -574,7 +574,7 @@ const FamilyTrackingPage = () => {
                                                     </div>
                                                 ) : (
                                                     <div className="bg-gray-50 rounded-2xl p-6 text-center border border-dashed border-gray-200">
-                                                        <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                                                        <Image className="w-8 h-8 text-gray-300 mx-auto mb-2" />
                                                         <p className="text-xs text-gray-500">Tour Leader belum mengunggah foto galeri.</p>
                                                     </div>
                                                 )}

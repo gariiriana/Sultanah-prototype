@@ -36,10 +36,14 @@ const WaitingApprovalPage: React.FC = () => {
     <div className="min-h-screen relative flex items-center justify-center p-6">
       {/* FULL SCREEN BACKGROUND - Beautiful Kaaba Photo */}
       <div
+        className="absolute inset-0 bg-cover bg-center"
         style={{
           backgroundImage: `url(/images/mecca-clock-tower.jpg)`
         }}
       />
+
+      {/* DARK OVERLAY for Readability */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px]" />
 
       {/* BACK BUTTON - TOP LEFT */}
       <motion.button
@@ -52,6 +56,11 @@ const WaitingApprovalPage: React.FC = () => {
         <ArrowLeft className="w-5 h-5" />
         <span className="font-medium text-sm">Kembali ke Login</span>
       </motion.button>
+
+      {/* DEBUG BANNER */}
+      <div className="fixed top-0 left-0 right-0 bg-red-600 text-white text-[50px] font-black z-[9999] text-center pointer-events-none p-4 opacity-50">
+        FILE AUTH/WAITING_APPROVAL_PAGE ACTIVE
+      </div>
 
       {/* CENTER CONTENT */}
       <motion.div
@@ -69,10 +78,10 @@ const WaitingApprovalPage: React.FC = () => {
           />
         </div>
 
-        {/* Glassmorphism Card - BENAR-BENAR TRANSPARAN */}
-        <div className="bg-white/20 backdrop-blur-2xl rounded-3xl shadow-2xl p-10 pt-20 border border-white/30"
+        {/* Glassmorphism Card */}
+        <div className="bg-white/10 backdrop-blur-3xl rounded-3xl shadow-2xl p-8 md:p-12 border border-white/20"
           style={{
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
           }}
         >
           {/* Icon - Animated Clock */}
@@ -121,24 +130,23 @@ const WaitingApprovalPage: React.FC = () => {
               </div>
             </div>
 
-            <div className="border-t border-white/20 pt-4">
-              <h4 className="text-white font-semibold mb-3">📋 Proses Selanjutnya:</h4>
-              <ul className="space-y-2 text-white/90 text-sm">
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-300 font-bold">1.</span>
-                  <span>Role yang Anda pilih (<strong>{getRoleLabel(userProfile?.role || 'Tour Leader')}</strong>) memerlukan <strong>proses verifikasi manual</strong> oleh tim Sultanah Travel.</span>
+            <div className="border-t border-white/20 pt-6">
+              <h4 className="text-white font-bold mb-4 flex items-center gap-2">
+                <span className="w-1.5 h-6 bg-blue-500 rounded-full" />
+                Proses Selanjutnya:
+              </h4>
+              <ul className="space-y-4 text-white/90 text-sm">
+                <li className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/30 text-blue-200 text-xs font-bold flex-shrink-0">1</span>
+                  <span>Role <span className="text-blue-300 font-bold">{getRoleLabel(userProfile?.role || 'Mitra')}</span> memerlukan verifikasi manual oleh tim Sultanah Travel.</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-300 font-bold">2.</span>
-                  <span>Proses ini biasanya memakan waktu <strong>1–2 hari kerja</strong>.</span>
+                <li className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/30 text-blue-200 text-xs font-bold flex-shrink-0">2</span>
+                  <span>Proses verifikasi ini biasanya memakan waktu <span className="text-blue-300 font-bold">1–2 hari kerja</span>.</span>
                 </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-300 font-bold">3.</span>
-                  <span>Kami akan menghubungi Anda melalui <strong>WhatsApp atau Email</strong> setelah akun disetujui.</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-blue-300 font-bold">4.</span>
-                  <span>Setelah disetujui, Anda dapat <strong>login</strong> dan mengakses dashboard sesuai role Anda.</span>
+                <li className="flex items-start gap-3 bg-white/5 p-3 rounded-xl border border-white/10">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/30 text-blue-200 text-xs font-bold flex-shrink-0">3</span>
+                  <span>Kami akan menghubungi Anda melalui <span className="text-blue-300 font-bold">WhatsApp atau Email</span> setelah akun disetujui.</span>
                 </li>
               </ul>
             </div>

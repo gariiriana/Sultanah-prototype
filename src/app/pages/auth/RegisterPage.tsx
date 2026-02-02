@@ -66,7 +66,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin, onRegist
 
       // ✅ FIX: For roles requiring approval, DON'T navigate away
       // Let AppContent routing handle the redirect to WaitingApprovalPage
-      const rolesRequiringApproval = ['agen', 'brand_ambassador', 'tour-leader', 'mutawwif', 'influencer', 'affiliator'];
+      const rolesRequiringApproval = ['tour-leader', 'mutawwif', 'influencer'];
       if (!rolesRequiringApproval.includes(formData.role)) {
         onRegisterSuccess();
       }

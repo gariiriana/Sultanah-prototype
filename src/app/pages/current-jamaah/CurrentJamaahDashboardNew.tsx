@@ -691,7 +691,7 @@ const CurrentJamaahDashboard = () => {
                 onClick={() => scrollToSection(dashboardRef)}
                 className="text-gray-700 hover:text-[#D4AF37] transition-all text-sm font-medium relative group whitespace-nowrap px-2"
               >
-                <span className="relative z-10">Dasbor</span>
+                <span className="relative z-10">Beranda</span>
                 <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </button>
               <button
@@ -1375,7 +1375,7 @@ const CurrentJamaahDashboard = () => {
                 className="group inline-flex items-center gap-3 px-8 py-4 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] hover:opacity-90 text-white rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
               >
                 <PenSquare className="w-5 h-5" />
-                <span>Submit Article</span>
+                <span>Kirim Artikel</span>
               </button>
             </div>
           )}
@@ -1706,7 +1706,7 @@ const CurrentJamaahDashboard = () => {
               <ul className="space-y-2">
                 <li>
                   <button onClick={() => scrollToSection(dashboardRef)} className="text-gray-400 hover:text-[#D4AF37] transition-colors">
-                    Dashboard
+                    Beranda
                   </button>
                 </li>
                 <li>

@@ -66,7 +66,7 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
     // Helper function to merge pending items from different sources
     function updatePendingItems(source: string, items: PendingItem[]) {
       pendingItemsCache[source] = items;
-      
+
       // Merge all pending items
       const allItems = [
         ...pendingItemsCache.payments,
@@ -76,17 +76,17 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
         ...pendingItemsCache.users,
         ...pendingItemsCache.upgrades
       ];
-      
+
       // Sort by timestamp (newest first)
       allItems.sort((a, b) => {
         const dateA = a.timestamp?.toDate?.() || new Date(a.timestamp || 0);
         const dateB = b.timestamp?.toDate?.() || new Date(b.timestamp || 0);
         return dateB.getTime() - dateA.getTime();
       });
-      
+
       setPendingItems(allItems);
       setTotalPending(allItems.length);
-      
+
       console.log('✅ Pending items updated:', {
         payments: pendingItemsCache.payments.length,
         marketplacePayments: pendingItemsCache.marketplacePayments.length,
@@ -118,7 +118,7 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
             link: '/admin/payment-management'
           };
         });
-        
+
         // Merge with other pending items
         updatePendingItems('payments', payments);
       },
@@ -150,7 +150,7 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
             link: '/admin/marketplace-orders'
           };
         });
-        
+
         updatePendingItems('marketplacePayments', marketplacePayments);
       },
       (error) => {
@@ -181,7 +181,7 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
             link: '/admin/commission-withdrawals' // ✅ FIXED: Changed from referral-program to commission-withdrawals
           };
         });
-        
+
         updatePendingItems('withdrawals', withdrawals);
       },
       (error) => {
@@ -213,7 +213,7 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
             link: '/admin/artikel'
           };
         });
-        
+
         updatePendingItems('articles', articles);
       },
       (error) => {
@@ -224,26 +224,31 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
     );
     unsubscribers.push(unsubArticles);
 
-    // 5️⃣ USERS (pending approval)
+    // 5️⃣ USERS (pending approval for marketing roles/staff)
     const usersQuery = query(
       collection(db, 'users'),
-      where('isApproved', '==', false)
+      where('approvalStatus', '==', 'pending')
     );
     const unsubUsers = onSnapshot(
       usersQuery,
       (snapshot) => {
         const users: PendingItem[] = snapshot.docs.map(doc => {
           const data = doc.data();
+          const roleLabel = data.role === 'tour-leader' ? 'Tour Leader' :
+            data.role === 'mutawwif' ? 'Mutawwif' :
+              data.role === 'influencer' ? 'Influencer' :
+                data.role === 'brand_ambassador' ? 'Brand Ambassador' : 'User';
+
           return {
             id: doc.id,
             type: 'user' as const,
-            title: `User Registration`,
-            description: `${data.displayName || data.email || 'Unknown'} - ${data.role || 'user'}`,
-            timestamp: data.createdAt,
+            title: `${roleLabel} Registration`,
+            description: `${data.displayName || data.email || 'Unknown'} waiting for approval`,
+            timestamp: data.approvalRequestedAt || data.createdAt,
             link: '/admin/users'
           };
         });
-        
+
         updatePendingItems('users', users);
       },
       (error) => {
@@ -273,7 +278,7 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
             link: '/admin/users'
           };
         });
-        
+
         updatePendingItems('upgrades', upgrades);
       },
       (error) => {
@@ -296,13 +301,13 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    
+
     if (diffMins < 1) return 'Just now';
     if (diffMins < 60) return `${diffMins}m ago`;
-    
+
     const diffHours = Math.floor(diffMins / 60);
     if (diffHours < 24) return `${diffHours}h ago`;
-    
+
     const diffDays = Math.floor(diffHours / 24);
     return `${diffDays}d ago`;
   };
@@ -358,9 +363,9 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
   // ✅ NEW: Navigation handler for each notification type
   const handleNotificationClick = (item: PendingItem) => {
     console.log('🔔 Notification clicked:', item.type, item.id);
-    
+
     setShowNotifications(false);
-    
+
     // Navigate based on item type
     switch (item.type) {
       case 'payment':
@@ -368,33 +373,33 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
         navigate('/admin/payment-management');
         console.log('→ Navigating to Payment Management');
         break;
-        
+
       case 'marketplace-payment':
       case 'marketplace-order':
         // Marketplace Order → Marketplace Orders page
         navigate('/admin/marketplace-orders');
         console.log('→ Navigating to Marketplace Orders');
         break;
-        
+
       case 'withdrawal':
         // Withdrawal → Commission Withdrawals page
         navigate('/admin/commission-withdrawals'); // ✅ FIXED: Changed from referral-program to commission-withdrawals
         console.log('→ Navigating to Commission Withdrawals');
         break;
-        
+
       case 'article':
         // Article → Artikel page
         navigate('/admin/artikel');
         console.log('→ Navigating to Artikel');
         break;
-        
+
       case 'user':
       case 'upgrade':
         // User registration or upgrade → Users page
         navigate('/admin/users');
         console.log('→ Navigating to Users');
         break;
-        
+
       default:
         // Fallback to item.link if provided
         if (item.link) {
@@ -404,7 +409,7 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
           console.warn('No navigation route for type:', item.type);
         }
     }
-    
+
     // Also call optional callback if provided
     if (onNotificationClick) {
       onNotificationClick(item.type as any, item.id);
@@ -523,22 +528,20 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
 
             {/* Notification Bell */}
             <div className="relative">
-              <button 
+              <button
                 onClick={() => setShowNotifications(!showNotifications)}
-                className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 group ${
-                  totalPending > 0 
-                    ? 'bg-red-50 hover:bg-red-100 border-2 border-red-200' 
-                    : 'bg-gray-100 hover:bg-gray-200'
-                }`}
+                className={`relative w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 group ${totalPending > 0
+                  ? 'bg-red-50 hover:bg-red-100 border-2 border-red-200'
+                  : 'bg-gray-100 hover:bg-gray-200'
+                  }`}
               >
-                <Bell className={`w-5 h-5 transition-colors ${
-                  totalPending > 0 
-                    ? 'text-red-600 group-hover:text-red-700' 
-                    : 'text-gray-600 group-hover:text-[#D4AF37]'
-                }`} />
+                <Bell className={`w-5 h-5 transition-colors ${totalPending > 0
+                  ? 'text-red-600 group-hover:text-red-700'
+                  : 'text-gray-600 group-hover:text-[#D4AF37]'
+                  }`} />
                 {/* Notification Badge */}
                 {totalPending > 0 && (
-                  <motion.span 
+                  <motion.span
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center"
@@ -553,11 +556,11 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
                 {showNotifications && (
                   <>
                     {/* Backdrop */}
-                    <div 
-                      className="fixed inset-0 z-30" 
+                    <div
+                      className="fixed inset-0 z-30"
                       onClick={() => setShowNotifications(false)}
                     />
-                    
+
                     {/* Notification Panel */}
                     <motion.div
                       initial={{ opacity: 0, y: -10, scale: 0.95 }}
@@ -656,11 +659,11 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
             {/* User Avatar */}
             <div className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-[#D4AF37]/10 to-[#FFD700]/10 rounded-xl border border-[#D4AF37]/20">
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#FFD700] flex items-center justify-center text-white font-bold text-sm">
-                {userProfile?.name?.charAt(0).toUpperCase() || 'A'}
+                {userProfile?.displayName?.charAt(0).toUpperCase() || 'A'}
               </div>
               <div className="hidden sm:block">
                 <p className="text-xs font-semibold text-gray-800 leading-tight">
-                  {userProfile?.name || 'Admin'}
+                  {userProfile?.displayName || 'Admin'}
                 </p>
                 <p className="text-xs text-gray-500 capitalize leading-tight">
                   {userProfile?.role || 'admin'}
@@ -686,24 +689,24 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
               >
                 {/* Gradient Background - appears on hover */}
                 <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-3 transition-opacity duration-200`} />
-                
+
                 <div className="relative p-3.5">
                   <div className="flex items-center gap-3 mb-2">
                     {/* Icon */}
                     <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${stat.iconBg} flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-200`}>
-                      <Icon className="w-4.5 h-4.5" style={{ 
+                      <Icon className="w-4.5 h-4.5" style={{
                         color: stat.gradient === 'from-blue-500 to-blue-600' ? '#3B82F6' :
-                               stat.gradient === 'from-green-500 to-emerald-600' ? '#10B981' :
-                               stat.gradient === 'from-purple-500 to-purple-600' ? '#A855F7' :
-                               stat.gradient === 'from-orange-500 to-orange-600' ? '#F97316' :
-                               stat.gradient === 'from-pink-500 to-pink-600' ? '#EC4899' :
-                               stat.gradient === 'from-gray-500 to-gray-600' ? '#6B7280' :
-                               stat.gradient === 'from-indigo-500 to-indigo-600' ? '#6366F1' :
-                               '#D4AF37'
+                          stat.gradient === 'from-green-500 to-emerald-600' ? '#10B981' :
+                            stat.gradient === 'from-purple-500 to-purple-600' ? '#A855F7' :
+                              stat.gradient === 'from-orange-500 to-orange-600' ? '#F97316' :
+                                stat.gradient === 'from-pink-500 to-pink-600' ? '#EC4899' :
+                                  stat.gradient === 'from-gray-500 to-gray-600' ? '#6B7280' :
+                                    stat.gradient === 'from-indigo-500 to-indigo-600' ? '#6366F1' :
+                                      '#D4AF37'
                       }} />
                     </div>
                   </div>
-                  
+
                   {/* Text */}
                   <div>
                     <p className="text-xs font-medium text-gray-600 mb-1.5 leading-tight">{stat.title}</p>
@@ -711,7 +714,7 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
                       {stat.value}
                     </p>
                   </div>
-                  
+
                   {/* Bottom accent line */}
                   <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${stat.gradient} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left`} />
                 </div>

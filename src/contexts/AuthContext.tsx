@@ -271,8 +271,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const selectedRole = role || 'prospective-jamaah';
 
-    // ✅ NEW: Set approval status for tour-leader, mutawwif, agen & influencer
-    const requiresApproval = selectedRole === 'tour-leader' || selectedRole === 'mutawwif' || selectedRole === 'agen' || selectedRole === 'influencer';
+    // ✅ NEW: Set approval status for tour-leader, mutawwif & influencer (Affiliator is instant)
+    const requiresApproval = selectedRole === 'tour-leader' || selectedRole === 'mutawwif' || selectedRole === 'influencer';
 
     // Create user profile in Firestore
     const userProfile: UserProfile = {
@@ -352,8 +352,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (userDoc.exists()) {
         const userData = userDoc.data() as UserProfile;
 
-        // Check if user is tour-leader, mutawwif or agen with REJECTED approval
-        const requiresApproval = userData.role === 'tour-leader' || userData.role === 'mutawwif' || userData.role === 'agen';
+        // Check if user is tour-leader, mutawwif or influencer with REJECTED approval
+        const requiresApproval = userData.role === 'tour-leader' || userData.role === 'mutawwif' || userData.role === 'influencer';
 
         // ✅ FIX: Only block REJECTED users, NOT pending users
         // Pending users should be allowed to login and see WaitingApprovalPage
