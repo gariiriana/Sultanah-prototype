@@ -596,8 +596,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
       return;
     }
 
-    if (!passportNumber || !passportExpiry || !passportPhoto || !ktpPhoto || !kkDocument ||
-      !birthCertificate || !visaDocument || !flightTicket || !vaccinationCertificate) {
+    if (!ktpPhoto || !kkDocument || !birthCertificate || !flightTicket || !vaccinationCertificate) {
       toast.error('Please upload all required documents');
       return;
     }
@@ -947,7 +946,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Passport Number */}
               <div>
-                <Label>Passport Number <span className="text-red-500">*</span></Label>
+                <Label>Passport Number</Label>
                 <Input
                   value={passportNumber}
                   onChange={(e) => setPassportNumber(e.target.value)}
@@ -958,7 +957,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
 
               {/* Passport Expiry */}
               <div>
-                <Label>Passport Expiry <span className="text-red-500">*</span></Label>
+                <Label>Passport Expiry</Label>
                 <Input
                   type="date"
                   value={passportExpiry}
@@ -969,7 +968,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
 
               {/* Passport Photo */}
               <div>
-                <Label>Passport Photo <span className="text-red-500">*</span></Label>
+                <Label>Passport Photo</Label>
                 <p className="text-xs text-gray-500 mb-2">Max 500KB - Gambar akan otomatis dikompres</p>
                 {passportPhoto ? (
                   <div className="relative border-2 border-green-300 rounded-lg p-3 bg-green-50">
@@ -1101,7 +1100,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
               {/* Visa Document */}
               <DocumentUpload
                 label="Visa Umroh"
-                required
+                required={false}
                 value={visaDocument}
                 onChange={handleFileUpload(setVisaDocument)}
                 onClear={() => setVisaDocument('')}

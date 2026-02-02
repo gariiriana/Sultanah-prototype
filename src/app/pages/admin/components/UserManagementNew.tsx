@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
+import { Checkbox } from '../../../components/ui/checkbox';
 import { toast } from 'sonner';
 import { collection, getDocs, query, updateDoc, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../../../config/firebase';
@@ -57,6 +58,11 @@ export default function UserManagementNew() {
     userId: null,
     email: null
   });
+
+  // ✅ NEW: State for bulk selection and deletion
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -237,6 +243,75 @@ export default function UserManagementNew() {
     fetchUsers();
   };
 
+  // ✅ NEW: Bulk Selection Handlers
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      // Select all visible users
+      const allIds = new Set(filteredUsers.map(u => u.id));
+      setSelectedUserIds(allIds);
+    } else {
+      setSelectedUserIds(new Set());
+    }
+  };
+
+  const handleSelectUser = (userId: string, checked: boolean) => {
+    const newSelected = new Set(selectedUserIds);
+    if (checked) {
+      newSelected.add(userId);
+    } else {
+      newSelected.delete(userId);
+    }
+    setSelectedUserIds(newSelected);
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedUserIds.size === 0) return;
+
+    setIsDeleting(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    // Convert Set to Array for iteration
+    const usersToDelete = Array.from(selectedUserIds);
+    const usersToDeleteDetails = users.filter(u => selectedUserIds.has(u.id));
+
+    console.log(`🗑️ Starting bulk delete for ${usersToDelete.length} users...`);
+
+    for (const userId of usersToDelete) {
+      try {
+        // 1. Cleanup associated referral data if any
+        const collectionsToCleanup = ['agenReferrals', 'alumniReferrals', 'referralTracking'];
+        for (const colName of collectionsToCleanup) {
+          try {
+            await deleteDoc(doc(db, colName, userId));
+          } catch (e) {
+            // Ignore cleanup errors
+          }
+        }
+
+        // 2. Delete the user record
+        await deleteDoc(doc(db, 'users', userId));
+        successCount++;
+      } catch (error) {
+        console.error(`Failed to delete user ID ${userId}:`, error);
+        failCount++;
+      }
+    }
+
+    setIsDeleting(false);
+    setShowBulkDeleteConfirm(false);
+    setSelectedUserIds(new Set()); // Clear selection
+
+    if (successCount > 0) {
+      toast.success(`Successfully deleted ${successCount} users.`);
+    }
+    if (failCount > 0) {
+      toast.error(`Failed to delete ${failCount} users.`);
+    }
+
+    fetchUsers(); // Refresh list
+  };
+
   const filteredUsers = users.filter(user => {
     // ✅ FIX: Filter by role - if influencer is selected, show both influencer and agen
     const matchesRole =
@@ -370,6 +445,17 @@ export default function UserManagementNew() {
           >
             🔄 Refresh Data
           </Button>
+
+          {/* ✅ NEW: Bulk Delete Button */}
+          {selectedUserIds.size > 0 && (
+            <Button
+              onClick={() => setShowBulkDeleteConfirm(true)}
+              className="bg-red-600 hover:bg-red-700 text-white animate-in fade-in slide-in-from-right-5"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Selected ({selectedUserIds.size})
+            </Button>
+          )}
         </div>
       </div>
 
@@ -412,6 +498,15 @@ export default function UserManagementNew() {
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-10">
+                  <div className="flex items-center">
+                    <Checkbox
+                      checked={filteredUsers.length > 0 && selectedUserIds.size === filteredUsers.length}
+                      onCheckedChange={(checked) => handleSelectAll(!!checked)}
+                      aria-label="Select all"
+                    />
+                  </div>
+                </th>
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   User Info
                 </th>
@@ -449,6 +544,14 @@ export default function UserManagementNew() {
                     transition={{ delay: index * 0.03 }}
                     className="hover:bg-gray-50 transition-colors"
                   >
+                    {/* Selection Checkbox */}
+                    <td className="px-6 py-4">
+                      <Checkbox
+                        checked={selectedUserIds.has(user.id)}
+                        onCheckedChange={(checked) => handleSelectUser(user.id, !!checked)}
+                        aria-label={`Select user ${user.displayName}`}
+                      />
+                    </td>
                     {/* User Info */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
@@ -777,6 +880,18 @@ export default function UserManagementNew() {
         title="Delete User"
         message={`Are you sure you want to delete user ${deleteConfirm.email}? This action cannot be undone.`}
         confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showBulkDeleteConfirm}
+        onClose={() => setShowBulkDeleteConfirm(false)}
+        onConfirm={handleBulkDelete}
+        title={`Delete ${selectedUserIds.size} Users`}
+        message={`Are you sure you want to delete ${selectedUserIds.size} selected users? This action cannot be undone and will remove all their data permanently.`}
+        confirmText={isDeleting ? "Deleting..." : "Delete All"}
         cancelText="Cancel"
         type="danger"
       />
