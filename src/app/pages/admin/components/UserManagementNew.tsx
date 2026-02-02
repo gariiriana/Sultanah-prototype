@@ -11,17 +11,19 @@ import {
   AlertCircle,
   Shield,
   User,
-  Award
+  Award,
+  Trash2
 } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { toast } from 'sonner';
-import { collection, getDocs, query, updateDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, query, updateDoc, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../../../config/firebase';
 import { User as UserType, UserRole } from '../../../../types';
 import VerificationRequestModal from './VerificationRequestModal';
 import UserProfileDetailModal from './UserProfileDetailModal'; // ✅ NEW: Import profile detail modal
 import { autoCreateReferralCode } from '../../../../utils/autoCreateReferralCode'; // ✅ NEW: Auto-create referral code
+import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 
 interface UserWithVerification extends UserType {
   verificationRequest?: {
@@ -49,6 +51,13 @@ export default function UserManagementNew() {
   const [showProfileDetail, setShowProfileDetail] = useState(false);
   const [profileDetailUser, setProfileDetailUser] = useState<{ userId: string; email: string; role: string; name: string } | null>(null);
 
+  // ✅ NEW: State for deletion confirmation
+  const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; userId: string | null; email: string | null }>({
+    isOpen: false,
+    userId: null,
+    email: null
+  });
+
   useEffect(() => {
     fetchUsers();
   }, []); // ✅ FIX: Only fetch once on mount, not on selectedRole change
@@ -66,10 +75,10 @@ export default function UserManagementNew() {
         ...doc.data()
       })) as UserWithVerification[];
 
-      // ✅ DEBUG: Log agen data to check approval status
-      const agenUsers = usersData.filter(u => u.role === 'agen');
-      if (agenUsers.length > 0) {
-        console.log('🔍 AGEN DATA DEBUG:', agenUsers.map(u => ({
+      // ✅ DEBUG: Log influencer data to check approval status
+      const influencerUsers = usersData.filter(u => u.role === 'agen' || u.role === 'influencer');
+      if (influencerUsers.length > 0) {
+        console.log('🔍 INFLUENCER DATA DEBUG:', influencerUsers.map(u => ({
           email: u.email,
           role: u.role,
           approvalStatus: u.approvalStatus,
@@ -120,8 +129,8 @@ export default function UserManagementNew() {
         approvedAt: new Date().toISOString(),
       });
 
-      // ✅ ENHANCED: Auto-create referral code for Alumni & Agen with better feedback
-      if (userRole === 'alumni' || userRole === 'agen') {
+      // ✅ ENHANCED: Auto-create referral code for Alumni & Influencer with better feedback
+      if (userRole === 'alumni' || userRole === 'agen' || userRole === 'influencer') {
         console.log('🔗 [ADMIN-APPROVAL] Auto-creating referral code for approved user...', {
           userId,
           userEmail,
@@ -170,9 +179,70 @@ export default function UserManagementNew() {
     setShowVerificationModal(true);
   };
 
+  const handleDeleteUser = async (userId: string, userEmail: string) => {
+    try {
+      // 1. Cleanup associated referral data if any
+      const collectionsToCleanup = ['agenReferrals', 'alumniReferrals', 'referralTracking'];
+      for (const colName of collectionsToCleanup) {
+        try {
+          await deleteDoc(doc(db, colName, userId));
+        } catch (e) {
+          console.warn(`Could not delete from ${colName}:`, e);
+        }
+      }
+
+      // 2. Delete the user record
+      await deleteDoc(doc(db, 'users', userId));
+
+      toast.success(`User ${userEmail} has been deleted successfully`);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error deleting user:', error);
+      // Better error message for the user
+      const errorMessage = error.code === 'permission-denied'
+        ? 'Permission denied: Only supervisors or owners can delete users.'
+        : `Failed to delete user: ${error.message || 'Unknown error'}`;
+      toast.error(errorMessage);
+    }
+  };
+
+  const purgeAgenUsers = async () => {
+    // Hidden functionality - can be manually triggered if needed from console, but removed from UI button
+    const agenUsers = users.filter(u => u.role === 'agen');
+    if (agenUsers.length === 0) {
+      toast.info('No legacy "Agen" users to purge');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete ALL ${agenUsers.length} users with "agen" role? This cannot be undone.`)) {
+      return;
+    }
+
+    let successCount = 0;
+    let failCount = 0;
+
+    toast.info(`Purging ${agenUsers.length} "Agen" users...`);
+
+    for (const user of agenUsers) {
+      try {
+        await deleteDoc(doc(db, 'users', user.id));
+        successCount++;
+      } catch (error) {
+        console.error(`Failed to delete user ${user.email}:`, error);
+        failCount++;
+      }
+    }
+
+    toast.success(`Purge completed: ${successCount} deleted, ${failCount} failed`);
+    fetchUsers();
+  };
+
   const filteredUsers = users.filter(user => {
-    // ✅ FIX: Filter by role first
-    const matchesRole = selectedRole === 'all' || user.role === selectedRole;
+    // ✅ FIX: Filter by role - if influencer is selected, show both influencer and agen
+    const matchesRole =
+      selectedRole === 'all' ||
+      (selectedRole === 'influencer' && (user.role === 'influencer' || user.role === 'agen' || user.role === 'reseller_agen')) ||
+      user.role === selectedRole;
 
     const matchesSearch =
       user.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -194,13 +264,19 @@ export default function UserManagementNew() {
       'supervisor': { label: 'Supervisor', color: 'bg-indigo-100 text-indigo-700', icon: Shield },
       'direktur': { label: 'Direktur', color: 'bg-pink-100 text-pink-700', icon: Shield },
       'brand_ambassador': { label: 'Brand Ambassador', color: 'bg-cyan-100 text-cyan-700', icon: Shield },
-      'agen': { label: 'Agen', color: 'bg-cyan-100 text-cyan-700', icon: Shield }, // Corrected label for 'agen'
+      'agen': { label: 'Influencer', color: 'bg-cyan-100 text-cyan-700', icon: Shield }, // ✅ RENAMED: Use Influencer label for agen role
+      'influencer': { label: 'Influencer', color: 'bg-indigo-100 text-indigo-700', icon: Award },
       'super_admin': { label: 'Super Admin', color: 'bg-black text-white', icon: Shield },
       'jamaah': { label: 'Jamaah', color: 'bg-slate-100 text-slate-700', icon: Users },
       'alumni_jamaah': { label: 'Alumni', color: 'bg-purple-100 text-purple-700', icon: Award },
-      'reseller_agen': { label: 'Brand Ambassador', color: 'bg-cyan-100 text-cyan-700', icon: Shield },
+      'reseller_agen': { label: 'Influencer', color: 'bg-cyan-100 text-cyan-700', icon: Shield },
       'mitra_biro': { label: 'Mitra Biro', color: 'bg-blue-100 text-blue-700', icon: Shield },
       'influencer_affiliator': { label: 'Influencer', color: 'bg-indigo-100 text-indigo-700', icon: Award },
+      'affiliator': { label: 'Affiliator', color: 'bg-indigo-100 text-indigo-700', icon: Award },
+      'corporate_client': { label: 'Corporate Client', color: 'bg-indigo-100 text-indigo-700', icon: Shield },
+      'travel_consultant': { label: 'Travel Consultant', color: 'bg-teal-100 text-teal-700', icon: Shield },
+      'content_creator': { label: 'Content Creator', color: 'bg-rose-100 text-rose-700', icon: Shield },
+      'owner': { label: 'Owner', color: 'bg-black text-white', icon: Shield },
     };
 
     const { label, color, icon: Icon } = config[role] || config['prospective-jamaah'];
@@ -264,7 +340,7 @@ export default function UserManagementNew() {
     { value: 'tour-leader', label: '🧑‍✈️ Tour Leader', count: users.filter(u => u.role === 'tour-leader').length },
     { value: 'mutawwif', label: '📿 Mutawwif', count: users.filter(u => u.role === 'mutawwif').length },
     { value: 'brand_ambassador', label: '💠 Brand Ambassador', count: users.filter(u => u.role === 'brand_ambassador').length },
-    { value: 'agen', label: '💼 Agen (Legacy)', count: users.filter(u => u.role === 'agen').length },
+    { value: 'influencer', label: '🤳 Influencer', count: users.filter(u => u.role === 'influencer' || u.role === 'agen').length },
   ];
 
   if (loading) {
@@ -284,16 +360,18 @@ export default function UserManagementNew() {
           <p className="text-sm text-gray-600 mt-1">Manage all users and approval requests</p>
         </div>
 
-        {/* ✅ NEW: Refresh Button */}
-        <Button
-          onClick={() => {
-            console.log('🔄 Manual refresh triggered');
-            fetchUsers();
-          }}
-          className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700] hover:opacity-90 text-white"
-        >
-          🔄 Refresh Data
-        </Button>
+        {/* ✅ NEW: Refresh & Utility Buttons */}
+        <div className="flex gap-2">
+          <Button
+            onClick={() => {
+              console.log('🔄 Manual refresh triggered');
+              fetchUsers();
+            }}
+            className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700] hover:opacity-90 text-white"
+          >
+            🔄 Refresh Data
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -394,8 +472,8 @@ export default function UserManagementNew() {
                     {/* Account Status */}
                     <td className="px-6 py-4">
                       <div className="space-y-1">
-                        {/* For Tour Leader, Mutawwif & Brand Ambassador - show approval status */}
-                        {(user.role === 'tour-leader' || user.role === 'mutawwif' || user.role === 'agen' || user.role === 'brand_ambassador') && (
+                        {/* For Tour Leader, Mutawwif, Influencer & Brand Ambassador - show approval status */}
+                        {(user.role === 'tour-leader' || user.role === 'mutawwif' || user.role === 'agen' || user.role === 'influencer' || user.role === 'brand_ambassador') && (
                           <>
                             {/* ✅ FIXED: Show "Setup Required" if no approvalStatus */}
                             {!user.approvalStatus ? (
@@ -417,7 +495,7 @@ export default function UserManagementNew() {
                         )}
 
                         {/* For regular jamaah - show profile completion */}
-                        {!['tour-leader', 'mutawwif', 'agen', 'brand_ambassador'].includes(user.role) && (() => {
+                        {!['tour-leader', 'mutawwif', 'agen', 'influencer', 'brand_ambassador'].includes(user.role) && (() => {
                           // ✅ CRITICAL FIX: Proper complete/incomplete logic
                           // - prospective-jamaah: Check profileCompleted field
                           // - current-jamaah: ALWAYS complete (can't become current-jamaah without completing profile)
@@ -457,8 +535,8 @@ export default function UserManagementNew() {
                     {/* Actions */}
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
-                        {/* ✅ FIXED: Setup button for agen/BA/tour-leader/mutawwif without approvalStatus */}
-                        {(user.role === 'tour-leader' || user.role === 'mutawwif' || user.role === 'agen' || user.role === 'brand_ambassador') && !user.approvalStatus && (
+                        {/* ✅ FIXED: Setup button for influencer/BA/tour-leader/mutawwif without approvalStatus */}
+                        {(user.role === 'tour-leader' || user.role === 'mutawwif' || user.role === 'agen' || user.role === 'influencer' || user.role === 'brand_ambassador') && !user.approvalStatus && (
                           <Button
                             onClick={async () => {
                               try {
@@ -481,8 +559,8 @@ export default function UserManagementNew() {
                           </Button>
                         )}
 
-                        {/* Approve/Reject for Tour Leader, Mutawwif & Brand Ambassador */}
-                        {(user.role === 'tour-leader' || user.role === 'mutawwif' || user.role === 'agen' || user.role === 'brand_ambassador') && user.approvalStatus === 'pending' && (
+                        {/* Approve/Reject for Tour Leader, Mutawwif, Influencer & Brand Ambassador */}
+                        {(user.role === 'tour-leader' || user.role === 'mutawwif' || user.role === 'agen' || user.role === 'influencer' || user.role === 'brand_ambassador') && user.approvalStatus === 'pending' && (
                           <>
                             <Button
                               onClick={() => {
@@ -536,6 +614,17 @@ export default function UserManagementNew() {
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           Detail
+                        </Button>
+
+                        {/* ✅ NEW: Delete User Button */}
+                        <Button
+                          onClick={() => setDeleteConfirm({ isOpen: true, userId: user.id, email: user.email })}
+                          size="sm"
+                          variant="outline"
+                          className="h-8 px-3 border-red-300 text-red-600 hover:bg-red-50"
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Delete
                         </Button>
                       </div>
                     </td>
@@ -618,7 +707,7 @@ export default function UserManagementNew() {
                     <div className="flex items-center justify-between">
                       <span className="text-sm text-gray-600">Role:</span>
                       <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                        {userToApprove.role === 'tour-leader' ? '🧑‍✈️ Tour Leader' : userToApprove.role === 'mutawwif' ? '📿 Mutawwif' : '💠 Brand Ambassador'}
+                        {userToApprove.role === 'tour-leader' ? '🧑‍✈️ Tour Leader' : userToApprove.role === 'mutawwif' ? '📿 Mutawwif' : userToApprove.role === 'brand_ambassador' ? '💠 Brand Ambassador' : '🤳 Influencer'}
                       </span>
                     </div>
                   </div>
@@ -676,6 +765,22 @@ export default function UserManagementNew() {
           }}
         />
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        onClose={() => setDeleteConfirm({ isOpen: false, userId: null, email: null })}
+        onConfirm={async () => {
+          if (deleteConfirm.userId && deleteConfirm.email) {
+            await handleDeleteUser(deleteConfirm.userId, deleteConfirm.email);
+          }
+        }}
+        title="Delete User"
+        message={`Are you sure you want to delete user ${deleteConfirm.email}? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   );
 }

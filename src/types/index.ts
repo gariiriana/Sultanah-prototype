@@ -216,24 +216,24 @@ export type UserRole =
   | 'prospective-jamaah'
   | 'current-jamaah'
   | 'alumni'             // ✅ Alumni Jamaah (eligible for referral commission)
-  | 'agen'               // ✅ Reseller Agen (higher commission rate)
+  | 'influencer'         // ✅ NEW: Influencer role (Standard)
   | 'tour-leader'
   | 'mutawwif'
   | 'staff'              // NEW: Staff role
   | 'supervisor'         // NEW: Supervisor/Management role
   | 'direktur'           // NEW: Direktur/Owner role
-  | 'jamaah'             // ✅ ADDED: Legacy/General Jamaah role
-  | 'alumni_jamaah'      // ✅ ADDED: Legacy Alumni Jamaah (backward compatibility)
-  | 'reseller_agen'      // ✅ ADDED: Legacy Reseller Agen (backward compatibility)
-  | 'mitra_biro'         // ✅ ADDED: Mitra Biro
-  | 'influencer_affiliator'  // ✅ ADDED: Influencer Affiliator
-  | 'corporate_client'   // ✅ ADDED: Corporate Client
-  | 'travel_consultant'  // ✅ ADDED: Travel Consultant
-  | 'content_creator'    // ✅ ADDED: Content Creator
+  | 'jamaah'             // ✅ Legacy/General Jamaah role
+  | 'alumni_jamaah'      // ✅ Legacy Alumni Jamaah (backward compatibility)
+  | 'agen'               // ⚠️ DEPRECATED/LEGACY: Use influencer instead
+  | 'reseller_agen'      // ⚠️ DEPRECATED/LEGACY: Use influencer instead
+  | 'mitra_biro'         // ✅ mitra biro
+  | 'influencer_affiliator'  // ✅ influencer_affiliator
+  | 'corporate_client'   // ✅ corporate_client
+  | 'travel_consultant'  // ✅ travel_consultant
+  | 'content_creator'    // ✅ content_creator
   | 'owner'              // ✅ NEW: Owner role (God Mode)
   | 'affiliator'         // ✅ NEW: Affiliator role
-  | 'brand_ambassador'   // ✅ NEW: Brand Ambassador role
-  | 'influencer';        // ✅ NEW: Influencer role
+  | 'brand_ambassador';  // ✅ NEW: Brand Ambassador role
 
 export interface UserExtended extends User {
   role: UserRole;

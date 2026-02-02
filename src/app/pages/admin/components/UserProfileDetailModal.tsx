@@ -186,8 +186,8 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
 
       // ✅ FIX: Check referral code from proper collection based on role
       try {
-        if (userRole === 'alumni' || userRole === 'agen') {
-          const collectionName = userRole === 'alumni' ? 'alumniReferrals' : 'agenReferrals';
+        if (userRole === 'alumni' || userRole === 'agen' || userRole === 'influencer') {
+          const collectionName = (userRole === 'alumni') ? 'alumniReferrals' : (userRole === 'agen' || userRole === 'influencer') ? 'agenReferrals' : 'referralTracking';
           const referralDoc = await getDoc(doc(db, collectionName, userId));
 
           if (referralDoc.exists()) {
@@ -261,7 +261,7 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
       content_creator: 'Content Creator',
       'tour-leader': 'Tour Leader',
       mutawwif: 'Mutawwif',
-      agen: 'Agen',
+      agen: 'Influencer',
       'prospective-jamaah': 'Calon Jamaah',
       'current-jamaah': 'Jamaah',
       alumni: 'Alumni',
@@ -275,8 +275,8 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
       admin: 'Admin',
       super_admin: 'Super Admin',
       jamaah: 'Jamaah',
-      alumni_jamaah: 'Alumni Jamaah',
-      reseller_agen: 'Reseller Agen',
+      alumni_jamaah: 'Alumni',
+      reseller_agen: 'Influencer',
       mitra_biro: 'Mitra Biro',
       influencer_affiliator: 'Influencer Affiliator',
       corporate_client: 'Corporate Client',

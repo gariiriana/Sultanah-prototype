@@ -1,4 +1,4 @@
-rules_version = '2';
+﻿rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
@@ -118,7 +118,7 @@ service cloud.firestore {
          request.resource.data.role == 'current-jamaah')
       );
       
-      allow delete: if isSupervisor() || isDirektur();
+      allow delete: if isAdmin() || isSupervisor() || isDirektur() || isSiteOwner();
     }
 
     // ========================================
@@ -158,7 +158,7 @@ service cloud.firestore {
       allow read: if hasManagementAccess() || (isSignedIn() && resource.data.userId == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
       allow update: if hasManagementAccess();
-      allow delete: if isSupervisor() || isDirektur();
+      allow delete: if isAdmin() || isSupervisor() || isDirektur() || isSiteOwner();
     }
 
     // ========================================
@@ -477,7 +477,7 @@ service cloud.firestore {
         request.resource.data.status == 'pending';
       
       allow update: if isSupervisor() || isDirektur();
-      allow delete: if isSupervisor() || isDirektur();
+      allow delete: if isAdmin() || isSupervisor() || isDirektur() || isSiteOwner();
     }
 
     // ========================================
@@ -890,7 +890,7 @@ service cloud.firestore {
       // ✅ UPDATED: Anyone can create tracking records during registration
       // (System creates this during user registration with referral code)
       allow create: if true;
-      
+            
       // Only admin can update (for status changes)
       allow update: if hasManagementAccess();
       

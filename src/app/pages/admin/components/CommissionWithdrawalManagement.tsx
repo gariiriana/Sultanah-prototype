@@ -6,7 +6,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../components/ui
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../../components/ui/dialog';
 import { Textarea } from '../../../components/ui/textarea';
 import { Label } from '../../../components/ui/label';
-import { Wallet, Check, X, Eye, DollarSign, TrendingUp, Upload, Image as ImageIcon, RefreshCw } from 'lucide-react';
+import {
+  Wallet, Check, X, Eye,
+  DollarSign, TrendingUp, Upload,
+  Image as ImageIcon, RefreshCw
+} from 'lucide-react';
 import { collection, getDocs, doc, updateDoc, Timestamp, getDoc } from 'firebase/firestore';
 import { db } from '../../../../config/firebase';
 import { toast } from 'sonner';
@@ -84,6 +88,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
         return {
           id: doc.id,
           ...data,
+          userType: data.userType === 'alumni' ? 'alumni' : data.userType, // Ensure userType is correct
           status, // Use converted status
           requestDate: data.requestDate?.toDate() || new Date(),
           processedDate: data.processedDate?.toDate(),
@@ -135,7 +140,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
       const compressedSizeKB = (compressedFile.size / 1024).toFixed(0);
       const compressionTime = ((Date.now() - startTime) / 1000).toFixed(1);
 
-      toast.success(`Siap! ${compressedSizeKB}KB (${compressionTime}s) ⚡`, { id: 'compress' });
+      toast.success(`Siap! ${compressedSizeKB} KB(${compressionTime}s) ⚡`, { id: 'compress' });
 
       setTransferProofFile(compressedFile);
 
@@ -237,8 +242,8 @@ const CommissionWithdrawalManagement: React.FC = () => {
             totalWithdrawn: currentTotalWithdrawn + selectedWithdrawal.amount,
             lastWithdrawalDate: Timestamp.now(),
           });
-          console.log(`✅ Balance reduced: ${currentBalance} → ${currentBalance - selectedWithdrawal.amount}`);
-          console.log(`✅ Total withdrawn increased: ${currentTotalWithdrawn} → ${currentTotalWithdrawn + selectedWithdrawal.amount}`);
+          console.log(`✅ Balance reduced: ${currentBalance} → ${currentBalance - selectedWithdrawal.amount} `);
+          console.log(`✅ Total withdrawn increased: ${currentTotalWithdrawn} → ${currentTotalWithdrawn + selectedWithdrawal.amount} `);
         } else {
           console.warn('⚠️ WARNING: Insufficient balance, but continuing approval');
           toast.warning('Balance tidak cukup, tapi approval tetap dilanjutkan');
@@ -339,7 +344,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
         // Reload data
         loadWithdrawals();
       } else {
-        toast.error(`Gagal recalculate: ${result.error}`, { id: 'recalculate' });
+        toast.error(`Gagal recalculate: ${result.error} `, { id: 'recalculate' });
       }
     } catch (error) {
       console.error('Error recalculating balances:', error);
@@ -453,7 +458,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
       <Card>
         <CardHeader>
           <CardTitle>Manajemen Pencairan Profit</CardTitle>
-          <CardDescription>Kelola permintaan pencairan profit dari alumni dan agen</CardDescription>
+          <CardDescription>Kelola permintaan pencairan profit dari alumni dan influencer</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="pending">
@@ -488,7 +493,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
                           <div className="flex items-center gap-3 mb-2">
                             <p className="font-semibold text-lg">{withdrawal.userName}</p>
                             <Badge className="bg-blue-100 text-blue-700">
-                              {withdrawal.userType === 'agen' ? 'Agen' : 'Alumni'}
+                              {withdrawal.userType === 'agen' ? 'Influencer' : 'Alumni'}
                             </Badge>
                           </div>
                           <p className="text-sm text-slate-600 mb-1">{withdrawal.userEmail}</p>
@@ -567,7 +572,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
                           <div className="flex items-center gap-3 mb-2">
                             <p className="font-semibold">{withdrawal.userName}</p>
                             <Badge className="bg-blue-100 text-blue-700">
-                              {withdrawal.userType === 'agen' ? 'Agen' : 'Alumni'}
+                              {withdrawal.userType === 'agen' ? 'Influencer' : 'Alumni'}
                             </Badge>
                             <Badge className="bg-green-100 text-green-700">Disetujui</Badge>
                           </div>
@@ -616,7 +621,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
                           <div className="flex items-center gap-3 mb-2">
                             <p className="font-semibold">{withdrawal.userName}</p>
                             <Badge className="bg-blue-100 text-blue-700">
-                              {withdrawal.userType === 'agen' ? 'Agen' : 'Alumni'}
+                              {withdrawal.userType === 'agen' ? 'Influencer' : 'Alumni'}
                             </Badge>
                             <Badge className="bg-red-100 text-red-700">Ditolak</Badge>
                           </div>
@@ -676,7 +681,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
               <div className="flex justify-between items-center">
                 <span className="text-slate-600">Tipe:</span>
                 <span className="font-semibold">
-                  {selectedWithdrawal?.userType === 'agen' ? 'Agen' : 'Alumni'}
+                  {selectedWithdrawal?.userType === 'agen' ? 'Influencer' : 'Alumni'}
                 </span>
               </div>
             </div>
@@ -879,7 +884,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
               <div className="flex justify-between py-2 border-b">
                 <span className="text-slate-600">Tipe</span>
                 <Badge className="bg-blue-100 text-blue-700">
-                  {selectedWithdrawal?.userType === 'agen' ? 'Agen' : 'Alumni'}
+                  {selectedWithdrawal?.userType === 'agen' ? 'Influencer' : 'Alumni'}
                 </Badge>
               </div>
               <div className="flex justify-between py-2 border-b">

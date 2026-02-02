@@ -57,10 +57,6 @@ const WaitingApprovalPage: React.FC = () => {
         <span className="font-medium text-sm">Kembali ke Login</span>
       </motion.button>
 
-      {/* DEBUG BANNER */}
-      <div className="fixed top-0 left-0 right-0 bg-red-600 text-white text-[50px] font-black z-[9999] text-center pointer-events-none p-4 opacity-50">
-        FILE AUTH/WAITING_APPROVAL_PAGE ACTIVE
-      </div>
 
       {/* CENTER CONTENT */}
       <motion.div
