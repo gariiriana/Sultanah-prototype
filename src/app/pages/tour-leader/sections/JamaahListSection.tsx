@@ -8,7 +8,6 @@ import {
   Search,
   Filter,
   User,
-  AlertCircle,
   CheckCircle,
   X,
   MessageCircle,
@@ -17,7 +16,9 @@ import {
   FileText,
   Building,
   Star,
-  Package
+  Package,
+  Activity,
+  AlertCircle,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { collection, query, where, getDocs } from 'firebase/firestore';
@@ -43,6 +44,9 @@ interface JamaahMember {
   // Medical Information
   medicalConditions?: string;
   medications?: string;
+  gender?: string;
+  bloodType?: string;
+  specialNotes?: string;
   healthCertificate?: string; // URL to uploaded health certificate
   // Hotel Package Info
   madinahHotel?: {
@@ -129,9 +133,12 @@ const JamaahListSection: React.FC = () => {
             departureDate: userData.jamaahInfo?.departureDate,
             status: userData.jamaahInfo?.status || 'confirmed', // ✅ FIXED: Use actual status or fallback to confirmed
             profilePhoto: userData.profilePhoto,
-            // Medical Information
-            medicalConditions: userData.medicalInfo?.conditions,
-            medications: userData.medicalInfo?.medications,
+            // Medical Information (Defensive mapping)
+            medicalConditions: userData.medicalInfo?.conditions || userData.medicalConditions,
+            medications: userData.medicalInfo?.medications || userData.medications,
+            gender: userData.identityInfo?.gender || userData.medicalInfo?.gender || userData.gender,
+            bloodType: userData.medicalInfo?.bloodType || userData.bloodType,
+            specialNotes: userData.medicalInfo?.specialNotes || userData.specialNotes,
             healthCertificate: userData.medicalInfo?.healthCertificate,
             // Hotel Package Info
             madinahHotel: userData.hotelInfo?.madinah,
@@ -518,58 +525,91 @@ const JamaahListSection: React.FC = () => {
                   </div>
                 )}
 
-                {/* Medical Information */}
-                {(selectedJamaah.medicalConditions || selectedJamaah.medications || selectedJamaah.healthCertificate) && (
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-lg">
-                      <div className="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center">
-                        <Heart className="w-4 h-4 text-pink-600" />
+                {/* Medical Information - HIGH IMPACT VIEW */}
+                {(selectedJamaah.medicalConditions || selectedJamaah.medications || selectedJamaah.specialNotes || selectedJamaah.bloodType || selectedJamaah.gender) && (
+                  <div className="relative overflow-hidden border-2 border-red-500 rounded-3xl bg-white shadow-xl">
+                    {/* Red Accent Strip */}
+                    <div className="absolute top-0 left-0 bottom-0 w-2 bg-red-500"></div>
+
+                    <div className="p-6 pl-8">
+                      {/* Name and Header Info */}
+                      <div className="flex justify-between items-start mb-6">
+                        <div>
+                          <h4 className="text-2xl font-bold text-gray-900 mb-1">{selectedJamaah.fullName}</h4>
+                          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                            {selectedJamaah.departureDate && (
+                              <span>
+                                {/* Age can be calculated here if birthDate is passed */}
+                              </span>
+                            )}
+                            <span>{selectedJamaah.gender || 'Gender N/A'}</span>
+                            <span className="w-1 h-1 rounded-full bg-gray-400"></span>
+                            <span>Gol. {selectedJamaah.bloodType || '?'}</span>
+                          </div>
+                        </div>
+                        <div className="w-12 h-12 rounded-full border-2 border-red-100 flex items-center justify-center bg-red-50">
+                          <AlertCircle className="w-6 h-6 text-red-500" />
+                        </div>
                       </div>
-                      Informasi Medis
-                    </h3>
-                    <div className="bg-pink-50 rounded-xl p-4 space-y-3 border border-pink-100">
+
+                      {/* Medical Conditions Tags */}
                       {selectedJamaah.medicalConditions && (
-                        <>
-                          <div>
-                            <div className="flex items-center gap-2 mb-2">
-                              <Heart className="w-4 h-4 text-pink-600" />
-                              <span className="text-sm font-medium text-gray-700">Kondisi Medis</span>
-                            </div>
-                            <p className="text-sm text-gray-900 bg-white p-3 rounded-lg">{selectedJamaah.medicalConditions}</p>
+                        <div className="mb-4">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                            <Activity className="w-3 h-3" /> KONDISI MEDIS
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedJamaah.medicalConditions.split(/[,;]/).map((cond, idx) => (
+                              <span key={idx} className="px-3 py-1 bg-red-50 text-red-700 rounded-full text-sm font-medium border border-red-100">
+                                {cond.trim()}
+                              </span>
+                            ))}
                           </div>
-                        </>
+                        </div>
                       )}
+
+                      {/* Medications Tags */}
                       {selectedJamaah.medications && (
-                        <>
-                          {selectedJamaah.medicalConditions && <div className="h-px bg-pink-200"></div>}
-                          <div>
-                            <div className="flex items-center gap-2 mb-2">
-                              <Pill className="w-4 h-4 text-pink-600" />
-                              <span className="text-sm font-medium text-gray-700">Obat-obatan</span>
-                            </div>
-                            <p className="text-sm text-gray-900 bg-white p-3 rounded-lg">{selectedJamaah.medications}</p>
+                        <div className="mb-4">
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-2 flex items-center gap-1">
+                            <Pill className="w-3 h-3" /> OBAT-OBATAN
+                          </p>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedJamaah.medications.split(/[,;]/).map((med, idx) => (
+                              <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-800 rounded-lg text-sm font-medium border border-gray-200">
+                                {med.trim()}
+                              </span>
+                            ))}
                           </div>
-                        </>
+                        </div>
                       )}
-                      {selectedJamaah.healthCertificate && (
-                        <>
-                          {(selectedJamaah.medicalConditions || selectedJamaah.medications) && <div className="h-px bg-pink-200"></div>}
+
+                      {/* Special Notes (Quote box) */}
+                      {selectedJamaah.specialNotes && (
+                        <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 italic text-gray-700 text-sm mb-6 relative">
+                          <span className="absolute -top-2 left-4 px-2 bg-white text-[10px] font-bold text-gray-400 border rounded-md">CATATAN</span>
+                          "{selectedJamaah.specialNotes}"
+                        </div>
+                      )}
+
+                      {/* Divider */}
+                      <div className="h-px bg-gray-200 mb-4"></div>
+
+                      {/* Emergency Contact Quick View */}
+                      {selectedJamaah.emergencyContact && (
+                        <div className="flex items-center justify-between">
                           <div>
-                            <div className="flex items-center gap-2 mb-2">
-                              <FileText className="w-4 h-4 text-pink-600" />
-                              <span className="text-sm font-medium text-gray-700">Sertifikat Kesehatan</span>
-                            </div>
-                            <a
-                              href={selectedJamaah.healthCertificate}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-2 px-4 py-2 bg-white hover:bg-gray-50 border border-pink-200 rounded-lg text-sm font-medium text-pink-700 transition-colors"
-                            >
-                              <FileText className="w-4 h-4" />
-                              Lihat Sertifikat
-                            </a>
+                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Kontak Darurat:</p>
+                            <p className="text-sm font-bold text-gray-800">{selectedJamaah.emergencyContact.name} ({selectedJamaah.emergencyContact.relationship})</p>
                           </div>
-                        </>
+                          <a
+                            href={`https://wa.me/${selectedJamaah.emergencyContact.phone.replace(/\D/g, '')}`}
+                            target="_blank"
+                            className="w-10 h-10 rounded-xl bg-green-500 flex items-center justify-center text-white shadow-lg hover:scale-110 transition-transform"
+                          >
+                            <Phone className="w-4 h-4" />
+                          </a>
+                        </div>
                       )}
                     </div>
                   </div>

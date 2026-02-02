@@ -15,7 +15,8 @@ import {
   X,
   ImageIcon,
   Eye,
-  Printer
+  Printer,
+  MapPin
 } from 'lucide-react';
 import {
   AlertDialog,
@@ -454,19 +455,19 @@ const TripGallerySection: React.FC = () => {
     <div className="space-y-6">
       {/* Upload Section */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-        <div className="bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] p-6">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-              <Upload className="w-6 h-6 text-white" />
+        <div className="bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] p-3 sm:p-6">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl flex items-center justify-center shrink-0">
+              <Upload className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
             </div>
             <div>
-              <h2 className="text-2xl font-bold text-white">Upload Trip Photo</h2>
-              <p className="text-white/90 text-sm">Share memories with your jamaah</p>
+              <h2 className="text-base sm:text-2xl font-bold text-white">Upload Photos</h2>
+              <p className="text-white/90 text-[10px] sm:text-sm">Share memories with jamaah</p>
             </div>
           </div>
         </div>
 
-        <form onSubmit={handleUpload} className="p-6 space-y-5">
+        <form onSubmit={handleUpload} className="p-3 sm:p-6 space-y-3 sm:space-y-5">
           {/* Image Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -484,22 +485,24 @@ const TripGallerySection: React.FC = () => {
               <div className="space-y-4">
                 <label
                   htmlFor="photo-upload"
-                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl hover:border-[#D4AF37] transition-colors cursor-pointer bg-gray-50 hover:bg-gray-100"
+                  className="flex flex-col items-center justify-center w-full min-h-[80px] sm:min-h-[120px] p-3 sm:p-4 text-center border-2 border-dashed border-gray-300 rounded-xl hover:border-[#D4AF37] transition-colors cursor-pointer bg-gray-50 hover:bg-gray-100"
                 >
-                  <Camera className="w-10 h-10 text-gray-400 mb-2" />
-                  <p className="text-sm font-medium text-gray-600">Klik untuk pilih foto-foto trip</p>
-                  <p className="text-xs text-gray-500 mt-1">Saran: Maksimal 10 foto sekaligus untuk performa terbaik</p>
+                  <Camera className="w-6 h-6 sm:w-10 sm:h-10 text-gray-400 mb-1" />
+                  <p className="text-xs sm:text-sm font-medium text-gray-600">Pilih foto trip</p>
+                  <p className="text-[9px] sm:text-xs text-gray-400 mt-0.5">
+                    Maksimal 10 foto
+                  </p>
                 </label>
 
                 {previewImages.length > 0 && (
-                  <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 gap-2">
+                  <div className="grid grid-cols-4 xs:grid-cols-5 sm:grid-cols-6 md:grid-cols-8 gap-2">
                     {previewImages.map((img, idx) => (
                       <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group">
                         <img src={img} className="w-full h-full object-cover" alt={`Preview ${idx}`} />
                         <button
                           type="button"
                           onClick={() => setPreviewImages(prev => prev.filter((_, i) => i !== idx))}
-                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1 right-1 p-1 bg-red-500/80 text-white rounded-md xs:opacity-0 xs:group-hover:opacity-100 transition-opacity"
                         >
                           <X className="w-3 h-3" />
                         </button>
@@ -507,7 +510,7 @@ const TripGallerySection: React.FC = () => {
                     ))}
                     <label
                       htmlFor="photo-upload"
-                      className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-[#D4AF37] hover:bg-gray-50"
+                      className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-[#D4AF37] hover:bg-gray-50 bg-gray-50/50"
                     >
                       <Upload className="w-5 h-5 text-gray-400" />
                     </label>
@@ -591,30 +594,31 @@ const TripGallerySection: React.FC = () => {
 
       {/* Gallery Grid */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-        <div className="bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-                <Camera className="w-6 h-6 text-white" />
+        <div className="bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 p-3 sm:p-6">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm rounded-lg sm:rounded-xl flex items-center justify-center shrink-0">
+                <Camera className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold text-white">Trip Gallery</h2>
-                <p className="text-white/90 text-sm">{photos.length} photos</p>
+                <h2 className="text-base sm:text-2xl font-bold text-white">Gallery</h2>
+                <p className="text-white/90 text-[10px] sm:text-sm">{photos.length} photos</p>
               </div>
             </div>
 
-            {/* ✅ NEW: PDF Export Button */}
+            {/* ✅ NEW: PDF Export Button - Compact on Mobile */}
             <Button
               onClick={() => setIsExportModalOpen(true)}
               disabled={exportingPDF || photos.length === 0}
-              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white gap-2 shadow-xl"
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white gap-2 shadow-xl py-2 px-3 sm:px-4 text-xs h-9 sm:h-10"
             >
               {exportingPDF ? (
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               ) : (
-                <Printer className="w-4 h-4" />
+                <Printer className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
               )}
-              {exportingPDF ? 'Sabar Ya...' : 'Buat Album PDF'}
+              <span className="hidden xs:inline">{exportingPDF ? 'Wait...' : 'PDF Album'}</span>
+              <span className="xs:hidden">{exportingPDF ? '...' : 'PDF'}</span>
             </Button>
           </div>
         </div>
@@ -627,56 +631,66 @@ const TripGallerySection: React.FC = () => {
 
             return (
               <div key={cat.id} className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
-                <div className="bg-gray-50 p-6 border-b border-gray-100 italic">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-3xl">{cat.icon}</span>
+                <div className="bg-gray-50 p-3 sm:p-6 border-b border-gray-100 italic">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                      <span className="text-xl sm:text-3xl">{cat.icon}</span>
                       <div>
-                        <h3 className="text-xl font-bold text-gray-800">{cat.label}</h3>
-                        <p className="text-gray-500 text-sm">{catPhotos.length} foto tersedia</p>
+                        <h3 className="text-sm sm:text-xl font-bold text-gray-800">{cat.label}</h3>
+                        <p className="text-gray-500 text-[10px] sm:text-sm">{catPhotos.length} foto tersedia</p>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => setDeleteCategoryData(cat.id)}
-                        className="rounded-lg gap-2"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                        Hapus Kategori
-                      </Button>
-                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setDeleteCategoryData(cat.id)}
+                      className="rounded-lg gap-2 text-[10px] sm:text-sm h-8 px-2 sm:px-3 shrink-0"
+                    >
+                      <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+                      <span className="hidden xs:inline">Hapus Kategori</span>
+                      <span className="xs:hidden">Hapus</span>
+                    </Button>
                   </div>
                 </div>
 
-                <div className="p-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="p-2 sm:p-6">
+                  <div className="grid grid-cols-3 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2 sm:gap-4">
                     {catPhotos.map((photo, index) => (
                       <motion.div
                         key={photo.id}
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: index * 0.05 }}
-                        className="group relative bg-gray-50 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer border border-gray-100"
+                        className="group relative bg-white rounded-lg sm:rounded-xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer"
                         onClick={() => setSelectedPhoto(photo)}
                       >
-                        <div className="aspect-square overflow-hidden">
+                        <div className="aspect-square relative">
                           <img
                             src={photo.imageBase64}
-                            alt={photo.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            alt={photo.location}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            loading="lazy"
                           />
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                          <div className="flex items-center justify-between w-full">
-                            <p className="text-white text-xs font-medium truncate">{photo.location}</p>
-                            <button
-                              onClick={(e) => { e.stopPropagation(); setDeleteId(photo.id); }}
-                              className="p-1.5 bg-red-500 text-white rounded-md"
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </button>
+
+                          {/* Overlay - Always visible on desktop hover, compact on mobile */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex flex-col justify-end p-2 sm:p-3">
+                            <div className="flex items-center justify-between gap-1">
+                              <div className="flex items-center gap-1 min-w-0">
+                                <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-white shrink-0" />
+                                <span className="text-[8px] sm:text-xs text-white font-medium truncate">
+                                  {photo.location}
+                                </span>
+                              </div>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteId(photo.id);
+                                }}
+                                className="p-1 sm:p-1.5 bg-red-500/80 hover:bg-red-500 text-white rounded-md transition-colors shrink-0"
+                              >
+                                <Trash2 className="w-2.5 h-2.5 sm:w-3.5 sm:h-3.5" />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </motion.div>

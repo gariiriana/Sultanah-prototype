@@ -49,6 +49,17 @@ interface JamaahTrackResult {
     status: string;
     role: string;
     departureDate?: string;
+    tourLeaderId?: string;
+}
+
+interface TripPhoto {
+    id: string;
+    title: string;
+    location: string;
+    date: string;
+    imageBase64: string;
+    uploadedAt: string;
+    category: 'masjid' | 'hotel' | 'activity' | 'group' | 'other';
 }
 
 const FamilyTrackingPage = () => {
@@ -58,7 +69,10 @@ const FamilyTrackingPage = () => {
     const [searchResult, setSearchResult] = useState<JamaahTrackResult | 'not-found' | null>(null);
     const [itinerary, setItinerary] = useState<ItineraryData | null>(null);
     const [loadingItinerary, setLoadingItinerary] = useState(false);
+    const [tripPhotos, setTripPhotos] = useState<TripPhoto[]>([]);
+    const [loadingPhotos, setLoadingPhotos] = useState(false);
     const [selectedDay, setSelectedDay] = useState<number | null>(null);
+    const [activeGalleryTab, setActiveGalleryTab] = useState<'all' | TripPhoto['category']>('all');
     const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
 
     const handleSearch = async (e: React.FormEvent) => {
@@ -108,10 +122,16 @@ const FamilyTrackingPage = () => {
                 packageName: packageName,
                 status: user.jamaahInfo?.status || 'Active',
                 role: user.role,
-                departureDate: user.jamaahInfo?.departureDate
+                departureDate: user.jamaahInfo?.departureDate,
+                tourLeaderId: user.jamaahInfo?.tourLeaderId
             };
 
             setSearchResult(result);
+
+            // Fetch Photos separately (based on packageId)
+            if (packageId) {
+                fetchPhotos(packageId);
+            }
 
             // Step 2: Fetch Itinerary if packageId exists
             if (packageId) {
@@ -156,10 +176,36 @@ const FamilyTrackingPage = () => {
         }
     };
 
+    const fetchPhotos = async (packageId: string) => {
+        setLoadingPhotos(true);
+        try {
+            const photosRef = collection(db, 'tripPhotos');
+            // We use packageId here because TL uploads photos specifically for a package/trip
+            const q = query(
+                photosRef,
+                where('packageId', '==', packageId)
+            );
+            const snap = await getDocs(q);
+            const fetched: TripPhoto[] = [];
+            snap.forEach(doc => {
+                fetched.push({ id: doc.id, ...doc.data() } as TripPhoto);
+            });
+
+            // Sort by uploadedAt desc
+            fetched.sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime());
+            setTripPhotos(fetched);
+        } catch (error) {
+            console.error('Error fetching trip photos:', error);
+        } finally {
+            setLoadingPhotos(false);
+        }
+    };
+
     const handleClear = () => {
         setSearchQuery('');
         setSearchResult(null);
         setItinerary(null);
+        setTripPhotos([]);
         setSelectedDay(null);
     };
 
@@ -451,6 +497,88 @@ const FamilyTrackingPage = () => {
                                                     </motion.div>
                                                 )}
                                             </AnimatePresence>
+
+                                            {/* --- Trip Gallery Section (Integrated) --- */}
+                                            <div className="pt-8 border-t border-gray-100">
+                                                <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                                    <div>
+                                                        <h4 className="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                                                            <Camera className="w-5 h-5 text-emerald-600" />
+                                                            Galeri Foto Terkini
+                                                        </h4>
+                                                        <p className="text-xs text-gray-500 mt-1">Update visual langsung dari Tour Leader</p>
+                                                    </div>
+                                                </div>
+
+                                                {tripPhotos.length > 0 ? (
+                                                    <div className="space-y-4">
+                                                        {/* Category Pills */}
+                                                        <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar -mx-2 px-2">
+                                                            {[
+                                                                { id: 'all', label: 'Semua', icon: '🌟' },
+                                                                { id: 'masjid', label: 'Masjid', icon: '🕌' },
+                                                                { id: 'hotel', label: 'Hotel', icon: '🏨' },
+                                                                { id: 'activity', label: 'Kegiatan', icon: '🏃' },
+                                                                { id: 'group', label: 'Grup', icon: '👥' },
+                                                                { id: 'other', label: 'Lainnya', icon: '📷' }
+                                                            ].map(cat => (
+                                                                <button
+                                                                    key={cat.id}
+                                                                    onClick={() => setActiveGalleryTab(cat.id as any)}
+                                                                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-bold transition-all border ${activeGalleryTab === cat.id
+                                                                        ? 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                                                                        : 'bg-white border-gray-100 text-gray-500'
+                                                                        }`}
+                                                                >
+                                                                    {cat.icon} {cat.label}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+
+                                                        {/* 3-Column Compact Grid */}
+                                                        <div className="grid grid-cols-3 gap-1.5 sm:gap-3">
+                                                            {tripPhotos
+                                                                .filter(p => activeGalleryTab === 'all' || p.category === activeGalleryTab)
+                                                                .slice(0, 12) // Show latest 12
+                                                                .map((photo, idx) => (
+                                                                    <motion.div
+                                                                        key={photo.id}
+                                                                        initial={{ opacity: 0, scale: 0.9 }}
+                                                                        animate={{ opacity: 1, scale: 1 }}
+                                                                        transition={{ delay: idx * 0.03 }}
+                                                                        className="group aspect-square relative bg-gray-100 rounded-lg sm:rounded-xl overflow-hidden cursor-pointer shadow-sm hover:shadow-md transition-all"
+                                                                        onClick={() => setViewingPhoto(photo.imageBase64)}
+                                                                    >
+                                                                        <img
+                                                                            src={photo.imageBase64}
+                                                                            alt={photo.location}
+                                                                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                                                            loading="lazy"
+                                                                        />
+                                                                        {/* Location Badge on Photo */}
+                                                                        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-1 sm:p-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                                                                            <p className="text-[8px] sm:text-[10px] text-white font-medium truncate flex items-center gap-1">
+                                                                                <MapPin className="w-2 h-2 text-red-400" />
+                                                                                {photo.location}
+                                                                            </p>
+                                                                        </div>
+                                                                    </motion.div>
+                                                                ))}
+                                                        </div>
+
+                                                        {tripPhotos.filter(p => activeGalleryTab === 'all' || p.category === activeGalleryTab).length === 0 && (
+                                                            <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                                                                <p className="text-xs text-gray-500">Belum ada foto untuk kategori ini.</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="bg-gray-50 rounded-2xl p-6 text-center border border-dashed border-gray-200">
+                                                        <ImageIcon className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                                                        <p className="text-xs text-gray-500">Tour Leader belum mengunggah foto galeri.</p>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     )}
                                 </div>

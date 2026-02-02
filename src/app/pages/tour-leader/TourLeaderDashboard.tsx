@@ -221,33 +221,33 @@ const TourLeaderDashboard = () => {
           transition={{ duration: 0.4 }}
           className="sm:hidden fixed top-0 left-0 right-0 z-30 bg-gradient-to-r from-emerald-600 to-teal-600 shadow-lg"
         >
-          <div className="flex items-center justify-between px-4 py-3">
-            <div className="flex items-center gap-3">
-              <img src={sultanahLogo} alt="Sultanah" className="w-10 h-10 object-contain rounded-2xl" />
-              <div>
-                <h1 className="text-white font-bold text-sm tracking-wide">SULTANAH</h1>
-                <p className="text-emerald-100 text-[10px]">Umrah & Halal Travel</p>
+          <div className="flex items-center justify-between px-4 h-16">
+            <div className="flex items-center gap-2">
+              <img src={sultanahLogo} alt="Sultanah" className="w-8 h-8 object-contain rounded-xl" />
+              <div className="flex flex-col">
+                <h1 className="text-white font-bold text-xs tracking-wide leading-none">SULTANAH</h1>
+                <p className="text-emerald-100 text-[9px] leading-tight">Umrah & Halal Travel</p>
               </div>
             </div>
-            <motion.button
-              onClick={() => setIsSidebarOpen(true)}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="flex items-center justify-center w-10 h-10 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 shadow-lg"
-            >
-              <Menu className="w-5 h-5 text-white" />
-            </motion.button>
-          </div>
-          <div className="px-4 pb-2">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30">
-              <div className="w-1.5 h-1.5 bg-emerald-300 rounded-full animate-pulse"></div>
-              <span className="text-white text-xs font-medium">Tour Leader Dashboard</span>
+            <div className="flex items-center gap-2">
+              <div className="hidden xs:flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30">
+                <div className="w-1.5 h-1.5 bg-emerald-300 rounded-full animate-pulse"></div>
+                <span className="text-white text-[10px] font-medium">Tour Leader Dashboard</span>
+              </div>
+              <motion.button
+                onClick={() => setIsSidebarOpen(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="flex items-center justify-center w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md border border-white/30 shadow-lg"
+              >
+                <Menu className="w-5 h-5 text-white" />
+              </motion.button>
             </div>
           </div>
         </motion.div>
 
         {/* Spacer */}
-        <div className="sm:hidden h-32"></div>
+        <div className="sm:hidden h-16"></div>
 
         {/* Hero Header with Background Image - Hidden on Mobile */}
         <div
@@ -350,37 +350,31 @@ const TourLeaderDashboard = () => {
         {/* Main Content */}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 mt-0 sm:-mt-12 relative z-10">
           {/* Stats Cards - Glassmorphism Design */}
-          <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-6 sm:mb-8">
+          <div className="grid grid-cols-3 gap-2 sm:gap-6 mb-4 sm:mb-8">
             {/* Total Jamaah - Emerald Elegant */}
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0, duration: 0.5 }}
               whileHover={{ y: -5, scale: 1.02 }}
-              className="group bg-white/90 backdrop-blur-xl rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/50 relative overflow-hidden"
+              className="group bg-white/90 backdrop-blur-xl rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/50 relative overflow-hidden"
             >
-              {/* Gradient Background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/20 via-teal-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-              {/* Decorative Circles */}
-              <div className="absolute -top-8 -right-8 w-32 h-32 bg-emerald-400/10 rounded-full blur-2xl"></div>
-              <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-teal-400/10 rounded-full blur-2xl"></div>
-
+              {/* ... existing content ... */}
               <div className="relative">
                 {/* Icon Container */}
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <Users className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center mb-1.5 sm:mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Users className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                 </div>
 
                 {/* Label */}
-                <p className="text-[10px] sm:text-xs text-gray-600 font-semibold mb-1 tracking-wide">Total Jamaah</p>
+                <p className="text-[9px] sm:text-xs text-gray-600 font-semibold mb-0.5 sm:mb-1 tracking-wide truncate">Total Jamaah</p>
 
                 {/* Value */}
-                <p className="text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
+                <p className="text-xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent">
                   {loading ? '...' : stats.totalJamaah}
                 </p>
 
-                <div className="mt-1.5 sm:mt-2 flex items-center gap-1 text-emerald-600">
+                <div className="hidden sm:flex mt-1.5 sm:mt-2 flex items-center gap-1 text-emerald-600">
                   <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
                   <span className="text-[10px] sm:text-xs font-medium">Active</span>
                 </div>
@@ -393,32 +387,25 @@ const TourLeaderDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.5 }}
               whileHover={{ y: -5, scale: 1.02 }}
-              className="group bg-white/90 backdrop-blur-xl rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/50 relative overflow-hidden"
+              className="group bg-white/90 backdrop-blur-xl rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/50 relative overflow-hidden"
             >
-              {/* Gradient Background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-green-500/20 via-emerald-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-              {/* Decorative Circles */}
-              <div className="absolute -top-8 -right-8 w-32 h-32 bg-green-400/10 rounded-full blur-2xl"></div>
-              <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-emerald-400/10 rounded-full blur-2xl"></div>
-
               <div className="relative">
                 {/* Icon Container */}
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center mb-1.5 sm:mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <MapPin className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                 </div>
 
                 {/* Label */}
-                <p className="text-[10px] sm:text-xs text-gray-600 font-semibold mb-1 tracking-wide">Perjalanan Aktif</p>
+                <p className="text-[9px] sm:text-xs text-gray-600 font-semibold mb-0.5 sm:mb-1 tracking-wide truncate">Aktif</p>
 
                 {/* Value */}
-                <p className="text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                <p className="text-xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
                   {loading ? '...' : stats.activeTrips}
                 </p>
 
                 {/* Trend Indicator */}
-                <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-green-500/10 border border-green-500/20 text-xs sm:text-sm font-medium text-green-700 mt-1.5 sm:mt-2">
-                  <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="hidden sm:inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-500/10 border border-green-500/20 text-sm font-medium text-green-700 mt-2">
+                  <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
                   Ongoing
                 </span>
               </div>
@@ -430,32 +417,25 @@ const TourLeaderDashboard = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2, duration: 0.5 }}
               whileHover={{ y: -5, scale: 1.02 }}
-              className="group bg-white/90 backdrop-blur-xl rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/50 relative overflow-hidden"
+              className="group bg-white/90 backdrop-blur-xl rounded-xl sm:rounded-2xl p-2 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-300 border border-white/50 relative overflow-hidden"
             >
-              {/* Gradient Background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[#D4AF37]/20 via-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-
-              {/* Decorative Circles */}
-              <div className="absolute -top-8 -right-8 w-32 h-32 bg-[#D4AF37]/10 rounded-full blur-2xl"></div>
-              <div className="absolute -bottom-8 -left-8 w-24 h-24 bg-amber-400/10 rounded-full blur-2xl"></div>
-
               <div className="relative">
                 {/* Icon Container */}
-                <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-[#C5A572] to-[#D4AF37] rounded-lg sm:rounded-xl flex items-center justify-center mb-2 sm:mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                  <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+                <div className="w-8 h-8 sm:w-12 sm:h-12 bg-gradient-to-br from-[#C5A572] to-[#D4AF37] rounded-lg flex items-center justify-center mb-1.5 sm:mb-3 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  <Clock className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                 </div>
 
                 {/* Label */}
-                <p className="text-[10px] sm:text-xs text-gray-600 font-semibold mb-1 tracking-wide">Selesai</p>
+                <p className="text-[9px] sm:text-xs text-gray-600 font-semibold mb-0.5 sm:mb-1 tracking-wide truncate">Selesai</p>
 
                 {/* Value */}
-                <p className="text-2xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-[#C5A572] to-[#D4AF37] bg-clip-text text-transparent">
+                <p className="text-xl sm:text-3xl lg:text-4xl font-black bg-gradient-to-r from-[#C5A572] to-[#D4AF37] bg-clip-text text-transparent">
                   {loading ? '...' : stats.completedTrips}
                 </p>
 
                 {/* Trend Indicator */}
-                <span className="inline-flex items-center gap-1 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-xs sm:text-sm font-medium text-[#A0883C] mt-1.5 sm:mt-2">
-                  <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-[#D4AF37] rounded-full"></div>
+                <span className="hidden sm:inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-sm font-medium text-[#A0883C] mt-2">
+                  <div className="w-1.5 h-1.5 bg-[#D4AF37] rounded-full"></div>
                   Completed
                 </span>
               </div>

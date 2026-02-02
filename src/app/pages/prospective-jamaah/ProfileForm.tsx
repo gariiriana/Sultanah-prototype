@@ -14,7 +14,10 @@ import {
   Home,
   Shield,
   AlertCircle,
-  LogOut
+  LogOut,
+  Heart,
+  Activity,
+  Pill,
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
@@ -84,6 +87,13 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
   const [city, setCity] = useState(userProfile?.identityInfo?.city || '');
   const [postalCode, setPostalCode] = useState(userProfile?.identityInfo?.postalCode || '');
   const [streetAddress, setStreetAddress] = useState(userProfile?.identityInfo?.streetAddress || '');
+  const [gender, setGender] = useState(userProfile?.identityInfo?.gender || '');
+
+  // Medical Information
+  const [bloodType, setBloodType] = useState(userProfile?.medicalInfo?.bloodType || '');
+  const [medicalConditions, setMedicalConditions] = useState(userProfile?.medicalInfo?.conditions || '');
+  const [medications, setMedications] = useState(userProfile?.medicalInfo?.medications || '');
+  const [specialNotes, setSpecialNotes] = useState(userProfile?.medicalInfo?.specialNotes || '');
 
   // Documents
   const [passportNumber, setPassportNumber] = useState(userProfile?.travelDocuments?.passportNumber || '');
@@ -466,18 +476,28 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
       const safeStreetAddress = identity.streetAddress || userProfile.streetAddress || userProfile.address || '';
       if (safeStreetAddress) setStreetAddress(safeStreetAddress);
 
-      // Emergency Contact - Check Nested FIRST, then Flat (Fallback)
-      const emergency = userProfile.emergencyContact || {};
+      const safeGender = identity.gender || userProfile.gender || '';
+      if (safeGender) setGender(safeGender);
 
-      const safeEmergencyName = emergency.name || userProfile.emergencyName || '';
-      if (safeEmergencyName) setEmergencyName(safeEmergencyName);
-
-      const safeEmergencyPhone = emergency.phone || userProfile.emergencyPhone || '';
-      if (safeEmergencyPhone) setEmergencyPhone(safeEmergencyPhone);
-
-      const safeRelationship = emergency.relationship || userProfile.emergencyRelationship || '';
-      if (safeRelationship) setEmergencyRelationship(safeRelationship);
+      // Medical Info Sync
+      const medical = userProfile.medicalInfo || {};
+      if (medical.bloodType) setBloodType(medical.bloodType);
+      if (medical.conditions) setMedicalConditions(medical.conditions);
+      if (medical.medications) setMedications(medical.medications);
+      if (medical.specialNotes) setSpecialNotes(medical.specialNotes);
     }
+
+    // Emergency Contact - Check Nested FIRST, then Flat (Fallback)
+    const emergency = userProfile?.emergencyContact || {};
+
+    const safeEmergencyName = emergency.name || userProfile?.emergencyName || '';
+    if (safeEmergencyName) setEmergencyName(safeEmergencyName);
+
+    const safeEmergencyPhone = emergency.phone || userProfile?.emergencyPhone || '';
+    if (safeEmergencyPhone) setEmergencyPhone(safeEmergencyPhone);
+
+    const safeRelationship = emergency.relationship || userProfile?.emergencyRelationship || '';
+    if (safeRelationship) setEmergencyRelationship(safeRelationship);
   }, [userProfile]);
 
   useEffect(() => {
@@ -492,7 +512,8 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
     const fields = [
       displayName, phoneNumber, fullName, idNumber, birthDate, country, state, city, postalCode, streetAddress,
       passportNumber, passportExpiry, passportPhoto, ktpPhoto, kkDocument, birthCertificate, visaDocument, flightTicket, vaccinationCertificate,
-      emergencyName, emergencyPhone, emergencyRelationship
+      emergencyName, emergencyPhone, emergencyRelationship,
+      gender, bloodType, medicalConditions, medications, specialNotes
     ];
 
     const filledFields = fields.filter(field => field && field !== '').length;
@@ -603,14 +624,21 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
           state,
           city,
           postalCode,
-          streetAddress
+          streetAddress,
+          gender
+        },
+        medicalInfo: {
+          bloodType,
+          conditions: medicalConditions,
+          medications,
+          specialNotes
         },
         emergencyContact: {
           name: emergencyName,
           phone: emergencyPhone,
           relationship: emergencyRelationship
         },
-        profileCompleted: true,
+        profileComplete: true,
         updatedAt: new Date()
       });
 
@@ -816,6 +844,91 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
                   rows={3}
                 />
                 <p className="text-xs text-gray-500 mt-1">Include street name, number, building name, unit, etc.</p>
+              </div>
+            </div>
+
+            {/* Medical Information Sub-section */}
+            <div className="mt-8 pt-8 border-t border-gray-100">
+              <h3 className="text-lg font-semibold text-gray-900 mb-6 flex items-center gap-2">
+                <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-red-500" />
+                </div>
+                Informasi Medis Penting
+              </h3>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Label className="flex items-center gap-2 mb-2">
+                    Jenis Kelamin <span className="text-red-500">*</span>
+                  </Label>
+                  <Select value={gender} onValueChange={setGender}>
+                    <SelectTrigger className="bg-gray-50/50">
+                      <SelectValue placeholder="Pilih Jenis Kelamin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Laki-laki">Laki-laki</SelectItem>
+                      <SelectItem value="Perempuan">Perempuan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label className="flex items-center gap-2 mb-2">
+                    Golongan Darah
+                  </Label>
+                  <Select value={bloodType} onValueChange={setBloodType}>
+                    <SelectTrigger className="bg-gray-50/50">
+                      <SelectValue placeholder="Pilih Golongan Darah" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A">A</SelectItem>
+                      <SelectItem value="B">B</SelectItem>
+                      <SelectItem value="AB">AB</SelectItem>
+                      <SelectItem value="O">O</SelectItem>
+                      <SelectItem value="Tidak Tahu">Tidak Tahu</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label className="flex items-center gap-2 mb-2">
+                    <Activity className="w-4 h-4 text-orange-500" />
+                    Riwayat Kondisi Medis
+                  </Label>
+                  <Textarea
+                    value={medicalConditions}
+                    onChange={(e) => setMedicalConditions(e.target.value)}
+                    placeholder="Contoh: Diabetes, Asma, Hipertensi, Alergi makanan/obat..."
+                    className="min-h-[80px] bg-gray-50/50"
+                  />
+                  <p className="text-xs text-gray-500 mt-1 italic">Tuliskan 'Tidak ada' jika tidak memiliki kondisi medis tertentu.</p>
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label className="flex items-center gap-2 mb-2">
+                    <Pill className="w-4 h-4 text-blue-500" />
+                    Obat-obatan yang Sedang Dikonsumsi
+                  </Label>
+                  <Textarea
+                    value={medications}
+                    onChange={(e) => setMedications(e.target.value)}
+                    placeholder="Sebutkan nama obat dan dosis jika ada..."
+                    className="min-h-[80px] bg-gray-50/50"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label className="flex items-center gap-2 mb-2">
+                    <AlertCircle className="w-4 h-4 text-red-500" />
+                    Catatan Khusus (Alat Bantu, Kursi Roda, dll)
+                  </Label>
+                  <Textarea
+                    value={specialNotes}
+                    onChange={(e) => setSpecialNotes(e.target.value)}
+                    placeholder="Informasi tambahan untuk tour leader (Contoh: Butuh kursi roda saat di bandara)..."
+                    className="min-h-[80px] bg-gray-50/50"
+                  />
+                </div>
               </div>
             </div>
           </CardContent>
