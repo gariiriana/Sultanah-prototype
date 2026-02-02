@@ -1,0 +1,64 @@
+
+  const handleDeleteActivityPhoto = async (
+    itineraryId: string,
+    dayNumber: number,
+    activityIndex: number,
+    photoIndex: number
+  ) => {
+    try {
+      const itinerary = itineraries.find(it => it.id === itineraryId);
+      if (!itinerary) {
+        toast.error('Jadwal tidak ditemukan');
+        return;
+      }
+
+      const day = itinerary.days.find(d => d.dayNumber === dayNumber);
+      if (!day || !day.activities[activityIndex]) {
+        toast.error('Aktivitas tidak ditemukan');
+        return;
+      }
+
+      const activity = day.activities[activityIndex];
+      const photos = activity.photos || [];
+
+      if (!photos[photoIndex]) {
+        toast.error('Foto tidak ditemukan');
+        return;
+      }
+
+      const updatedDays = itinerary.days.map(d => {
+        if (d.dayNumber === dayNumber) {
+          return {
+            ...d,
+            activities: d.activities.map((act, idx) => {
+              if (idx === activityIndex) {
+                return {
+                  ...act,
+                  photos: photos.filter((_, pIdx) => pIdx !== photoIndex)
+                };
+              }
+              return act;
+            })
+          };
+        }
+        return d;
+      });
+
+      const itineraryRef = doc(db, 'itineraries', itineraryId);
+      await updateDoc(itineraryRef, {
+        days: updatedDays,
+        updatedAt: Timestamp.now(),
+      });
+
+      setItineraries(prevItineraries =>
+        prevItineraries.map(it =>
+          it.id === itineraryId ? { ...it, days: updatedDays } : it
+        )
+      );
+
+      toast.success('✅ Foto berhasil dihapus!');
+    } catch (error) {
+      console.error('Error deleting photo:', error);
+      toast.error('Gagal menghapus foto');
+    }
+  };

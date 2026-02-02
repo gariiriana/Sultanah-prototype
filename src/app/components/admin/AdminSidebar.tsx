@@ -77,7 +77,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChange }) =
       items: [
         { id: 'marketplace', label: 'Marketplace', icon: Store },
         { id: 'referrals', label: 'Referral Program', icon: Gift },
-        { id: 'commission-withdrawals', label: 'Pencairan Komisi', icon: Wallet },
+        { id: 'commission-withdrawals', label: 'Pencairan Profit', icon: Wallet },
       ]
     }
   ];

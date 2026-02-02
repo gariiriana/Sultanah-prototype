@@ -33,7 +33,7 @@ const ReferralBalanceCard: React.FC<ReferralBalanceCardProps> = ({ userId, userR
     if (!userId) return;
 
     const balanceRef = doc(db, 'referralBalances', userId);
-    
+
     const unsubscribe = onSnapshot(
       balanceRef,
       (docSnapshot) => {
@@ -81,14 +81,14 @@ const ReferralBalanceCard: React.FC<ReferralBalanceCardProps> = ({ userId, userR
       console.log('💸 [WITHDRAWAL] Submitting withdrawal request:', formData);
 
       // Determine bank info based on payment method
-      const bankName = formData.paymentMethod === 'bank' 
+      const bankName = formData.paymentMethod === 'bank'
         ? formData.bankName || ''
         : formData.ewalletProvider || '';
-      
+
       const accountNumber = formData.paymentMethod === 'bank'
         ? formData.accountNumber || ''
         : formData.ewalletNumber || '';
-      
+
       const accountName = formData.paymentMethod === 'bank'
         ? formData.accountHolderName || ''
         : formData.ewalletAccountName || '';
@@ -141,7 +141,7 @@ const ReferralBalanceCard: React.FC<ReferralBalanceCardProps> = ({ userId, userR
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wallet className="w-5 h-5 text-amber-600" />
-            Saldo Komisi
+            Saldo Profit
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -196,7 +196,7 @@ const ReferralBalanceCard: React.FC<ReferralBalanceCardProps> = ({ userId, userR
           {/* Info */}
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-xs text-blue-800 leading-relaxed">
-              💡 <strong>Catatan:</strong> Saldo akan langsung berkurang saat Anda mengajukan pencairan. 
+              💡 <strong>Catatan:</strong> Saldo akan langsung berkurang saat Anda mengajukan pencairan.
               Jika ditolak oleh Admin, saldo akan dikembalikan secara otomatis.
             </p>
           </div>

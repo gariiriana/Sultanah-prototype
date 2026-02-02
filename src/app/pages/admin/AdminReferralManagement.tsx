@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { 
-  Users, 
-  DollarSign, 
-  TrendingUp, 
-  CheckCircle, 
-  Clock, 
+import {
+  Users,
+  DollarSign,
+  TrendingUp,
+  CheckCircle,
+  Clock,
   Search,
   Download,
   Gift,
@@ -69,7 +69,7 @@ const AdminReferralManagement: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'has-pending' | 'all-paid'>('all');
-  
+
   // Stats
   const [stats, setStats] = useState<ReferralStats>({
     totalAlumni: 0,
@@ -97,16 +97,16 @@ const AdminReferralManagement: React.FC = () => {
   const fetchAllReferrals = async () => {
     try {
       setLoading(true);
-      
+
       // Fetch all alumni referrals
       const referralsRef = collection(db, 'alumniReferrals');
       const referralsSnap = await getDocs(referralsRef);
-      
+
       const referralsData: ReferralData[] = [];
-      
+
       for (const docSnap of referralsSnap.docs) {
         const data = docSnap.data();
-        
+
         // Fetch user info - alumniId is the document ID
         const alumniId = data.alumniId || docSnap.id;
         const userRef = doc(db, 'users', alumniId);
@@ -118,9 +118,9 @@ const AdminReferralManagement: React.FC = () => {
             return null;
           }
         })();
-        
+
         const userData = userSnap?.data();
-        
+
         referralsData.push({
           id: docSnap.id,
           userId: alumniId,
@@ -137,13 +137,13 @@ const AdminReferralManagement: React.FC = () => {
           createdAt: data.createdAt,
         });
       }
-      
+
       // Sort by total commission earned (descending)
       referralsData.sort((a, b) => b.totalCommissionEarned - a.totalCommissionEarned);
-      
+
       setReferrals(referralsData);
       calculateStats(referralsData);
-      
+
     } catch (error) {
       console.error('Error fetching referrals:', error);
       toast.error('Gagal memuat data referral');
@@ -161,30 +161,30 @@ const AdminReferralManagement: React.FC = () => {
       pendingCommission: data.reduce((sum, r) => sum + r.pendingCommission, 0),
       paidCommission: data.reduce((sum, r) => sum + r.paidCommission, 0),
     };
-    
+
     setStats(stats);
   };
 
   const applyFilters = () => {
     let filtered = [...referrals];
-    
+
     // Search filter
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(r => 
+      filtered = filtered.filter(r =>
         r.userName.toLowerCase().includes(query) ||
         r.userEmail.toLowerCase().includes(query) ||
         r.code.toLowerCase().includes(query)
       );
     }
-    
+
     // Status filter
     if (filterStatus === 'has-pending') {
       filtered = filtered.filter(r => r.pendingCommission > 0);
     } else if (filterStatus === 'all-paid') {
       filtered = filtered.filter(r => r.pendingCommission === 0 && r.paidCommission > 0);
     }
-    
+
     setFilteredReferrals(filtered);
   };
 
@@ -192,12 +192,12 @@ const AdminReferralManagement: React.FC = () => {
     setSelectedReferral(referral);
     setShowDetailModal(true);
     setLoadingDetails(true);
-    
+
     try {
       // In real implementation, fetch actual referral records from a 'referralTransactions' collection
       // For now, we'll show mock data based on successful referrals
       const mockDetails: ReferralDetail[] = [];
-      
+
       for (let i = 0; i < referral.successfulReferrals; i++) {
         mockDetails.push({
           referralId: `REF-${referral.code}-${i + 1}`,
@@ -212,7 +212,7 @@ const AdminReferralManagement: React.FC = () => {
           createdAt: new Date(Date.now() - Math.random() * 90 * 24 * 60 * 60 * 1000),
         });
       }
-      
+
       setReferralDetails(mockDetails);
     } catch (error) {
       console.error('Error fetching referral details:', error);
@@ -224,35 +224,35 @@ const AdminReferralManagement: React.FC = () => {
 
   const handlePayCommission = async (referral: ReferralData) => {
     if (referral.pendingCommission === 0) {
-      toast.info('Tidak ada komisi yang perlu dibayar');
+      toast.info('Tidak ada profit yang perlu dibayar');
       return;
     }
 
     try {
       const referralRef = doc(db, 'alumniReferrals', referral.id);
-      
+
       await updateDoc(referralRef, {
         paidCommission: referral.paidCommission + referral.pendingCommission,
         pendingCommission: 0,
       });
-      
-      toast.success(`Komisi sebesar Rp ${referral.pendingCommission.toLocaleString('id-ID')} telah dibayar!`);
-      
+
+      toast.success(`Profit sebesar Rp ${referral.pendingCommission.toLocaleString('id-ID')} telah dibayar!`);
+
       // Refresh data
       fetchAllReferrals();
-      
+
       if (showDetailModal && selectedReferral?.id === referral.id) {
         setShowDetailModal(false);
       }
-      
+
     } catch (error) {
       console.error('Error paying commission:', error);
-      toast.error('Gagal membayar komisi');
+      toast.error('Gagal membayar profit');
     }
   };
 
   const exportToCSV = () => {
-    const headers = ['Nama Alumni', 'Email', 'Kode Referral', 'Total Referrals', 'Successful', 'Total Komisi', 'Pending', 'Paid'];
+    const headers = ['Nama Alumni', 'Email', 'Kode Referral', 'Total Referrals', 'Successful', 'Total Profit', 'Pending', 'Paid'];
     const rows = filteredReferrals.map(r => [
       r.userName,
       r.userEmail,
@@ -263,19 +263,19 @@ const AdminReferralManagement: React.FC = () => {
       r.pendingCommission,
       r.paidCommission,
     ]);
-    
+
     const csvContent = [
       headers.join(','),
       ...rows.map(row => row.join(','))
     ].join('\n');
-    
+
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `referral-data-${new Date().toISOString().split('T')[0]}.csv`;
     a.click();
-    
+
     toast.success('Data berhasil diekspor!');
   };
 
@@ -376,7 +376,7 @@ const AdminReferralManagement: React.FC = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-green-700 mb-1">Total Komisi</p>
+                    <p className="text-sm font-medium text-green-700 mb-1">Total Profit</p>
                     <p className="text-3xl font-bold text-green-900">
                       Rp {stats.totalCommissionEarned.toLocaleString('id-ID')}
                     </p>
@@ -400,7 +400,7 @@ const AdminReferralManagement: React.FC = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-amber-700 mb-1">Komisi Tertunda</p>
+                    <p className="text-sm font-medium text-amber-700 mb-1">Profit Tertunda</p>
                     <p className="text-3xl font-bold text-amber-900">
                       Rp {stats.pendingCommission.toLocaleString('id-ID')}
                     </p>
@@ -424,7 +424,7 @@ const AdminReferralManagement: React.FC = () => {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-cyan-700 mb-1">Komisi Dibayar</p>
+                    <p className="text-sm font-medium text-cyan-700 mb-1">Profit Dibayar</p>
                     <p className="text-3xl font-bold text-cyan-900">
                       Rp {stats.paidCommission.toLocaleString('id-ID')}
                     </p>
@@ -450,7 +450,7 @@ const AdminReferralManagement: React.FC = () => {
                   <div>
                     <p className="text-sm font-medium text-[#D4AF37] mb-1">Success Rate</p>
                     <p className="text-4xl font-bold text-gray-900">
-                      {stats.totalReferrals > 0 
+                      {stats.totalReferrals > 0
                         ? Math.round((stats.successfulReferrals / stats.totalReferrals) * 100)
                         : 0}%
                     </p>
@@ -545,7 +545,7 @@ const AdminReferralManagement: React.FC = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Wallet className="w-5 h-5 text-[#D4AF37]" />
-              Daftar Alumni & Komisi ({filteredReferrals.length})
+              Daftar Alumni & Profit ({filteredReferrals.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -563,7 +563,7 @@ const AdminReferralManagement: React.FC = () => {
                       <th className="text-left py-4 px-4 font-semibold text-gray-700">Kode Referral</th>
                       <th className="text-center py-4 px-4 font-semibold text-gray-700">Total</th>
                       <th className="text-center py-4 px-4 font-semibold text-gray-700">Sukses</th>
-                      <th className="text-right py-4 px-4 font-semibold text-gray-700">Total Komisi</th>
+                      <th className="text-right py-4 px-4 font-semibold text-gray-700">Total Profit</th>
                       <th className="text-right py-4 px-4 font-semibold text-gray-700">Pending</th>
                       <th className="text-right py-4 px-4 font-semibold text-gray-700">Paid</th>
                       <th className="text-center py-4 px-4 font-semibold text-gray-700">Actions</th>
@@ -645,7 +645,7 @@ const AdminReferralManagement: React.FC = () => {
               <div className="text-center py-12">
                 <Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                 <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                  {searchQuery || filterStatus !== 'all' 
+                  {searchQuery || filterStatus !== 'all'
                     ? 'Tidak ada hasil'
                     : 'Belum ada data referral'}
                 </h3>
@@ -732,17 +732,17 @@ const AdminReferralManagement: React.FC = () => {
                       <p className="text-2xl font-bold text-[#D4AF37] font-mono">{selectedReferral.code}</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Komisi Per Referral</p>
+                      <p className="text-sm text-gray-600 mb-1">Profit Per Referral</p>
                       <p className="text-2xl font-bold text-gray-900">
                         Rp {selectedReferral.commissionPerReferral.toLocaleString('id-ID')}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Persentase Komisi</p>
+                      <p className="text-sm text-gray-600 mb-1">Persentase Profit</p>
                       <p className="text-2xl font-bold text-purple-600">{selectedReferral.commissionPercentage}%</p>
                     </div>
                     <div>
-                      <p className="text-sm text-gray-600 mb-1">Total Komisi Earned</p>
+                      <p className="text-sm text-gray-600 mb-1">Total Profit Earned</p>
                       <p className="text-2xl font-bold text-green-600">
                         Rp {selectedReferral.totalCommissionEarned.toLocaleString('id-ID')}
                       </p>
@@ -782,11 +782,10 @@ const AdminReferralManagement: React.FC = () => {
                               <p className="font-bold text-green-600">
                                 Rp {detail.commissionAmount.toLocaleString('id-ID')}
                               </p>
-                              <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${
-                                detail.commissionPaid 
-                                  ? 'bg-green-100 text-green-700' 
-                                  : 'bg-amber-100 text-amber-700'
-                              }`}>
+                              <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mt-1 ${detail.commissionPaid
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-amber-100 text-amber-700'
+                                }`}>
                                 {detail.commissionPaid ? '✓ Paid' : '⏳ Pending'}
                               </span>
                             </div>
@@ -816,7 +815,7 @@ const AdminReferralManagement: React.FC = () => {
                     className="bg-gradient-to-r from-green-500 to-emerald-600 hover:opacity-90 text-white"
                   >
                     <CheckCircle className="w-4 h-4 mr-2" />
-                    Bayar Komisi (Rp {selectedReferral.pendingCommission.toLocaleString('id-ID')})
+                    Bayar Profit (Rp {selectedReferral.pendingCommission.toLocaleString('id-ID')})
                   </Button>
                 </div>
               )}

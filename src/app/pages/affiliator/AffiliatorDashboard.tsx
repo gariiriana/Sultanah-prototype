@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
     Users,
     Link,
@@ -112,7 +112,7 @@ const AffiliatorDashboard: React.FC = () => {
                                     Halo, {userProfile?.displayName || 'Partner'}! 👋
                                 </h2>
                                 <p className="text-sm sm:text-base text-slate-600">
-                                    Bagikan link referral Anda dan dapatkan komisi menarik untuk setiap pendaftaran jamaah baru.
+                                    Bagikan link referral Anda dan dapatkan profit menarik untuk setiap pendaftaran jamaah baru.
                                 </p>
                             </div>
 
@@ -159,7 +159,7 @@ const AffiliatorDashboard: React.FC = () => {
                         <CardContent className="p-6">
                             <div className="flex items-center gap-3 mb-4">
                                 <div className="p-2 bg-emerald-100 rounded-lg text-emerald-600"><DollarSign className="w-5 h-5" /></div>
-                                <span className="text-sm text-emerald-800 font-medium">Estimasi Komisi</span>
+                                <span className="text-sm text-emerald-800 font-medium">Estimasi Profit</span>
                             </div>
                             <h3 className="text-3xl font-bold text-emerald-700">Rp {stats.potentialCommission.toLocaleString()}</h3>
                             <p className="text-xs text-emerald-600 mt-1">Menunggu pencairan</p>

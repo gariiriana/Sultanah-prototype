@@ -77,9 +77,9 @@ interface Referral {
   successfulReferrals: number;
   commissionPercentage: number; // e.g., 5 for 5%
   commissionPerReferral: number; // Nominal rupiah per successful referral
-  totalCommissionEarned: number; // Total komisi yang sudah didapat
-  pendingCommission: number; // Komisi yang belum dibayar
-  paidCommission: number; // Komisi yang sudah dibayar
+  totalCommissionEarned: number; // Total profit yang sudah didapat
+  pendingCommission: number; // Profit yang belum dibayar
+  paidCommission: number; // Profit yang sudah dibayar
   createdAt: any;
 }
 
@@ -795,7 +795,7 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
                     </div>
                     <div>
                       <h3 className="font-semibold mb-1 text-white">Program Referral 🎁</h3>
-                      <p className="text-sm text-gray-300">Ajak teman & dapatkan komisi!</p>
+                      <p className="text-sm text-gray-300">Ajak teman & dapatkan profit!</p>
                     </div>
                   </div>
                 </CardContent>
@@ -951,7 +951,7 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
                       <div>
                         <h4 className="font-semibold mb-1">Dapatkan Reward</h4>
                         <p className="text-sm text-gray-600">
-                          Anda mendapatkan komisi dan diskon spesial untuk perjalanan umrah berikutnya
+                          Anda mendapatkan profit dan diskon spesial untuk perjalanan umrah berikutnya
                         </p>
                       </div>
                     </div>
@@ -962,7 +962,7 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
                     <ul className="space-y-2 text-sm text-gray-700">
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                        <span>Komisi untuk setiap referral yang berhasil booking</span>
+                        <span>Profit untuk setiap referral yang berhasil booking</span>
                       </li>
                       <li className="flex items-start gap-2">
                         <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
@@ -992,9 +992,9 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
                     <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#FFD700] flex items-center justify-center">
                       <Wallet className="w-5 h-5 text-white" />
                     </div>
-                    <span>Detail Komisi Referral</span>
+                    <span>Detail Profit Referral</span>
                   </CardTitle>
-                  <p className="text-gray-600 mt-2">Informasi lengkap tentang penghasilan komisi Anda</p>
+                  <p className="text-gray-600 mt-2">Informasi lengkap tentang penghasilan profit Anda</p>
                 </CardHeader>
                 <CardContent>
                   {/* Main Commission Stats Grid */}
@@ -1009,7 +1009,7 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
                           Total Earned
                         </span>
                       </div>
-                      <h3 className="text-sm font-medium text-green-900 mb-1">Total Komisi Terkumpul</h3>
+                      <h3 className="text-sm font-medium text-green-900 mb-1">Total Profit Terkumpul</h3>
                       <p className="text-3xl font-bold text-green-700">
                         Rp {(referralData?.totalCommissionEarned || 0).toLocaleString('id-ID')}
                       </p>
@@ -1028,7 +1028,7 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
                           Pending
                         </span>
                       </div>
-                      <h3 className="text-sm font-medium text-amber-900 mb-1">Komisi Tertunda</h3>
+                      <h3 className="text-sm font-medium text-amber-900 mb-1">Profit Tertunda</h3>
                       <p className="text-3xl font-bold text-amber-700">
                         Rp {(referralData?.pendingCommission || 0).toLocaleString('id-ID')}
                       </p>
@@ -1047,7 +1047,7 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
                           Paid
                         </span>
                       </div>
-                      <h3 className="text-sm font-medium text-blue-900 mb-1">Komisi Telah Dibayar</h3>
+                      <h3 className="text-sm font-medium text-blue-900 mb-1">Profit Telah Dibayar</h3>
                       <p className="text-3xl font-bold text-blue-700">
                         Rp {(referralData?.paidCommission || 0).toLocaleString('id-ID')}
                       </p>
@@ -1066,7 +1066,7 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
                           <Gift className="w-6 h-6 text-white" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 mb-2">Komisi Per Referral Sukses</h3>
+                          <h3 className="font-semibold text-gray-900 mb-2">Profit Per Referral Sukses</h3>
                           <div className="flex items-baseline gap-2 mb-3">
                             <span className="text-4xl font-bold bg-gradient-to-r from-[#D4AF37] to-[#FFD700] bg-clip-text text-transparent">
                               Rp {(referralData?.commissionPerReferral || 0).toLocaleString('id-ID')}
@@ -1077,7 +1077,7 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
                           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
                             <p className="text-sm font-semibold text-amber-900 flex items-center gap-2">
                               <span className="inline-block w-2 h-2 bg-amber-500 rounded-full"></span>
-                              Cara Mendapatkan Komisi:
+                              Cara Mendapatkan Profit:
                             </p>
 
                             <ol className="text-sm text-gray-700 space-y-2 ml-4">
@@ -1095,13 +1095,13 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
                               </li>
                               <li className="flex items-start gap-2">
                                 <span className="font-bold text-green-600 mt-0.5">✓</span>
-                                <span><strong className="text-green-600">Komisi Rp200.000 aktif</strong> dan bisa diajukan pencairan</span>
+                                <span><strong className="text-green-600">Profit Rp200.000 aktif</strong> dan bisa diajukan pencairan</span>
                               </li>
                             </ol>
 
                             <div className="pt-3 border-t border-amber-200">
                               <p className="text-xs text-gray-600 italic">
-                                <strong>Catatan:</strong> Booking saja belum dihitung. Komisi hanya aktif setelah pembayaran di-approve admin.
+                                <strong>Catatan:</strong> Booking saja belum dihitung. Profit hanya aktif setelah pembayaran di-approve admin.
                               </p>
                             </div>
                           </div>
@@ -1116,7 +1116,7 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
                           <TrendingUp className="w-6 h-6 text-white" />
                         </div>
                         <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900 mb-2">Persentase Komisi</h3>
+                          <h3 className="font-semibold text-gray-900 mb-2">Persentase Profit</h3>
                           <div className="flex items-baseline gap-2 mb-3">
                             <span className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
                               {referralData?.commissionPercentage || 0}%
@@ -1138,7 +1138,7 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
                           <Wallet className="w-7 h-7 text-white" />
                         </div>
                         <div>
-                          <p className="text-white/90 text-sm font-medium mb-1">💰 Saldo Komisi Tersedia</p>
+                          <p className="text-white/90 text-sm font-medium mb-1">💰 Saldo Profit Tersedia</p>
                           <p className="text-3xl font-bold text-white">
                             Rp {commissionBalance.toLocaleString('id-ID')}
                           </p>
@@ -1151,7 +1151,7 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
                         className="bg-white text-green-600 hover:bg-white/90 gap-2 px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
                       >
                         <Wallet className="w-5 h-5" />
-                        Ajukan Pencairan Komisi
+                        Ajukan Pencairan Profit
                       </Button>
                     </div>
                   </div>
@@ -1163,9 +1163,9 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
                         <DollarSign className="w-5 h-5 text-white" />
                       </div>
                       <div className="flex-1">
-                        <h4 className="font-semibold text-blue-900 mb-2">💡 Cara Pencairan Komisi</h4>
+                        <h4 className="font-semibold text-blue-900 mb-2">💡 Cara Pencairan Profit</h4>
                         <p className="text-sm text-blue-800 mb-3">
-                          Komisi akan dibayarkan setiap bulan untuk referral yang telah berhasil melakukan pelunasan pembayaran paket umrah.
+                          Profit akan dibayarkan setiap bulan untuk referral yang telah berhasil melakukan pelunasan pembayaran paket umrah.
                           Transfer dilakukan ke rekening yang Anda daftarkan di profil.
                         </p>
                         <div className="flex flex-wrap gap-2">

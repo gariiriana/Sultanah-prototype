@@ -19,7 +19,7 @@ import FamilyTrackingPage from './pages/guest/FamilyTrackingPage'; // ✅ NEW - 
 import SavingsPage from './pages/jamaah/SavingsPage'; // ✅ NEW - Savings Page
 // ❌ REMOVED: MarketplaceOrderTracking - Now using unified PesananPage instead
 import PesananPage from './pages/current-jamaah/PesananPage'; // ✅ NEW - Unified Pesanan Page (Payments + Marketplace)
-import AgentDashboard from './pages/agent/AgentDashboardNew'; // ✅ NEW - Premium Agent Dashboard
+import AffiliatorDashboard from './pages/affiliator/AffiliatorDashboardNew'; // ✅ NEW - Premium Affiliator Dashboard
 import AgentProfilePage from './pages/agent/AgentProfilePage'; // ✅ NEW - Agent Profile
 import { LoginPage, RegisterPage } from './pages/auth'; // ✅ Centralized import
 import WaitingApprovalPage from './pages/auth/WaitingApprovalPage'; // ✅ NEW - Waiting Approval Page
@@ -275,7 +275,7 @@ const AppContent = () => {
           {console.log('✅ Rendering Affiliator Dashboard (NO APPROVAL REQUIRED)')}
           <Routes>
             <Route path="/" element={<Navigate to="/agent/dashboard" replace />} />
-            <Route path="/agent/dashboard" element={<AgentDashboard />} />
+            <Route path="/agent/dashboard" element={<AffiliatorDashboard />} />
             <Route path="/agent/profile" element={<AgentProfilePage />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
@@ -286,7 +286,7 @@ const AppContent = () => {
             {console.log('✅ Rendering Agent/Influencer Dashboard')}
             <Routes>
               <Route path="/" element={<Navigate to="/agent/dashboard" replace />} />
-              <Route path="/agent/dashboard" element={<AgentDashboard />} />
+              <Route path="/agent/dashboard" element={<AffiliatorDashboard />} />
               <Route path="/agent/profile" element={<AgentProfilePage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

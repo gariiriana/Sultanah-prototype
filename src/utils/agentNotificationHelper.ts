@@ -67,8 +67,8 @@ export const createCommissionEarnedNotification = async (
     await addDoc(collection(db, 'agentNotifications'), {
       agentId,
       type: 'commission_earned',
-      title: '✨ Komisi Diperoleh!',
-      message: `Selamat! Anda mendapatkan komisi dari referral ${referralName}`,
+      title: '✨ Profit Diperoleh!',
+      message: `Selamat! Anda mendapatkan profit dari referral ${referralName}`,
       referralName,
       amount: commissionAmount,
       isRead: false,

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Textarea } from '../../../components/ui/textarea';
 import { Label } from '../../../components/ui/label';
 import { Wallet, Check, X, Eye, DollarSign, Users, TrendingUp, Upload, Image as ImageIcon, RefreshCw } from 'lucide-react';
-import { collection, getDocs, doc, updateDoc, Timestamp, getDoc, query, where } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, Timestamp, getDoc, onSnapshot, orderBy } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage';
 import { db, storage } from '../../../../config/firebase';
 import { toast } from 'sonner';
@@ -46,12 +46,12 @@ const CommissionWithdrawalManagement: React.FC = () => {
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [note, setNote] = useState('');
   const [processing, setProcessing] = useState(false);
-  
+
   // ✅ File upload states
   const [transferProofFile, setTransferProofFile] = useState<File | null>(null);
   const [transferProofPreview, setTransferProofPreview] = useState<string | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
-  
+
   // ✅ Fix balance state
   const [fixingBalance, setFixingBalance] = useState(false);
   const [needsBalanceFix, setNeedsBalanceFix] = useState(false);
@@ -72,16 +72,16 @@ const CommissionWithdrawalManagement: React.FC = () => {
     try {
       setLoading(true);
       const querySnapshot = await getDocs(collection(db, 'commissionWithdrawals'));
-      
+
       const withdrawalList: WithdrawalRequest[] = querySnapshot.docs.map(doc => {
         const data = doc.data();
-        
+
         // ✅ BACKWARD COMPATIBILITY: Convert old status to new format
         let status = data.status;
         if (status === 'approved') {
           status = 'confirmed';
         }
-        
+
         return {
           id: doc.id,
           ...data,
@@ -131,15 +131,15 @@ const CommissionWithdrawalManagement: React.FC = () => {
         initialQuality: 0.65,    // Lower for speed
         maxIteration: 2,         // FAST processing
       };
-      
+
       const compressedFile = await imageCompression(file, options);
       const compressedSizeKB = (compressedFile.size / 1024).toFixed(0);
       const compressionTime = ((Date.now() - startTime) / 1000).toFixed(1);
-      
+
       toast.success(`Siap! ${compressedSizeKB}KB (${compressionTime}s) ⚡`, { id: 'compress' });
-      
+
       setTransferProofFile(compressedFile);
-      
+
       // Create preview (async, non-blocking)
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -149,7 +149,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
     } catch (error) {
       console.error('Error compressing image:', error);
       toast.error('Gagal memproses gambar', { id: 'compress' });
-      
+
       // Fallback: use original file
       setTransferProofFile(file);
       const reader = new FileReader();
@@ -188,18 +188,18 @@ const CommissionWithdrawalManagement: React.FC = () => {
         } catch (error: any) {
           console.error('Failed to convert image:', error);
           toast.error('Gagal menyimpan bukti transfer', { id: 'save-proof' });
-          
+
           // Ask user if they want to continue without proof
           const continueWithoutProof = window.confirm(
             'Gagal menyimpan bukti transfer. Apakah Anda ingin tetap menyetujui pencairan tanpa bukti transfer?\n\n' +
             'Klik OK untuk melanjutkan tanpa bukti, atau Cancel untuk membatalkan approval.'
           );
-          
+
           if (!continueWithoutProof) {
             setProcessing(false);
             return;
           }
-          
+
           toast.info('Melanjutkan approval tanpa bukti transfer');
         }
       }
@@ -249,7 +249,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
         toast.warning('Balance document tidak ditemukan');
       }
 
-      toast.success('Pencairan komisi berhasil disetujui!');
+      toast.success('Pencairan profit berhasil disetujui!');
       setShowApproveDialog(false);
       setSelectedWithdrawal(null);
       setNote('');
@@ -283,7 +283,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
 
       console.log('✅ Withdrawal rejected (no refund needed - balance was never deducted)');
 
-      toast.success('Pencairan komisi ditolak');
+      toast.success('Pencairan profit ditolak');
       setShowRejectDialog(false);
       setSelectedWithdrawal(null);
       setNote('');
@@ -453,8 +453,8 @@ const CommissionWithdrawalManagement: React.FC = () => {
       {/* Withdrawal List */}
       <Card>
         <CardHeader>
-          <CardTitle>Manajemen Pencairan Komisi</CardTitle>
-          <CardDescription>Kelola permintaan pencairan komisi dari alumni dan agen</CardDescription>
+          <CardTitle>Manajemen Pencairan Profit</CardTitle>
+          <CardDescription>Kelola permintaan pencairan profit dari alumni dan agen</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="pending">
@@ -656,9 +656,9 @@ const CommissionWithdrawalManagement: React.FC = () => {
       <Dialog open={showApproveDialog} onOpenChange={setShowApproveDialog}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Setujui Pencairan Komisi</DialogTitle>
+            <DialogTitle>Setujui Pencairan Profit</DialogTitle>
             <DialogDescription>
-              Konfirmasi persetujuan pencairan komisi untuk {selectedWithdrawal?.userName}
+              Konfirmasi persetujuan pencairan profit untuk {selectedWithdrawal?.userName}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -717,7 +717,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
             <div className="space-y-2">
               <Label htmlFor="transfer-proof">Bukti Transfer (Opsional)</Label>
               <p className="text-xs text-slate-500">Upload bukti transfer untuk dokumentasi</p>
-              
+
               {/* Upload Button & Preview */}
               <div className="space-y-3">
                 {!transferProofPreview ? (
@@ -806,7 +806,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
       <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Tolak Pencairan Komisi</DialogTitle>
+            <DialogTitle>Tolak Pencairan Profit</DialogTitle>
             <DialogDescription>
               Berikan alasan penolakan untuk {selectedWithdrawal?.userName}
             </DialogDescription>
@@ -900,15 +900,15 @@ const CommissionWithdrawalManagement: React.FC = () => {
                     selectedWithdrawal?.status === 'confirmed'
                       ? 'bg-green-100 text-green-700'
                       : selectedWithdrawal?.status === 'rejected'
-                      ? 'bg-red-100 text-red-700'
-                      : 'bg-amber-100 text-amber-700'
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-amber-100 text-amber-700'
                   }
                 >
                   {selectedWithdrawal?.status === 'confirmed'
                     ? 'Disetujui'
                     : selectedWithdrawal?.status === 'rejected'
-                    ? 'Ditolak'
-                    : 'Pending'}
+                      ? 'Ditolak'
+                      : 'Pending'}
                 </Badge>
               </div>
 

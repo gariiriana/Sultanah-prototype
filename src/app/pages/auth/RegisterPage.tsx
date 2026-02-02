@@ -95,7 +95,7 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin, onRegist
   };
 
   const roleOptions = [
-    { value: 'affiliator', label: 'Affiliator', description: 'Daftar program afiliasi (komisi per jamaah)' },
+    { value: 'affiliator', label: 'Affiliator', description: 'Daftar program afiliasi (profit per jamaah)' },
     { value: 'influencer', label: 'Influencer', description: 'Kolaborasi media sosial (perlu persetujuan)' },
     { value: 'tour-leader', label: 'Tour Leader', description: 'Daftar sebagai tour leader (perlu persetujuan)' },
     { value: 'mutawwif', label: 'Mutawwif', description: 'Daftar sebagai mutawwif (perlu persetujuan)' },

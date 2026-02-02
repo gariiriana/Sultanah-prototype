@@ -74,7 +74,7 @@ const ReferralDashboardPage: React.FC<ReferralDashboardPageProps> = ({ onBack })
         await setDoc(referralRef, newReferral);
         setReferralData(newReferral);
         setReferralLink(`${window.location.origin}?ref=${code}`);
-        
+
         // Also update user document with referral code
         const userRef = doc(db, 'users', currentUser.uid);
         await setDoc(userRef, { referralCode: code }, { merge: true });
@@ -83,16 +83,16 @@ const ReferralDashboardPage: React.FC<ReferralDashboardPageProps> = ({ onBack })
       // ✅ AUTO-INITIALIZE: Ensure commissionBalance exists in user document
       const userRef = doc(db, 'users', currentUser.uid);
       const userSnap = await getDoc(userRef);
-      
+
       if (userSnap.exists()) {
         const userData = userSnap.data();
-        
+
         // If commissionBalance doesn't exist, initialize it to 0
         if (userData.commissionBalance === undefined || userData.commissionBalance === null) {
-          await setDoc(userRef, { 
-            commissionBalance: 0 
+          await setDoc(userRef, {
+            commissionBalance: 0
           }, { merge: true });
-          
+
           console.log('✅ Auto-initialized commissionBalance to 0');
           setCommissionBalance(0);
         } else {
@@ -100,10 +100,10 @@ const ReferralDashboardPage: React.FC<ReferralDashboardPageProps> = ({ onBack })
         }
       } else {
         // User document doesn't exist - create it with commission balance
-        await setDoc(userRef, { 
-          commissionBalance: 0 
+        await setDoc(userRef, {
+          commissionBalance: 0
         }, { merge: true });
-        
+
         console.log('✅ Created user document with commissionBalance');
         setCommissionBalance(0);
       }
@@ -154,7 +154,7 @@ const ReferralDashboardPage: React.FC<ReferralDashboardPageProps> = ({ onBack })
       }
     } catch (error) {
       console.error('Error loading commission data:', error);
-      toast.error('Gagal memuat data komisi');
+      toast.error('Gagal memuat data profit');
     }
   };
 
@@ -175,7 +175,7 @@ const ReferralDashboardPage: React.FC<ReferralDashboardPageProps> = ({ onBack })
       setWithdrawalHistory(history);
     } catch (error) {
       console.error('Error loading withdrawal history:', error);
-      toast.error('Gagal memuat riwayat penarikan');
+      toast.error('Gagal memuat riwayat pencairan');
     } finally {
       setLoadingWithdrawals(false);
     }
@@ -313,7 +313,7 @@ const ReferralDashboardPage: React.FC<ReferralDashboardPageProps> = ({ onBack })
                 <Wallet className="w-8 h-8 text-white" />
               </div>
               <div>
-                <p className="text-white/80 text-sm mb-1">Saldo Komisi Anda</p>
+                <p className="text-white/80 text-sm mb-1">Saldo Profit Anda</p>
                 <p className="text-4xl font-bold">
                   Rp {commissionBalance.toLocaleString('id-ID')}
                 </p>
@@ -326,7 +326,7 @@ const ReferralDashboardPage: React.FC<ReferralDashboardPageProps> = ({ onBack })
               className="bg-white text-green-600 hover:bg-white/90 gap-2 px-6 py-3 rounded-xl font-semibold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Wallet className="w-5 h-5" />
-              Ajukan Pencairan Komisi
+              Ajukan Pencairan Profit
             </Button>
           </div>
         </motion.div>
@@ -361,11 +361,10 @@ const ReferralDashboardPage: React.FC<ReferralDashboardPageProps> = ({ onBack })
             />
             <Button
               onClick={copyReferralLink}
-              className={`${
-                copied
+              className={`${copied
                   ? 'bg-green-500 hover:bg-green-600'
                   : 'bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] hover:opacity-90'
-              } text-white gap-2 px-6 py-3 rounded-xl transition-all`}
+                } text-white gap-2 px-6 py-3 rounded-xl transition-all`}
             >
               {copied ? (
                 <>

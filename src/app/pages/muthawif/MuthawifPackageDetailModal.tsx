@@ -16,7 +16,8 @@ import {
   Download,
   FileText,
   UserCheck,
-  MessageCircle
+  MessageCircle,
+  Award
 } from 'lucide-react';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
@@ -360,8 +361,8 @@ const MuthawifPackageDetailModal: React.FC<MuthawifPackageDetailModalProps> = ({
             <button
               onClick={() => setActiveTab('info')}
               className={`flex-1 px-6 py-4 font-semibold transition-all ${activeTab === 'info'
-                  ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
             >
               <div className="flex items-center justify-center gap-2">
@@ -372,8 +373,8 @@ const MuthawifPackageDetailModal: React.FC<MuthawifPackageDetailModalProps> = ({
             <button
               onClick={() => setActiveTab('jamaah')}
               className={`flex-1 px-6 py-4 font-semibold transition-all ${activeTab === 'jamaah'
-                  ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
             >
               <div className="flex items-center justify-center gap-2">

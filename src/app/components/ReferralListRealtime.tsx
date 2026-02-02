@@ -195,7 +195,7 @@ const ReferralListRealtime: React.FC<ReferralListRealtimeProps> = ({ userId, use
             <div className="flex items-center gap-3">
               <TrendingUp className="w-8 h-8 text-amber-600" />
               <div>
-                <p className="text-sm text-gray-600">Total Komisi</p>
+                <p className="text-sm text-gray-600">Total Profit</p>
                 <p className="text-xl font-bold text-gray-900">
                   {formatCommission(stats.totalCommission)}
                 </p>
@@ -219,7 +219,7 @@ const ReferralListRealtime: React.FC<ReferralListRealtimeProps> = ({ userId, use
               <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-600 mb-2">Belum ada referral</p>
               <p className="text-sm text-gray-500">
-                Bagikan kode referral Anda untuk mendapatkan komisi
+                Bagikan kode referral Anda untuk mendapatkan profit
               </p>
             </div>
           ) : (
@@ -240,7 +240,7 @@ const ReferralListRealtime: React.FC<ReferralListRealtimeProps> = ({ userId, use
                       Status
                     </th>
                     <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">
-                      Komisi
+                      Profit
                     </th>
                   </tr>
                 </thead>
@@ -268,7 +268,7 @@ const ReferralListRealtime: React.FC<ReferralListRealtimeProps> = ({ userId, use
                         {referral.status === 'approved' && referral.paymentApproved ? (
                           <Badge className="bg-green-100 text-green-700 hover:bg-green-100">
                             <CheckCircle className="w-3 h-3 mr-1" />
-                            Komisi Didapat
+                            Profit Didapat
                           </Badge>
                         ) : referral.hasPaid ? (
                           <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
@@ -312,7 +312,7 @@ const ReferralListRealtime: React.FC<ReferralListRealtimeProps> = ({ userId, use
               </div>
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-blue-900 mb-2">Informasi Komisi</h4>
+              <h4 className="font-semibold text-blue-900 mb-2">Informasi Profit</h4>
               <ul className="space-y-1 text-sm text-blue-800">
                 <li>• Komisi {getRoleTitle()}: {getCommissionAmount()} per referral sukses</li>
                 <li>• Komisi dihitung setelah Jamaah bayar paket & disetujui Admin</li>

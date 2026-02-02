@@ -1,20 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../config/firebase';
 import { collection, query, where, getDocs, onSnapshot } from 'firebase/firestore'; // ✅ Remove orderBy - akan sort di client side
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from './ui/table';
 import { Badge } from './ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { 
-  getReferralStatusDisplay, 
+import {
+  getReferralStatusDisplay,
   getReferralStatusColor,
-  formatCommission 
+  formatCommission
 } from '../../constants/commissionRates';
 import { User, Calendar, DollarSign, CheckCircle, Clock, XCircle, Users } from 'lucide-react'; // ✅ Add Users import
 
@@ -129,7 +129,7 @@ const ReferralDetailsTable: React.FC<ReferralDetailsTableProps> = ({ userId }) =
         <CardContent>
           <div className="text-center py-8 text-gray-500">
             <Users className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>Bagikan kode referral Anda untuk mulai mendapatkan komisi!</p>
+            <p>Bagikan kode referral Anda untuk mulai mendapatkan profit!</p>
           </div>
         </CardContent>
       </Card>
@@ -155,7 +155,7 @@ const ReferralDetailsTable: React.FC<ReferralDetailsTableProps> = ({ userId }) =
                 <TableHead className="font-semibold">Nama Jamaah</TableHead>
                 <TableHead className="font-semibold">Email</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
-                <TableHead className="font-semibold">Komisi</TableHead>
+                <TableHead className="font-semibold">Profit</TableHead>
                 <TableHead className="font-semibold">Tanggal Daftar</TableHead>
               </TableRow>
             </TableHeader>
@@ -235,7 +235,7 @@ const ReferralDetailsTable: React.FC<ReferralDetailsTableProps> = ({ userId }) =
             <CardContent className="pt-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-green-600 font-medium">Komisi Aktif</p>
+                  <p className="text-sm text-green-600 font-medium">Profit Aktif</p>
                   <p className="text-2xl font-bold text-green-700">
                     {referrals.filter(r => r.status === 'converted').length}
                   </p>

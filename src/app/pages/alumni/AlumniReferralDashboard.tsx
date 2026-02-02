@@ -3,27 +3,21 @@ import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import { db } from '../../../config/firebase';
-import { doc, getDoc, setDoc, collection, query, where, getDocs, orderBy, addDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs, orderBy, addDoc, Timestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { 
-  Gift, 
-  Copy, 
-  Share2, 
-  TrendingUp, 
-  DollarSign, 
-  Users, 
+import {
+  Gift,
+  Copy,
+  Share2,
+  Users,
   CheckCircle,
-  Clock,
   Wallet,
   ArrowLeft,
   Link2,
   Eye,
   Calendar,
 } from 'lucide-react';
-import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
-import { Input } from '../../components/ui/input';
-import { Badge } from '../../components/ui/badge';
 import CommissionWithdrawalForm, { WithdrawalFormData } from '../../components/CommissionWithdrawalForm'; // ✅ FIX: Correct path
 import { copyToClipboard } from '../../../utils/clipboard'; // ✅ Import safe clipboard utility
 import { COMMISSION_RATES } from '../../../constants/commissionRates'; // ✅ NEW: Import commission rates
@@ -79,11 +73,11 @@ const AlumniReferralDashboard: React.FC<AlumniReferralDashboardProps> = ({ onBac
 
       // ✅ FIXED: Use centralized auto-create system
       console.log('🔧 [ALUMNI REFERRAL] Initializing referral system...');
-      
+
       // Auto-create referral code if not exists (uses autoCreateReferralCode.ts)
       await autoCreateReferralCode(
-        userProfile.uid, 
-        'alumni', 
+        userProfile.uid,
+        'alumni',
         userProfile.displayName || 'USER',
         userProfile.email
       );
@@ -96,7 +90,7 @@ const AlumniReferralDashboard: React.FC<AlumniReferralDashboardProps> = ({ onBac
         const data = referralSnap.data();
         setReferralData(data as ReferralData);
         console.log('✅ [ALUMNI REFERRAL] Referral loaded:', data.referralCode);
-        
+
         // Fetch referral usage history
         await fetchReferralUsages(data.referralCode);
       } else {
@@ -119,7 +113,7 @@ const AlumniReferralDashboard: React.FC<AlumniReferralDashboardProps> = ({ onBac
         where('referralCode', '==', refCode),
         orderBy('clickedAt', 'desc')
       );
-      
+
       const usagesSnapshot = await getDocs(usagesQuery);
       const usagesData = usagesSnapshot.docs.map(doc => ({
         id: doc.id,
@@ -218,7 +212,7 @@ const AlumniReferralDashboard: React.FC<AlumniReferralDashboardProps> = ({ onBac
             </div>
             <div>
               <h1 className="text-3xl font-bold">Program Referral Alumni</h1>
-              <p className="text-purple-100 mt-1">Ajak teman & keluarga, dapatkan komisi!</p>
+              <p className="text-purple-100 mt-1">Ajak teman & keluarga, dapatkan profit!</p>
             </div>
           </div>
         </div>
@@ -290,9 +284,9 @@ const AlumniReferralDashboard: React.FC<AlumniReferralDashboardProps> = ({ onBac
               {/* Info */}
               <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4">
                 <p className="text-sm text-blue-800">
-                  💡 <strong>Cara kerja:</strong> Bagikan link Anda kepada teman/keluarga. 
-                  Setiap mereka mendaftar & <strong>membayar paket umrah</strong> melalui link Anda (dan pembayaran di-approve oleh Admin), 
-                  Anda akan mendapatkan komisi <strong>Rp{COMMISSION_RATE.toLocaleString('id-ID')}</strong> per referral yang berhasil!
+                  💡 <strong>Cara kerja:</strong> Bagikan link Anda kepada teman/keluarga.
+                  Setiap mereka mendaftar & <strong>membayar paket umrah</strong> melalui link Anda (dan pembayaran di-approve oleh Admin),
+                  Anda akan mendapatkan profit <strong>Rp{COMMISSION_RATE.toLocaleString('id-ID')}</strong> per referral yang berhasil!
                 </p>
               </div>
             </CardContent>
@@ -352,14 +346,14 @@ const AlumniReferralDashboard: React.FC<AlumniReferralDashboardProps> = ({ onBac
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-medium text-gray-600 flex items-center gap-2">
                   <DollarSign className="w-4 h-4" />
-                  Total Komisi
+                  Total Profit
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
                   {formatCurrency(referralData?.totalCommission || 0)}
                 </div>
-                <p className="text-xs text-gray-500 mt-1">Komisi yang didapat</p>
+                <p className="text-xs text-gray-500 mt-1">Profit yang didapat</p>
               </CardContent>
             </Card>
           </motion.div>
@@ -384,7 +378,7 @@ const AlumniReferralDashboard: React.FC<AlumniReferralDashboardProps> = ({ onBac
                   <Users className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Belum Ada Penggunaan</h3>
                   <p className="text-gray-600">
-                    Mulai bagikan link referral Anda untuk mendapatkan komisi!
+                    Mulai bagikan link referral Anda untuk mendapatkan profit!
                   </p>
                 </div>
               ) : (
@@ -392,11 +386,10 @@ const AlumniReferralDashboard: React.FC<AlumniReferralDashboardProps> = ({ onBac
                   {referralUsages.map((usage) => (
                     <div
                       key={usage.id}
-                      className={`border-2 rounded-xl p-4 ${
-                        usage.converted
-                          ? 'border-green-200 bg-green-50/30'
-                          : 'border-gray-200 bg-gray-50/30'
-                      }`}
+                      className={`border-2 rounded-xl p-4 ${usage.converted
+                        ? 'border-green-200 bg-green-50/30'
+                        : 'border-gray-200 bg-gray-50/30'
+                        }`}
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
@@ -431,7 +424,7 @@ const AlumniReferralDashboard: React.FC<AlumniReferralDashboardProps> = ({ onBac
 
                         {usage.converted && (
                           <div className="text-right">
-                            <p className="text-sm text-gray-600">Komisi</p>
+                            <p className="text-sm text-gray-600">Profit</p>
                             <p className="text-xl font-bold text-green-600">
                               {formatCurrency(usage.commissionAmount)}
                             </p>
@@ -460,11 +453,11 @@ const AlumniReferralDashboard: React.FC<AlumniReferralDashboardProps> = ({ onBac
                 Syarat & Ketentuan
               </h3>
               <ul className="space-y-2 text-sm text-purple-800">
-                <li>✅ Komisi <strong>Rp{COMMISSION_RATE.toLocaleString('id-ID')}</strong> per referral yang berhasil</li>
-                <li>✅ Komisi dihitung HANYA setelah pembayaran paket di-approve oleh Admin</li>
+                <li>✅ Profit <strong>Rp{COMMISSION_RATE.toLocaleString('id-ID')}</strong> per referral yang berhasil</li>
+                <li>✅ Profit dihitung HANYA setelah pembayaran paket di-approve oleh Admin</li>
                 <li>✅ Link referral berlaku selamanya</li>
                 <li>✅ Tidak ada batas jumlah referral yang bisa Anda dapatkan</li>
-                <li>✅ Pencairan komisi dapat diajukan melalui tombol "Ajukan Pencairan Komisi" di bawah</li>
+                <li>✅ Pencairan profit dapat diajukan melalui tombol "Ajukan Pencairan Profit" di bawah</li>
               </ul>
             </CardContent>
           </Card>
@@ -481,13 +474,13 @@ const AlumniReferralDashboard: React.FC<AlumniReferralDashboardProps> = ({ onBac
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Wallet className="w-5 h-5 text-amber-600" />
-                Ajukan Pencairan Komisi
+                Ajukan Pencairan Profit
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="mb-4">
                 <p className="text-sm text-gray-600 mb-2">
-                  Komisi tersedia: <span className="text-green-600 font-semibold">{formatCurrency(referralData?.totalCommission || 0)}</span>
+                  Profit tersedia: <span className="text-green-600 font-semibold">{formatCurrency(referralData?.totalCommission || 0)}</span>
                 </p>
               </div>
               <Button
@@ -496,11 +489,11 @@ const AlumniReferralDashboard: React.FC<AlumniReferralDashboardProps> = ({ onBac
                 className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700"
               >
                 <Wallet className="w-4 h-4 mr-2" />
-                Ajukan Pencairan Komisi
+                Ajukan Pencairan Profit
               </Button>
               {(referralData?.totalCommission || 0) <= 0 && (
                 <p className="text-sm text-gray-500 mt-2 text-center">
-                  Belum ada komisi yang dapat dicairkan
+                  Belum ada profit yang dapat dicairkan
                 </p>
               )}
             </CardContent>
@@ -537,10 +530,10 @@ const AlumniReferralDashboard: React.FC<AlumniReferralDashboardProps> = ({ onBac
               note: '',
             });
 
-            toast.success('✅ Permintaan pencairan komisi berhasil diajukan!');
+            toast.success('✅ Permintaan pencairan profit berhasil diajukan!');
           } catch (error) {
             console.error('Error submitting withdrawal:', error);
-            toast.error('Gagal mengajukan pencairan komisi');
+            toast.error('Gagal mengajukan pencairan profit');
           }
         }}
         maxAmount={referralData?.totalCommission || 0}

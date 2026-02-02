@@ -1,15 +1,14 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
-import { ArrowLeft, Save, User, Crown } from 'lucide-react';
+import { ArrowLeft, Save, User, Crown, LogOut } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
-import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
-import { db } from '../../../config/firebase';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../../components/ui/alert-dialog';
 
 // ✅ LOGO: Genuine Sultanah Logo
 const logoSultanah = '/images/logo.png';
@@ -29,10 +28,11 @@ interface AgentProfile {
 }
 
 const AgentProfilePage: React.FC = () => {
-  const { currentUser, userProfile } = useAuth();
+  const { currentUser, userProfile, updateUserProfile, signOut } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
   const [profile, setProfile] = useState<AgentProfile>({
     userId: '',
     fullName: '',
@@ -54,35 +54,24 @@ const AgentProfilePage: React.FC = () => {
   }, [currentUser]);
 
   const loadProfile = async () => {
-    if (!currentUser) return;
+    if (!userProfile) return;
 
     try {
       setLoading(true);
-      const profileDoc = await getDoc(doc(db, 'agentProfiles', currentUser.uid));
-
-      if (profileDoc.exists()) {
-        const data = profileDoc.data();
-        setProfile({
-          userId: data.userId || currentUser.uid,
-          fullName: data.fullName || '',
-          email: data.email || currentUser.email || '',
-          phone: data.phone || '',
-          address: data.address || '',
-          city: data.city || '',
-          province: data.province || '',
-          postalCode: data.postalCode || '',
-          idNumber: data.idNumber || '',
-          createdAt: data.createdAt?.toDate() || new Date(),
-          updatedAt: data.updatedAt?.toDate() || new Date(),
-        });
-      } else {
-        // Initialize with email
-        setProfile(prev => ({
-          ...prev,
-          userId: currentUser.uid,
-          email: currentUser.email || '',
-        }));
-      }
+      // ✅ Use centralized userProfile from useAuth
+      setProfile({
+        userId: userProfile.uid || '',
+        fullName: userProfile.identityInfo?.fullName || '',
+        email: userProfile.email || '',
+        phone: userProfile.phoneNumber || '',
+        address: userProfile.identityInfo?.streetAddress || '',
+        city: userProfile.identityInfo?.city || '',
+        province: userProfile.identityInfo?.state || '',
+        postalCode: userProfile.identityInfo?.postalCode || '',
+        idNumber: userProfile.identityInfo?.idNumber || '',
+        createdAt: userProfile.createdAt ? new Date(userProfile.createdAt) : new Date(),
+        updatedAt: new Date(),
+      });
     } catch (error) {
       console.error('Error loading profile:', error);
       toast.error('Gagal memuat profil');
@@ -110,21 +99,20 @@ const AgentProfilePage: React.FC = () => {
     try {
       setSaving(true);
 
-      const profileData = {
-        userId: currentUser.uid,
-        fullName: profile.fullName,
-        email: profile.email,
-        phone: profile.phone,
-        address: profile.address,
-        city: profile.city,
-        province: profile.province,
-        postalCode: profile.postalCode,
-        idNumber: profile.idNumber,
-        updatedAt: Timestamp.now(),
-        createdAt: profile.createdAt ? Timestamp.fromDate(profile.createdAt) : Timestamp.now(),
-      };
+      setSaving(true);
 
-      await setDoc(doc(db, 'agentProfiles', currentUser.uid), profileData);
+      await updateUserProfile({
+        phoneNumber: profile.phone,
+        identityInfo: {
+          fullName: profile.fullName,
+          idNumber: profile.idNumber,
+          streetAddress: profile.address,
+          city: profile.city,
+          state: profile.province,
+          postalCode: profile.postalCode,
+        },
+        profileComplete: true
+      } as any);
 
       toast.success('Profil berhasil disimpan!');
     } catch (error) {
@@ -132,6 +120,16 @@ const AgentProfilePage: React.FC = () => {
       toast.error('Gagal menyimpan profil');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      toast.success('Berhasil logout');
+      navigate('/');
+    } catch (error) {
+      toast.error('Gagal logout');
     }
   };
 
@@ -360,8 +358,41 @@ const AgentProfilePage: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Logout Section */}
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="mt-6 sm:mt-8">
+              <Button
+                onClick={() => setShowLogoutDialog(true)}
+                variant="outline"
+                className="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border-red-500/30 backdrop-blur-sm py-6 sm:py-8 rounded-2xl flex items-center justify-center gap-3 text-lg font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]">
+                <LogOut className="w-5 h-5 sm:w-6 sm:h-6" />
+                Keluar dari Akun
+              </Button>
+            </motion.div>
           </motion.div>
         </div>
+
+        {/* Logout Confirmation */}
+        <AlertDialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+          <AlertDialogContent className="bg-slate-900/90 backdrop-blur-xl border-white/10 text-white">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Konfirmasi Logout</AlertDialogTitle>
+              <AlertDialogDescription className="text-white/70">
+                Apakah Anda yakin ingin keluar dari akun? Anda perlu login kembali untuk mengakses dashboard.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="bg-white/10 border-white/20 text-white hover:bg-white/20">Batal</AlertDialogCancel>
+              <AlertDialogAction onClick={handleLogout} className="bg-red-500 hover:bg-red-600 border-0">
+                Ya, Keluar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );

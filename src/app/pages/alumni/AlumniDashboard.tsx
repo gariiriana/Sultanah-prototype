@@ -326,7 +326,7 @@ const AlumniDashboard: React.FC<AlumniDashboardProps> = () => {
                     </div>
                     <div>
                       <h3 className="text-sm sm:text-base font-semibold mb-1">Program Referral 🎁</h3>
-                      <p className="text-xs sm:text-sm text-gray-600">Ajak teman & dapatkan komisi!</p>
+                      <p className="text-xs sm:text-sm text-gray-600">Ajak teman & dapatkan profit!</p>
                     </div>
                   </div>
                 </CardContent>
@@ -457,7 +457,7 @@ const AlumniDashboard: React.FC<AlumniDashboardProps> = () => {
                       </div>
                       <div className="flex items-start gap-2">
                         <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 text-xs font-bold">3</div>
-                        <p className="text-blue-800">Admin approve pembayaran → Anda dapat komisi Rp200.000!</p>
+                        <p className="text-blue-800">Admin approve pembayaran → Anda dapat profit Rp200.000!</p>
                       </div>
                     </div>
                   </div>

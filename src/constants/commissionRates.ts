@@ -1,11 +1,11 @@
 /**
  * 💰 COMMISSION RATES CONFIGURATION
  * 
- * Ketentuan komisi referral Sultanah Travel:
+ * Ketentuan profit referral Sultanah Travel:
  * - Alumni Jamaah Umroh: Rp200.000 per Jamaah
  * - Reseller Agen: Rp500.000 per Jamaah
  * 
- * Komisi HANYA dihitung setelah:
+ * Profit HANYA dihitung setelah:
  * 1. Jamaah melakukan pembayaran
  * 2. Pembayaran di-approve oleh Admin
  */
@@ -55,7 +55,7 @@ export const REFERRAL_STATUS = {
   // Jamaah sudah submit payment, menunggu approval
   PAYMENT_SUBMITTED: 'payment_submitted',
 
-  // Payment approved, komisi sudah dihitung
+  // Payment approved, profit sudah dihitung
   CONVERTED: 'converted',
 
   // Payment rejected
@@ -71,7 +71,7 @@ export function getReferralStatusDisplay(status: string): string {
   const statusMap: Record<string, string> = {
     'registered': '🆕 Baru Daftar (Belum Bayar)',
     'payment_submitted': '⏳ Menunggu Approval Pembayaran',
-    'converted': '✅ Pembayaran Approved - Komisi Aktif',
+    'converted': '✅ Pembayaran Approved - Profit Aktif',
     'payment_rejected': '❌ Pembayaran Ditolak',
     'pending': '⏳ Menunggu Pembayaran', // Legacy status
   };

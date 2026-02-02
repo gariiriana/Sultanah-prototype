@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { collection, getDocs, query, where, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
 import { toast } from 'sonner';
-import { Users, TrendingUp, DollarSign, Copy, Download, Filter, Search } from 'lucide-react';
+import { Users, TrendingUp, DollarSign, Copy, Download, Filter, Search, CheckCircle, Eye, Award, Gift } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Badge } from '../../components/ui/badge';
@@ -71,17 +73,17 @@ const ReferralManagement: React.FC = () => {
       setLoading(true);
       const referralsRef = collection(db, 'alumniReferrals');
       const q = query(referralsRef, orderBy('createdAt', 'desc'));
-      
+
       const querySnapshot = await getDocs(q);
       const referralData: ReferralData[] = [];
-      
+
       for (const docSnap of querySnapshot.docs) {
         const data = docSnap.data();
-        
+
         // Fetch user info
         let userName = 'Unknown';
         let userEmail = 'Unknown';
-        
+
         if (data.userId) {
           try {
             const userRef = doc(db, 'users', data.userId);
@@ -95,7 +97,7 @@ const ReferralManagement: React.FC = () => {
             console.error('Error fetching user:', err);
           }
         }
-        
+
         referralData.push({
           id: docSnap.id,
           userId: data.userId || '',
@@ -108,7 +110,7 @@ const ReferralManagement: React.FC = () => {
           userEmail,
         });
       }
-      
+
       setReferrals(referralData);
       setFilteredReferrals(referralData);
     } catch (error) {
@@ -122,7 +124,7 @@ const ReferralManagement: React.FC = () => {
   const handleViewDetails = async (referral: ReferralData) => {
     setSelectedReferral(referral);
     setShowDetails(true);
-    
+
     // In real implementation, fetch referral details from a separate collection
     // For now, we'll show empty state
     setReferralDetails([]);
@@ -134,7 +136,7 @@ const ReferralManagement: React.FC = () => {
   };
 
   const exportToCSV = () => {
-    const headers = ['Kode Referral', 'Nama Alumni', 'Email', 'Total Referrals', 'Successful', 'Komisi Total'];
+    const headers = ['Kode Referral', 'Nama Alumni', 'Email', 'Total Referrals', 'Successful', 'Profit Total'];
     const rows = filteredReferrals.map(r => [
       r.code,
       r.userName || '',
@@ -154,7 +156,7 @@ const ReferralManagement: React.FC = () => {
     link.href = URL.createObjectURL(blob);
     link.download = `referral-data-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
-    
+
     toast.success('Data referral berhasil diekspor!');
   };
 
@@ -187,7 +189,7 @@ const ReferralManagement: React.FC = () => {
               </h1>
               <p className="text-gray-600">Kelola program referral alumni Jamaah Umroh</p>
             </div>
-            
+
             <Button
               onClick={exportToCSV}
               className="bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] hover:opacity-90 text-white"
@@ -246,7 +248,7 @@ const ReferralManagement: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">Total Komisi</p>
+                  <p className="text-sm text-gray-600 mb-1">Total Profit</p>
                   <p className="text-2xl font-bold text-[#D4AF37]">
                     Rp {totalCommission.toLocaleString('id-ID')}
                   </p>
@@ -310,7 +312,7 @@ const ReferralManagement: React.FC = () => {
                       <th className="text-left py-3 px-4 text-sm font-semibold text-gray-700">Email</th>
                       <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">Total</th>
                       <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">Successful</th>
-                      <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Komisi</th>
+                      <th className="text-right py-3 px-4 text-sm font-semibold text-gray-700">Profit</th>
                       <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">Tanggal</th>
                       <th className="text-center py-3 px-4 text-sm font-semibold text-gray-700">Aksi</th>
                     </tr>
@@ -422,7 +424,7 @@ const ReferralManagement: React.FC = () => {
                     <p className="text-2xl font-bold text-purple-600">{selectedReferral.totalReferrals}</p>
                   </div>
                   <div className="p-4 bg-[#D4AF37]/10 rounded-lg border border-[#D4AF37]/30">
-                    <p className="text-sm text-gray-600 mb-1">Total Komisi</p>
+                    <p className="text-sm text-gray-600 mb-1">Total Profit</p>
                     <p className="text-2xl font-bold text-[#D4AF37]">
                       Rp {(selectedReferral.totalCommission || 0).toLocaleString('id-ID')}
                     </p>
@@ -451,11 +453,10 @@ const ReferralManagement: React.FC = () => {
                             <p className="text-sm font-semibold text-[#D4AF37]">
                               Rp {detail.commissionAmount.toLocaleString('id-ID')}
                             </p>
-                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                              detail.status === 'successful' ? 'bg-green-100 text-green-700' :
+                            <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${detail.status === 'successful' ? 'bg-green-100 text-green-700' :
                               detail.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                              'bg-red-100 text-red-700'
-                            }`}>
+                                'bg-red-100 text-red-700'
+                              }`}>
                               {detail.status}
                             </span>
                           </div>

@@ -62,28 +62,28 @@ export async function processReferralCode(
     // 🔥 FALLBACK: If not in master, try to find in alumniReferrals and auto-migrate
     if (!codeSnap.exists()) {
       console.log('⚠️ [REFERRAL] Code not in master collection, attempting auto-migration...');
-      
+
       // Search in alumniReferrals collection
       const alumniQuery = query(
         collection(db, 'alumniReferrals'),
         where('referralCode', '==', cleanCode)
       );
       const alumniSnapshot = await getDocs(alumniQuery);
-      
+
       if (!alumniSnapshot.empty) {
         const alumniDoc = alumniSnapshot.docs[0];
         const alumniData = alumniDoc.data();
         const ownerId = alumniDoc.id;
-        
+
         console.log('✅ [REFERRAL] Found in alumniReferrals, migrating to master...');
-        
+
         // Get user data for complete info
         const userDoc = await getDoc(doc(db, 'users', ownerId));
         if (userDoc.exists()) {
           const userData = userDoc.data();
           const ownerRole = userData.role;
           const commissionAmount = getCommissionAmount(ownerRole);
-          
+
           // Create in master collection
           await setDoc(doc(db, 'referralCodes', cleanCode), {
             code: cleanCode,
@@ -96,9 +96,9 @@ export async function processReferralCode(
             createdAt: alumniData.createdAt || new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           });
-          
+
           console.log('✅ [REFERRAL] Auto-migration successful! Code now in master collection.');
-          
+
           // Now continue with normal flow - re-fetch from master
           const migratedCodeSnap = await getDoc(codeRef);
           if (migratedCodeSnap.exists()) {
@@ -107,7 +107,7 @@ export async function processReferralCode(
             const referrerRole = migratedCodeData.ownerRole;
             const commissionAmount = migratedCodeData.commissionPerPaidUser;
             const isActive = migratedCodeData.isActive;
-            
+
             console.log('✅ [REFERRAL] Using migrated code:', {
               code: cleanCode,
               ownerId: referrerId,
@@ -115,7 +115,7 @@ export async function processReferralCode(
               commission: commissionAmount,
               isActive
             });
-            
+
             // Continue with referral processing (skip to step 3)
             const referrerUserDoc = await getDoc(doc(db, 'users', referrerId));
             if (!referrerUserDoc.exists()) {
@@ -134,14 +134,14 @@ export async function processReferralCode(
 
             // Validate role
             if (referrerRole !== 'alumni' && referrerRole !== 'agen') {
-              console.log('⚠️ [REFERRAL] Role tidak eligible untuk komisi:', referrerRole);
-              return { success: false, error: 'Kode referral tidak valid untuk komisi' };
+              console.log('⚠️ [REFERRAL] Role tidak eligible untuk profit:', referrerRole);
+              return { success: false, error: 'Kode referral tidak valid untuk profit' };
             }
 
             // Create tracking (jump to step 4)
             const trackingId = `${referrerId}_${newUserId}_${Date.now()}`;
             console.log('📝 [REFERRAL] Creating referral tracking record:', trackingId);
-            
+
             const trackingData = {
               referralCode: cleanCode,
               referrerId: referrerId,
@@ -151,18 +151,18 @@ export async function processReferralCode(
               referredUserId: newUserId,
               referredUserEmail: newUserEmail,
               referredUserName: newUserName,
-              
+
               status: 'registered',
               hasUpgraded: false,
               hasPaid: false,
               paymentApproved: false,
               commissionGranted: false,
-              
+
               commissionAmount: commissionAmount,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
             };
-            
+
             await setDoc(doc(db, 'referralTracking', trackingId), trackingData);
 
             console.log('✅ [REFERRAL] Referral tracking created with COMPLETE structure:', trackingData);
@@ -171,7 +171,7 @@ export async function processReferralCode(
             const autoMigrationCollection = referrerRole === 'agen' ? 'agenReferrals' : 'alumniReferrals';
             const referralDocRef = doc(db, autoMigrationCollection, referrerId);
             console.log(`📝 [REFERRAL] Updating referrer stats in ${autoMigrationCollection} - incrementing totalReferrals...`);
-            
+
             await updateDoc(referralDocRef, {
               totalReferrals: increment(1),
               updatedAt: new Date().toISOString(),
@@ -184,7 +184,7 @@ export async function processReferralCode(
               `Referrer: ${referrerName} (${referrerRole})\\n` +
               `New User: ${newUserName}\\n` +
               `Status: REGISTERED (Belum Bayar)\\n` +
-              `Expected Commission: Rp${commissionAmount.toLocaleString('id-ID')}\\n` +
+              `Expected Profit: Rp${commissionAmount.toLocaleString('id-ID')}\\n` +
               `Alumni can see this referral IMMEDIATELY in dashboard!`,
               'color: green; font-weight: bold; font-size: 14px; background: #e8f5e9; padding: 10px; border-radius: 5px;'
             );
@@ -198,39 +198,39 @@ export async function processReferralCode(
           }
         }
       }
-      
+
       // 🔥 FALLBACK LAYER 3: Search in users collection
       console.log('⚠️ [REFERRAL] Not found in alumniReferrals, trying users collection...');
-      
+
       const usersQuery = query(
         collection(db, 'users'),
         where('referralCode', '==', cleanCode)
       );
       const usersSnapshot = await getDocs(usersQuery);
-      
+
       if (!usersSnapshot.empty) {
         const userDoc = usersSnapshot.docs[0];
         const userData = userDoc.data();
         const ownerId = userDoc.id;
         const ownerRole = userData.role;
-        
+
         console.log('✅ [REFERRAL] Found code owner in users collection:', {
           userId: ownerId,
           email: userData.email,
           role: ownerRole
         });
-        
+
         // Validate role can have referral code
         if (ownerRole !== 'alumni' && ownerRole !== 'agen') {
           console.log('⚠️ [REFERRAL] User role not eligible for referral:', ownerRole);
-          return { success: false, error: 'Kode referral tidak valid untuk komisi' };
+          return { success: false, error: 'Kode referral tidak valid untuk profit' };
         }
-        
+
         const commissionAmount = getCommissionAmount(ownerRole);
-        
+
         // AUTO-CREATE EVERYTHING: referralCodes + alumniReferrals
         console.log('🔧 [REFERRAL] Auto-creating referral system for user...');
-        
+
         // 1. Create master referralCodes
         await setDoc(doc(db, 'referralCodes', cleanCode), {
           code: cleanCode,
@@ -243,14 +243,14 @@ export async function processReferralCode(
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
-        
+
         console.log('✅ [REFERRAL] Created referralCodes master record');
-        
+
         // 2. Create/Update role-specific collection - ✅ FIX: Dynamic collection
         const autoSetupCollection = ownerRole === 'agen' ? 'agenReferrals' : 'alumniReferrals';
         const roleRefDoc = doc(db, autoSetupCollection, ownerId);
         const existingRoleRef = await getDoc(roleRefDoc);
-        
+
         if (!existingRoleRef.exists()) {
           await setDoc(roleRefDoc, {
             userId: ownerId,
@@ -265,16 +265,16 @@ export async function processReferralCode(
         } else {
           console.log(`ℹ️ [REFERRAL] ${autoSetupCollection} already exists, skipping creation`);
         }
-        
+
         // 3. Now continue with normal referral tracking flow
         const referrerName = userData.displayName || userData.email;
-        
+
         console.log('✅ [REFERRAL] Auto-setup complete! Proceeding with referral tracking...');
-        
+
         // Create tracking
         const trackingId = `${ownerId}_${newUserId}_${Date.now()}`;
         console.log('📝 [REFERRAL] Creating referral tracking record:', trackingId);
-        
+
         const trackingData = {
           referralCode: cleanCode,
           referrerId: ownerId,
@@ -284,18 +284,18 @@ export async function processReferralCode(
           referredUserId: newUserId,
           referredUserEmail: newUserEmail,
           referredUserName: newUserName,
-          
+
           status: 'registered',
           hasUpgraded: false,
           hasPaid: false,
           paymentApproved: false,
           commissionGranted: false,
-          
+
           commissionAmount: commissionAmount,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         };
-        
+
         await setDoc(doc(db, 'referralTracking', trackingId), trackingData);
 
         console.log('✅ [REFERRAL] Referral tracking created with COMPLETE structure:', trackingData);
@@ -304,7 +304,7 @@ export async function processReferralCode(
         const autoSetupStatsCollection = ownerRole === 'agen' ? 'agenReferrals' : 'alumniReferrals';
         const referralDocRef = doc(db, autoSetupStatsCollection, ownerId);
         console.log(`📝 [REFERRAL] Updating referrer stats in ${autoSetupStatsCollection} - incrementing totalReferrals...`);
-        
+
         await updateDoc(referralDocRef, {
           totalReferrals: increment(1),
           updatedAt: new Date().toISOString(),
@@ -317,7 +317,7 @@ export async function processReferralCode(
           `Referrer: ${referrerName} (${ownerRole})\n` +
           `New User: ${newUserName}\n` +
           `Status: REGISTERED (Belum Bayar)\n` +
-          `Expected Commission: Rp${commissionAmount.toLocaleString('id-ID')}\n` +
+          `Expected Profit: Rp${commissionAmount.toLocaleString('id-ID')}\n` +
           `Alumni can see this referral IMMEDIATELY in dashboard!`,
           'color: green; font-weight: bold; font-size: 14px; background: #e8f5e9; padding: 10px; border-radius: 5px;'
         );
@@ -329,7 +329,7 @@ export async function processReferralCode(
           referrerRole: ownerRole,
         };
       }
-      
+
       // If still not found after ALL fallback attempts
       console.log('❌ [REFERRAL] Kode referral tidak ditemukan di semua collection:', cleanCode);
       console.log('💡 [REFERRAL] Possible reasons:');
@@ -349,13 +349,13 @@ export async function processReferralCode(
       console.log(`      - referralCodes/${cleanCode}`);
       console.log('   4. Jika masalah persists, contact admin untuk manual create');
       console.log('   5. Admin dapat gunakan: /manual-referral-code-creator.html');
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: `Kode referral "${cleanCode}" tidak ditemukan. Kemungkinan:\n\n` +
-               `1️⃣ Pemilik kode belum login ke system (minta mereka login dulu)\n` +
-               `2️⃣ Kode salah/typo (cek ulang kode yang diberikan)\n` +
-               `3️⃣ Kode belum dibuat di system (hubungi admin)\n\n` +
-               `Jika yakin kode benar, hubungi admin untuk verifikasi.`
+          `1️⃣ Pemilik kode belum login ke system (minta mereka login dulu)\n` +
+          `2️⃣ Kode salah/typo (cek ulang kode yang diberikan)\n` +
+          `3️⃣ Kode belum dibuat di system (hubungi admin)\n\n` +
+          `Jika yakin kode benar, hubungi admin untuk verifikasi.`
       };
     }
 
@@ -399,14 +399,14 @@ export async function processReferralCode(
 
     // ✅ Validate role - only Alumni & Agen can earn commission
     if (referrerRole !== 'alumni' && referrerRole !== 'agen') {
-      console.log('⚠️ [REFERRAL] Role tidak eligible untuk komisi:', referrerRole);
-      return { success: false, error: 'Kode referral tidak valid untuk komisi' };
+      console.log('⚠️ [REFERRAL] Role tidak eligible untuk profit:', referrerRole);
+      return { success: false, error: 'Kode referral tidak valid untuk profit' };
     }
 
     // 4. 🔥 CREATE REFERRAL TRACKING IMMEDIATELY - NEW STRUCTURE
     const trackingId = `${referrerId}_${newUserId}_${Date.now()}`;
     console.log('📝 [REFERRAL] Creating referral tracking record:', trackingId);
-    
+
     // ✅ CORRECT LIFECYCLE: Status "registered" with complete fields
     const trackingData = {
       referralCode: cleanCode,
@@ -417,19 +417,19 @@ export async function processReferralCode(
       referredUserId: newUserId,
       referredUserEmail: newUserEmail,
       referredUserName: newUserName,
-      
+
       // 🔥 LIFECYCLE STATUS - CLEAR & COMPLETE
       status: 'registered', // ✅ User baru register dengan kode referral
       hasUpgraded: false, // ✅ Belum upgrade dari Calon Jamaah ke Jamaah
       hasPaid: false, // ✅ Belum bayar
       paymentApproved: false, // ✅ Admin belum approve payment
-      commissionGranted: false, // ✅ Komisi belum diberikan
-      
+      commissionGranted: false, // ✅ Profit belum diberikan
+
       commissionAmount: commissionAmount, // Expected amount when paid
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    
+
     await setDoc(doc(db, 'referralTracking', trackingId), trackingData);
 
     console.log('✅ [REFERRAL] Referral tracking created with COMPLETE structure:', trackingData);
@@ -439,7 +439,7 @@ export async function processReferralCode(
     const referralCollection = referrerRole === 'agen' ? 'agenReferrals' : 'alumniReferrals';
     const referralDocRef = doc(db, referralCollection, referrerId);
     console.log(`📝 [REFERRAL] Updating referrer stats in ${referralCollection} - incrementing totalReferrals...`);
-    
+
     await updateDoc(referralDocRef, {
       totalReferrals: increment(1), // ✅ Total yang daftar (termasuk belum bayar)
       updatedAt: new Date().toISOString(),
@@ -452,7 +452,7 @@ export async function processReferralCode(
       `Referrer: ${referrerName} (${referrerRole})\\n` +
       `New User: ${newUserName}\\n` +
       `Status: REGISTERED (Belum Bayar)\\n` +
-      `Expected Commission: Rp${commissionAmount.toLocaleString('id-ID')}\\n` +
+      `Expected Profit: Rp${commissionAmount.toLocaleString('id-ID')}\\n` +
       `Alumni can see this referral IMMEDIATELY in dashboard!`,
       'color: green; font-weight: bold; font-size: 14px; background: #e8f5e9; padding: 10px; border-radius: 5px;'
     );
@@ -489,10 +489,10 @@ export async function processReferralCode(
  * 💰 COMMISSION PROCESSOR - FIXED & IMPROVED
  * Called when payment is approved by Admin
  * 
- * SOP Pencairan Komisi:
+ * SOP Pencairan Profit:
  * 1. Admin approve payment → Find referral tracking
  * 2. Update referralTracking: status = "paid", paid = true, commissionGranted = true
- * 3. Calculate commission: Alumni Rp200k, Agen Rp500k
+ * 3. Calculate profit: Alumni Rp200k, Agen Rp500k
  * 4. Update/Create referralBalances - add to balance
  * 5. Update alumniReferrals successfulReferrals counter
  */
@@ -520,7 +520,7 @@ export async function processReferralCommission(
 
     const trackingDoc = trackingSnapshot.docs[0];
     const trackingData = trackingDoc.data();
-    
+
     // ✅ FIXED: Check using new lifecycle fields
     if (trackingData.paymentApproved === true || trackingData.commissionGranted === true) {
       console.log('⚠️ [COMMISSION] Commission already granted, skipping...');
@@ -541,7 +541,7 @@ export async function processReferralCommission(
 
     // 2. Calculate commission based on referrer role
     const commissionAmount = getCommissionAmount(referrerRole);
-    
+
     if (commissionAmount === 0) {
       console.log('⚠️ [COMMISSION] No commission for role:', referrerRole);
       return false;
@@ -550,9 +550,9 @@ export async function processReferralCommission(
     console.log('💰 [COMMISSION] Commission calculated:', {
       role: referrerRole,
       amount: commissionAmount,
-      formatted: new Intl.NumberFormat('id-ID', { 
-        style: 'currency', 
-        currency: 'IDR' 
+      formatted: new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR'
       }).format(commissionAmount)
     });
 
@@ -561,21 +561,21 @@ export async function processReferralCommission(
       // ✅ CRITICAL: ALL READS MUST HAPPEN FIRST (before any writes)
       const balanceRef = doc(db, 'referralBalances', referrerId);
       const balanceDoc = await transaction.get(balanceRef);
-      
+
       // ✅ READ referral doc to check if approvedCommission field exists
       const commissionCollection = referrerRole === 'agen' ? 'agenReferrals' : 'alumniReferrals';
       const referralDocRef = doc(db, commissionCollection, referrerId);
       const referralDocSnap = await transaction.get(referralDocRef);
-      
+
       // ✅ NOW DO ALL WRITES (after all reads are complete)
-      
+
       // 1. UPDATE REFERRAL TRACKING - COMPLETE LIFECYCLE
       const trackingRef = doc(db, 'referralTracking', trackingDoc.id);
       transaction.update(trackingRef, {
         status: 'approved', // ✅ FINAL STATUS: approved
         hasPaid: true, // ✅ User sudah bayar
         paymentApproved: true, // ✅ Admin sudah approve payment
-        commissionGranted: true, // ✅ Komisi sudah diberikan
+        commissionGranted: true, // ✅ Profit sudah diberikan
         paidAt: new Date().toISOString(),
         paymentId: paymentId,
         updatedAt: new Date().toISOString(),
@@ -616,16 +616,16 @@ export async function processReferralCommission(
         const data = referralDocSnap.data();
         const currentApproved = data.approvedCommission || 0;
         const newApproved = currentApproved + commissionAmount;
-        
+
         console.log('💰 [COMMISSION] Updating commission fields:', {
           currentApproved,
           adding: commissionAmount,
           newApproved
         });
-        
+
         transaction.update(referralDocRef, {
           successfulReferrals: increment(1), // ✅ Jumlah referral yang sudah bayar & approved
-          totalCommission: increment(commissionAmount), // ✅ Total komisi (for legacy compatibility)
+          totalCommission: increment(commissionAmount), // ✅ Total profit (for legacy compatibility)
           approvedCommission: newApproved, // ✅ FIXED: Set exact value instead of increment!
           withdrawnCommission: data.withdrawnCommission || 0, // ✅ Initialize if missing
           updatedAt: new Date().toISOString(),
@@ -715,9 +715,9 @@ export async function processWithdrawalRequest(
 
     // Validate sufficient balance
     if (amount > currentBalance) {
-      return { 
-        success: false, 
-        error: `Saldo tidak cukup. Saldo Anda: Rp${currentBalance.toLocaleString('id-ID')}` 
+      return {
+        success: false,
+        error: `Saldo tidak cukup. Saldo Anda: Rp${currentBalance.toLocaleString('id-ID')}`
       };
     }
 
@@ -730,7 +730,7 @@ export async function processWithdrawalRequest(
     const userData = balanceDoc.data();
     const userDoc = await getDoc(doc(db, 'users', userId));
     const userProfile = userDoc.exists() ? userDoc.data() : null;
-    
+
     await setDoc(withdrawalRef, {
       userId: userId,
       userName: userProfile?.displayName || userProfile?.email || 'Unknown',

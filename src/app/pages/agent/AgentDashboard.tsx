@@ -327,12 +327,12 @@ const AgentDashboard: React.FC = () => {
         note: '',
       });
 
-      toast.success('Permintaan pencairan komisi berhasil diajukan!');
+      toast.success('Permintaan pencairan profit berhasil diajukan!');
       setShowWithdrawalForm(false); // ✅ Close the form
       // ✅ Removed loadWithdrawals() - real-time listener will auto-update
     } catch (error) {
       console.error('Error requesting withdrawal:', error);
-      toast.error('Gagal mengajukan pencairan komisi');
+      toast.error('Gagal mengajukan pencairan profit');
     }
   };
 
@@ -455,7 +455,7 @@ const AgentDashboard: React.FC = () => {
 
           <Card className="border-t-4 border-t-amber-500 bg-white/80 backdrop-blur-md shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Komisi Disetujui</CardTitle>
+              <CardTitle className="text-sm font-medium text-slate-600">Profit Disetujui</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex items-center justify-between">
@@ -487,7 +487,7 @@ const AgentDashboard: React.FC = () => {
         <Tabs defaultValue="referral" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 max-w-md">
             <TabsTrigger value="referral">Program Referral</TabsTrigger>
-            <TabsTrigger value="withdrawal">Pencairan Komisi</TabsTrigger>
+            <TabsTrigger value="withdrawal">Pencairan Profit</TabsTrigger>
           </TabsList>
 
           {/* Referral Tab */}
@@ -497,7 +497,7 @@ const AgentDashboard: React.FC = () => {
               <CardHeader>
                 <CardTitle>Kode Referral Anda</CardTitle>
                 <CardDescription>
-                  Bagikan kode referral Anda untuk mendapatkan komisi Rp500.000 per referral sukses
+                  Bagikan kode referral Anda untuk mendapatkan profit Rp500.000 per referral sukses
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -561,11 +561,11 @@ const AgentDashboard: React.FC = () => {
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 mt-0.5 text-blue-600" />
-                      <span>Komisi Rp500.000 diberikan setelah pembayaran disetujui admin</span>
+                      <span>Profit Rp500.000 diberikan setelah pembayaran disetujui admin</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 mt-0.5 text-blue-600" />
-                      <span>Anda dapat mengajukan pencairan komisi yang sudah disetujui</span>
+                      <span>Anda dapat mengajukan pencairan profit yang sudah disetujui</span>
                     </li>
                   </ul>
                 </div>
@@ -597,9 +597,9 @@ const AgentDashboard: React.FC = () => {
               {/* Request Withdrawal Form */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Ajukan Pencairan Komisi</CardTitle>
+                  <CardTitle>Ajukan Pencairan Profit</CardTitle>
                   <CardDescription>
-                    Komisi tersedia: <span className="text-green-600 font-semibold">
+                    Profit tersedia: <span className="text-green-600 font-semibold">
                       Rp {stats.approvedCommission.toLocaleString('id-ID')}
                     </span>
                   </CardDescription>
@@ -611,11 +611,11 @@ const AgentDashboard: React.FC = () => {
                     className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700"
                   >
                     <Wallet className="w-4 h-4 mr-2" />
-                    Ajukan Pencairan Komisi
+                    Ajukan Pencairan Profit
                   </Button>
                   {stats.approvedCommission <= 0 && (
                     <p className="text-sm text-slate-500 mt-2 text-center">
-                      Belum ada komisi yang dapat dicairkan
+                      Belum ada profit yang dapat dicairkan
                     </p>
                   )}
                 </CardContent>
@@ -625,7 +625,7 @@ const AgentDashboard: React.FC = () => {
               <Card>
                 <CardHeader>
                   <CardTitle>Riwayat Pencairan</CardTitle>
-                  <CardDescription>Daftar permintaan pencairan komisi Anda</CardDescription>
+                  <CardDescription>Daftar permintaan pencairan profit Anda</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {withdrawals.length === 0 ? (
@@ -695,7 +695,7 @@ const AgentDashboard: React.FC = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>Peringatan</AlertDialogTitle>
             <AlertDialogDescription>
-              Anda belum memiliki komisi yang dapat dicairkan. Pastikan Anda memiliki komisi yang disetujui sebelum mengajukan pencairan.
+              Anda belum memiliki profit yang dapat dicairkan. Pastikan Anda memiliki profit yang disetujui sebelum mengajukan pencairan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

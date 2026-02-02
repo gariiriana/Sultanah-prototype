@@ -161,7 +161,7 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
     );
     unsubscribers.push(unsubMarketplacePayments);
 
-    // 3️⃣ WITHDRAWAL KOMISI (pending or not paid)
+    // 3️⃣ WITHDRAWAL PROFIT (pending or not paid)
     const withdrawalsQuery = query(
       collection(db, 'commissionWithdrawals'), // ✅ FIXED: Changed from 'withdrawals' to 'commissionWithdrawals'
       where('status', 'in', ['pending', 'requested'])

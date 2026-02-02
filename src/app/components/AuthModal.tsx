@@ -508,7 +508,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ open, onClose, defaultTab = 'logi
                       className="h-12 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:border-[#D4AF37] focus:ring-[#D4AF37]/30 rounded-xl"
                     />
                     <p className="text-xs text-gray-400">
-                      💡 Masukkan kode referral dari Alumni atau Agen untuk mendukung mereka mendapatkan komisi
+                      💡 Masukkan kode referral dari Alumni atau Agen untuk mendukung mereka mendapatkan profit
                     </p>
                   </div>
 

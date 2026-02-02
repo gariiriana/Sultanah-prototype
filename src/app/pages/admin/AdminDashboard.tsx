@@ -182,7 +182,7 @@ const AdminDashboard = () => {
                           activeTab === 'item-requests' ? 'Pesanan Marketplace' : // ✅ RENAMED: Only Marketplace Orders
                             activeTab === 'marketplace' ? 'Manajemen Marketplace' :
                               activeTab === 'referrals' ? 'Referral Management' :
-                                activeTab === 'commission-withdrawals' ? 'Pencairan Komisi' :
+                                activeTab === 'commission-withdrawals' ? 'Pencairan Profit' :
                                   activeTab === 'savings-approval' ? 'Approval Tabungan' : // ✅ NEW
                                     'Dashboard'}
           pageSubtitle="Kelola bisnis perjalanan Anda dengan mudah"

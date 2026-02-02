@@ -127,7 +127,7 @@ const AgentUpgradeDialog: React.FC<AgentUpgradeDialogProps> = ({ open, onOpenCha
               <ul className="space-y-2 text-sm text-green-800">
                 <li className="flex items-start gap-2">
                   <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
-                  <span>Dapatkan <span className="font-bold">komisi Rp500.000</span> untuk setiap jamaah yang berhasil mendaftar dan membayar menggunakan kode referral Anda</span>
+                  <span>Dapatkan <span className="font-bold">profit Rp500.000</span> untuk setiap jamaah yang berhasil mendaftar dan membayar menggunakan kode referral Anda</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
@@ -135,7 +135,7 @@ const AgentUpgradeDialog: React.FC<AgentUpgradeDialogProps> = ({ open, onOpenCha
                 </li>
                 <li className="flex items-start gap-2">
                   <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
-                  <span>Dashboard khusus untuk tracking referral dan komisi real-time</span>
+                  <span>Dashboard khusus untuk tracking referral dan profit real-time</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
@@ -302,7 +302,7 @@ const AgentUpgradeDialog: React.FC<AgentUpgradeDialogProps> = ({ open, onOpenCha
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-2">1. Menggunakan Kode Referral yang Tidak Sah</h4>
                   <ul className="space-y-1 ml-4 list-disc list-inside">
-                    <li><strong>Agen dan Jamaah:</strong> Dilarang menggunakan kode referral yang tidak terdaftar atau tidak sah untuk tujuan pribadi atau keuntungan yang tidak sah. Penggunaan kode referral palsu dapat menyebabkan pencabutan hak komisi atau bahkan pembatalan pendaftaran jamaah.</li>
+                    <li><strong>Agen dan Jamaah:</strong> Dilarang menggunakan kode referral yang tidak terdaftar atau tidak sah untuk tujuan pribadi atau keuntungan yang tidak sah. Penggunaan kode referral palsu dapat menyebabkan pencabutan hak profit atau bahkan pembatalan pendaftaran jamaah.</li>
                   </ul>
                 </div>
 
@@ -328,16 +328,16 @@ const AgentUpgradeDialog: React.FC<AgentUpgradeDialogProps> = ({ open, onOpenCha
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-gray-900 mb-2">5. Mendapatkan Komisi Tanpa Melakukan Referral yang Sah</h4>
+                  <h4 className="font-semibold text-gray-900 mb-2">5. Mendapatkan Profit Tanpa Melakukan Referral yang Sah</h4>
                   <ul className="space-y-1 ml-4 list-disc list-inside">
-                    <li><strong>Agen:</strong> Dilarang menerima komisi tanpa melakukan referral yang sah. Jika agen menerima komisi dari referral yang tidak valid, komisi tersebut akan dibatalkan dan agen tersebut dapat dikenakan tindakan lebih lanjut.</li>
+                    <li><strong>Agen:</strong> Dilarang menerima profit tanpa melakukan referral yang sah. Jika agen menerima profit dari referral yang tidak valid, profit tersebut akan dibatalkan dan agen tersebut dapat dikenakan tindakan lebih lanjut.</li>
                   </ul>
                 </div>
 
                 <div>
                   <h4 className="font-semibold text-gray-900 mb-2">6. Menunda Pengunggahan Bukti Transfer</h4>
                   <ul className="space-y-1 ml-4 list-disc list-inside">
-                    <li><strong>Agen dan Jamaah:</strong> Dilarang menunda-nunda dalam mengunggah bukti transfer atau dokumen yang diperlukan. Pengunggahan bukti transfer yang tidak tepat waktu dapat menyebabkan keterlambatan dalam proses persetujuan dan pencairan komisi.</li>
+                    <li><strong>Agen dan Jamaah:</strong> Dilarang menunda-nunda dalam mengunggah bukti transfer atau dokumen yang diperlukan. Pengunggahan bukti transfer yang tidak tepat waktu dapat menyebabkan keterlambatan dalam proses persetujuan dan pencairan profit.</li>
                   </ul>
                 </div>
 
@@ -359,7 +359,7 @@ const AgentUpgradeDialog: React.FC<AgentUpgradeDialogProps> = ({ open, onOpenCha
 
               <div className="space-y-3 text-sm text-gray-700">
                 <p>
-                  <strong>Sanksi dan Tindakan:</strong> Pihak yang melanggar aturan ini (baik agen atau jamaah) akan dikenakan sanksi, yang dapat berupa pembatalan pendaftaran, pencabutan hak komisi, atau bahkan tindakan hukum lebih lanjut jika ditemukan pelanggaran yang lebih serius.
+                  <strong>Sanksi dan Tindakan:</strong> Pihak yang melanggar aturan ini (baik agen atau jamaah) akan dikenakan sanksi, yang dapat berupa pembatalan pendaftaran, pencabutan hak profit, atau bahkan tindakan hukum lebih lanjut jika ditemukan pelanggaran yang lebih serius.
                 </p>
                 <p>
                   <strong>Pemantauan Sistem:</strong> Semua tindakan yang dilakukan oleh agen dan jamaah akan dipantau secara transparan dalam sistem. Setiap aktivitas akan dicatat dan dapat diperiksa oleh admin untuk memastikan kepatuhan terhadap ketentuan yang berlaku.

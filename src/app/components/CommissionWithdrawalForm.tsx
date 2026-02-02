@@ -97,7 +97,7 @@ const CommissionWithdrawalForm: React.FC<CommissionWithdrawalFormProps> = ({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Wallet className="w-5 h-5 text-amber-600" />
-            Ajukan Pencairan Komisi
+            Ajukan Pencairan Profit
           </DialogTitle>
           <DialogDescription>
             Saldo tersedia: <span className="text-green-600 font-semibold">
