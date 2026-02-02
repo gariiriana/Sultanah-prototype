@@ -42,8 +42,14 @@ function midtransApiPlugin() {
           }
 
           // Initialize Midtrans Core
+          // ✅ AUTO-DETECT Environment: If key starts with "SB-", it's Sandbox. Otherwise, it's Production.
+          const isSandbox = SERVER_KEY.startsWith('SB-');
+          const isProduction = !isSandbox;
+
+          console.log(`[Midtrans Middleware] Environment: ${isProduction ? 'PRODUCTION 🔴' : 'SANDBOX 🟢'}`);
+
           let core = new midtransClient.CoreApi({
-            isProduction: false,
+            isProduction: isProduction,
             serverKey: SERVER_KEY,
             clientKey: CLIENT_KEY
           });

@@ -202,7 +202,10 @@ const AppContent = () => {
   // Wrap everything with BrowserRouter
   return (
     <BrowserRouter>
-      {shouldStayInAdminDashboard ? (
+      {/* ✅ ALLOW BOOKING & PUBLIC PAGES TO RENDER WITHOUT REDIRECT */}
+      {(window.location.pathname.startsWith('/booking') || window.location.pathname.startsWith('/gallery') || window.location.pathname.startsWith('/family-tracking')) ? (
+        <AppRoutes />
+      ) : shouldStayInAdminDashboard ? (
         <>
           {console.log('✅ ROUTING: Management role detected → Admin Dashboard')}
           {console.log('📋 Management roles: admin, staff, supervisor, direktur')}

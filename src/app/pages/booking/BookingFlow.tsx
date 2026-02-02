@@ -580,7 +580,7 @@ const BookingFlow: React.FC = () => {
 
                                     <Button
                                         className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                                        onClick={() => navigate('/dashboard')}
+                                        onClick={() => window.location.href = '/dashboard'}
                                     >
                                         Cek Status di Dashboard
                                     </Button>
