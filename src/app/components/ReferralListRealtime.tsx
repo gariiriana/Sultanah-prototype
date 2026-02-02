@@ -22,12 +22,42 @@ interface ReferralRecord {
 
 interface ReferralListRealtimeProps {
   userId: string;
-  userRole: 'alumni' | 'agen';
+  userRole: 'alumni' | 'agen' | 'affiliator' | 'influencer' | 'brand_ambassador';
 }
 
 const ReferralListRealtime: React.FC<ReferralListRealtimeProps> = ({ userId, userRole }) => {
   const [referrals, setReferrals] = useState<ReferralRecord[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Get role display name
+  const getRoleTitle = () => {
+    switch (userRole) {
+      case 'affiliator':
+        return 'Affiliator';
+      case 'influencer':
+        return 'Influencer';
+      case 'agen':
+        return 'Agen';
+      case 'brand_ambassador':
+        return 'Brand Ambassador';
+      case 'alumni':
+        return 'Alumni';
+      default:
+        return 'Marketing Partner';
+    }
+  };
+
+  // Get commission amount based on role
+  const getCommissionAmount = () => {
+    switch (userRole) {
+      case 'affiliator':
+        return 'Rp200.000';
+      case 'alumni':
+        return 'Rp200.000';
+      default:
+        return 'Rp500.000';
+    }
+  };
 
   useEffect(() => {
     if (!userId) return;
@@ -41,7 +71,7 @@ const ReferralListRealtime: React.FC<ReferralListRealtimeProps> = ({ userId, use
       q,
       (snapshot) => {
         const referralData: ReferralRecord[] = [];
-        
+
         snapshot.forEach((doc) => {
           const data = doc.data();
           referralData.push({
@@ -284,7 +314,7 @@ const ReferralListRealtime: React.FC<ReferralListRealtimeProps> = ({ userId, use
             <div className="flex-1">
               <h4 className="font-semibold text-blue-900 mb-2">Informasi Komisi</h4>
               <ul className="space-y-1 text-sm text-blue-800">
-                <li>• Komisi {userRole === 'alumni' ? 'Alumni' : 'Agen'}: {userRole === 'alumni' ? 'Rp200.000' : 'Rp500.000'} per referral sukses</li>
+                <li>• Komisi {getRoleTitle()}: {getCommissionAmount()} per referral sukses</li>
                 <li>• Komisi dihitung setelah Jamaah bayar paket & disetujui Admin</li>
                 <li>• Referral yang belum bayar akan tetap tampil di daftar</li>
                 <li>• Saldo komisi dapat dicairkan kapan saja (minimum Rp50.000)</li>
