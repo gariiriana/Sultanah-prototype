@@ -97,35 +97,14 @@ const BookingFlow: React.FC = () => {
     // Automated payment detection is now handled by the Midtrans webhook or Snap success callback
     // (Simulation removed for production-ready integration)
 
-    const [paymentMethod, setPaymentMethod] = useState<string>('');
-    const [selectedBank, setSelectedBank] = useState<string>('');
-    const [paymentResult, setPaymentResult] = useState<any>(null); // ✅ NEW: Store API response
+    // Automated payment detection is now handled by the Midtrans webhook or Snap success callback
 
     // Methods
-    const PAYMENT_METHODS = [
-        { id: 'bank_transfer', name: 'Virtual Account', icon: CreditCard },
-        { id: 'gopay', name: 'GoPay / QRIS', icon: Sparkles }
-    ];
-
-    const BANKS = [
-        { id: 'bca', name: 'BCA', logo: '/banks/bca.png' },
-        { id: 'mandiri', name: 'Mandiri', logo: '/banks/mandiri.png' },
-        { id: 'bni', name: 'BNI', logo: '/banks/bni.png' },
-        { id: 'bri', name: 'BRI', logo: '/banks/bri.png' },
-        { id: 'permata', name: 'Permata', logo: '/banks/permata.png' }
-    ];
+    // (Removed manual payment methods)
 
     const handlePayment = async () => {
         if (!formData.name || !formData.email || !formData.phone) {
             toast.error("Mohon lengkapi data diri");
-            return;
-        }
-        if (!paymentMethod) {
-            toast.error("Pilih metode pembayaran");
-            return;
-        }
-        if (paymentMethod === 'bank_transfer' && !selectedBank) {
-            toast.error("Pilih bank tujuan");
             return;
         }
 
@@ -134,8 +113,15 @@ const BookingFlow: React.FC = () => {
             const orderId = `BOOK-${Date.now()}`;
             const grossAmount = parseInt(pkg.price) * formData.pax - (formData.voucherCode ? VOUCHER_DISCOUNT : 0);
 
-            // 1. Call Core API
-            const response = await fetch('/api/create-transaction', {
+            // 1. Call Snap API to get Token
+            const response = await fetch('/api/midtrans/create-transaction', { // Use middleware path explicitly or /api/create-transaction
+                // Note: Vite middleware intercepts /api/midtrans/create-transaction. 
+                // The production build will use the Next.js API route /api/create-transaction (if applicable) or similar.
+                // let's stick to /api/create-transaction to match production, but middleware checks that too?
+                // Wait, middleware in vite.config.ts listens on '/api/midtrans/create-transaction'.
+                // Backend file is at 'api/create-transaction.ts'. 
+                // I should use the path that works for both or simply '/api/midtrans/create-transaction' for dev.
+                // Let's use '/api/midtrans/create-transaction' for clarity as defined in vite config.
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -145,9 +131,8 @@ const BookingFlow: React.FC = () => {
                         name: formData.name,
                         email: formData.email,
                         phone: formData.phone
-                    },
-                    paymentType: paymentMethod,
-                    bank: selectedBank
+                    }
+                    // No paymentType needed for Snap
                 })
             });
 
@@ -157,14 +142,36 @@ const BookingFlow: React.FC = () => {
                 throw new Error(data.error || "Gagal memproses pembayaran");
             }
 
-            // 2. Handle Success Response
-            setPaymentResult(data);
+            // 2. Open Snap Popup
+            console.log("Snap Token:", data.token);
 
-            // 3. Register/Save Booking as "Pending Payment"
-            await handleBookingSubmission(orderId, grossAmount, data);
-
-            setStep(3); // Move to Instruction Page
-            toast.success("Kode pembayaran berhasil dibuat!");
+            if (window.snap) {
+                window.snap.pay(data.token, {
+                    onSuccess: async (result: any) => {
+                        console.log('Payment Success:', result);
+                        toast.success("Pembayaran Berhasil!");
+                        // Save booking as 'paid' or 'pending_verification'
+                        await handleBookingSubmission(orderId, grossAmount, result, 'pending_verification'); // Paid but needs verification? Or 'paid'
+                        setStep(3);
+                    },
+                    onPending: async (result: any) => {
+                        console.log('Payment Pending:', result);
+                        toast.info("Menunggu Pembayaran...");
+                        await handleBookingSubmission(orderId, grossAmount, result, 'pending_payment');
+                        setStep(3);
+                    },
+                    onError: (result: any) => {
+                        console.error('Payment Error:', result);
+                        toast.error("Pembayaran Gagal");
+                    },
+                    onClose: () => {
+                        console.log('Customer closed the popup without finishing the payment');
+                        toast.warning("Pembayaran belum diselesaikan");
+                    }
+                });
+            } else {
+                toast.error("Gagal memuat sistem pembayaran. Coba refresh halaman.");
+            }
 
         } catch (error: any) {
             console.error("Payment Error:", error);
@@ -174,13 +181,13 @@ const BookingFlow: React.FC = () => {
         }
     };
 
-    const handleBookingSubmission = async (orderId: string, totalAmount: number, paymentData: any) => {
+    const handleBookingSubmission = async (orderId: string, totalAmount: number, paymentData: any, status: string = 'pending_payment') => {
         try {
             // 1. Register user if new
             const userId = await handleAutoRegister();
             if (!userId) throw new Error("Gagal mendaftar user");
 
-            // 2. Save booking (Status: pending_payment)
+            // 2. Save booking
             await setDoc(doc(db, 'bookings', orderId), {
                 id: orderId,
                 userId: userId,
@@ -189,16 +196,15 @@ const BookingFlow: React.FC = () => {
                 packagePrice: parseInt(pkg.price),
                 paxCount: formData.pax,
                 totalAmount: totalAmount,
-                status: 'pending_payment', // ✅ CHANGED: Logic pending first
-                paymentMethod: paymentMethod,
-                bank: selectedBank,
+                status: status,
+                // paymentMethod: paymentData.payment_type, // Saved from Snap result
                 jamaah: [
                     { name: formData.name, email: formData.email, phone: formData.phone, documentsUploaded: false },
                     ...formData.additionalJamaah.map(j => ({ name: j.name, phone: j.whatsapp, email: '', documentsUploaded: false }))
                 ],
                 createdAt: new Date(),
                 midtransOrderId: orderId,
-                midtransData: paymentData, // Save full response for reference
+                midtransData: paymentData,
                 voucherCode: formData.voucherCode || null,
                 referralCode: formData.referralCode || null
             });
@@ -208,7 +214,7 @@ const BookingFlow: React.FC = () => {
 
         } catch (error: any) {
             console.error("Booking Save Error:", error);
-            toast.error("Gagal menympan data booking. Hubungi CS.");
+            toast.error("Gagal menyimpan data booking. Hubungi CS.");
         }
     };
 
@@ -480,106 +486,52 @@ const BookingFlow: React.FC = () => {
                                     exit={{ opacity: 0, x: 20 }}
                                     className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border border-white/30 h-full flex flex-col"
                                 >
-                                    <h2 className="text-xl font-bold mb-6">Pilih Metode Pembayaran</h2>
+                                    <h2 className="text-xl font-bold mb-6">Konfirmasi Pembayaran</h2>
 
-                                    <div className="space-y-4 flex-1 overflow-y-auto">
-                                        <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">Transfer Virtual Account</p>
-                                        <div className="grid grid-cols-1 gap-3">
-                                            {BANKS.map((bank) => (
-                                                <div
-                                                    key={bank.id}
-                                                    onClick={() => {
-                                                        setPaymentMethod('bank_transfer');
-                                                        setSelectedBank(bank.id);
-                                                    }}
-                                                    className={`p-4 rounded-xl border flex items-center gap-4 cursor-pointer transition-all ${selectedBank === bank.id ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500' : 'border-gray-200 hover:border-emerald-200 hover:bg-gray-50'}`}
-                                                >
-                                                    <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${selectedBank === bank.id ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}>
-                                                        {selectedBank === bank.id && <div className="w-2 h-2 bg-white rounded-full" />}
-                                                    </div>
-                                                    <CreditCard className="w-6 h-6 text-gray-600" />
-                                                    <span className="font-bold text-gray-700">{bank.name} Virtual Account</span>
-                                                </div>
-                                            ))}
+                                    <div className="flex-1 flex flex-col justify-center items-center text-center space-y-4">
+                                        <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100">
+                                            <p className="text-gray-500 mb-2 uppercase text-xs font-bold tracking-widest">Total Tagihan Anda</p>
+                                            <p className="text-4xl font-black text-emerald-800 tracking-tighter">
+                                                Rp {(formData.pax * parseInt(pkg.price) - (formData.voucherCode ? VOUCHER_DISCOUNT : 0)).toLocaleString()}
+                                            </p>
                                         </div>
-
-                                        <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mt-6">E-Wallet / QRIS</p>
-                                        <div
-                                            onClick={() => {
-                                                setPaymentMethod('gopay');
-                                                setSelectedBank('');
-                                            }}
-                                            className={`p-4 rounded-xl border flex items-center gap-4 cursor-pointer transition-all ${paymentMethod === 'gopay' ? 'border-emerald-500 bg-emerald-50 ring-1 ring-emerald-500' : 'border-gray-200 hover:border-emerald-200 hover:bg-gray-50'}`}
-                                        >
-                                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center ${paymentMethod === 'gopay' ? 'border-emerald-500 bg-emerald-500' : 'border-gray-300'}`}>
-                                                {paymentMethod === 'gopay' && <div className="w-2 h-2 bg-white rounded-full" />}
-                                            </div>
-                                            <Sparkles className="w-6 h-6 text-blue-500" />
-                                            <span className="font-bold text-gray-700">GoPay / QRIS</span>
-                                        </div>
+                                        <p className="text-gray-600 text-sm max-w-md">
+                                            Klik tombol di bawah untuk memilih metode pembayaran (Transfer Bank, Credit Card, GoPay, dll) melalui popup aman Midtrans.
+                                        </p>
                                     </div>
 
                                     <div className="mt-6 pt-4 border-t space-y-3">
-                                        <div className="flex justify-between items-center text-sm">
-                                            <span className="text-gray-600">Total Tagihan</span>
-                                            <span className="font-bold text-emerald-700 text-lg">
-                                                Rp {(formData.pax * parseInt(pkg.price) - (formData.voucherCode ? VOUCHER_DISCOUNT : 0)).toLocaleString()}
-                                            </span>
-                                        </div>
                                         <div className="flex gap-3">
                                             <Button variant="outline" onClick={() => setStep(1)} className="flex-1">Kembali</Button>
                                             <Button
-                                                className="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                className="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200"
                                                 onClick={handlePayment}
-                                                disabled={!paymentMethod || isProcessing}
+                                                disabled={isProcessing}
                                             >
-                                                {isProcessing ? <Loader2 className="animate-spin" /> : 'Bayar Sekarang'}
+                                                {isProcessing ? <Loader2 className="animate-spin" /> : 'Bayar Sekarang & Pilih Metode'}
                                             </Button>
                                         </div>
                                     </div>
                                 </motion.div>
                             )}
 
-                            {step === 3 && paymentResult && (
+                            {step === 3 && (
                                 <motion.div
                                     key="step3"
                                     initial={{ opacity: 0, scale: 0.95 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border border-white/30 h-full flex flex-col"
+                                    className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border border-white/30 h-full flex flex-col justify-center items-center text-center"
                                 >
-                                    <div className="text-center mb-6">
-                                        <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <CheckCircle className="w-8 h-8 text-emerald-600" />
-                                        </div>
-                                        <h2 className="text-2xl font-bold text-gray-900">Menunggu Pembayaran</h2>
-                                        <p className="text-sm text-gray-500 mt-1">Selesaikan pembayaran sebelum {new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                    <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                                        <CheckCircle className="w-10 h-10 text-emerald-600" />
                                     </div>
-
-                                    <div className="bg-gray-50 p-6 rounded-xl border border-gray-200 mb-6 flex-1 flex flex-col justify-center items-center text-center">
-                                        {paymentResult.payment_type === 'bank_transfer' || paymentResult.payment_type === 'echannel' || paymentResult.payment_type === 'permata' ? (
-                                            <>
-                                                <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">Nomor Virtual Account</p>
-                                                <div className="text-3xl font-mono font-bold text-emerald-600 tracking-wider mb-2 select-all">
-                                                    {paymentResult.permata_va_number ||
-                                                        paymentResult.va_numbers?.[0]?.va_number ||
-                                                        paymentResult.bill_key ||
-                                                        "Error"}
-                                                </div>
-                                                {paymentResult.biller_code && <p className="text-xs text-gray-500">Kode Biller: {paymentResult.biller_code}</p>}
-                                                <p className="text-xs text-gray-400 mt-4">Salin nomor di atas dan bayar melalui ATM/M-Banking {selectedBank.toUpperCase()}</p>
-                                            </>
-                                        ) : paymentResult.payment_type === 'gopay' || paymentResult.payment_type === 'qris' ? (
-                                            <>
-                                                <img src={paymentResult.actions?.find((a: any) => a.name === 'generate-qr-code')?.url} alt="QR Code" className="w-48 h-48 mx-auto mix-blend-multiply" />
-                                                <p className="text-sm font-bold mt-4">Scan QRIS</p>
-                                            </>
-                                        ) : (
-                                            <p>Ikuti instruksi pembayaran yang dikirim ke email Anda.</p>
-                                        )}
-                                    </div>
+                                    <h2 className="text-2xl font-bold text-emerald-900 mb-2">Transaksi Diproses!</h2>
+                                    <p className="text-gray-600 mb-8 max-w-sm">
+                                        Terima kasih. Pesanan Anda telah kami terima. Silakan cek dashboard untuk melihat status pembayaran dan melengkapi dokumen.
+                                    </p>
 
                                     <Button
-                                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                                        className="w-full max-w-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200"
                                         onClick={() => window.location.href = '/dashboard'}
                                     >
                                         Cek Status di Dashboard

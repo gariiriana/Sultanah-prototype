@@ -48,18 +48,20 @@ function midtransApiPlugin() {
 
           console.log(`[Midtrans Middleware] Environment: ${isProduction ? 'PRODUCTION 🔴' : 'SANDBOX 🟢'}`);
 
-          let core = new midtransClient.CoreApi({
+          let snap = new midtransClient.Snap({
             isProduction: isProduction,
             serverKey: SERVER_KEY,
             clientKey: CLIENT_KEY
           });
 
           // Construct Parameters
-          let parameter: any = {
-            payment_type: paymentType || 'bank_transfer',
+          let parameter = {
             transaction_details: {
               order_id: orderId,
               gross_amount: grossAmount
+            },
+            credit_card: {
+              secure: true
             },
             customer_details: {
               first_name: customerDetails.name,
@@ -68,30 +70,13 @@ function midtransApiPlugin() {
             }
           };
 
-          // Logic from api/create-transaction.ts
-          if (paymentType === 'bank_transfer') {
-            if (bank === 'permata') {
-              parameter.payment_type = 'permata';
-            } else if (bank === 'mandiri') {
-              parameter.payment_type = 'echannel';
-              parameter.echannel = { bill_info1: "Payment For:", bill_info2: "Umroh Package" };
-            } else {
-              parameter.bank_transfer = { bank: bank };
-            }
-          } else if (paymentType === 'gopay') {
-            parameter.payment_type = 'gopay';
-          } else if (paymentType === 'qris') {
-            parameter.payment_type = 'qris';
-            parameter.qris = { acquirer: 'gopay' };
-          }
-
-          console.log('[Midtrans Middleware] Creating transaction:', orderId);
-          const chargeResponse = await core.charge(parameter);
-          console.log('[Midtrans Middleware] Response:', chargeResponse);
+          console.log('[Midtrans Middleware] Creating Snap transaction:', orderId);
+          const transaction = await snap.createTransaction(parameter);
+          console.log('[Midtrans Middleware] Response:', transaction);
 
           res.setHeader('Content-Type', 'application/json');
           res.statusCode = 200;
-          res.end(JSON.stringify(chargeResponse));
+          res.end(JSON.stringify(transaction));
 
         } catch (error: any) {
           console.error('[Midtrans Middleware] Error:', error);
