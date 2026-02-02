@@ -267,6 +267,11 @@ const AgentDashboardNew: React.FC = () => {
 
   const referralLink = `${window.location.origin}/?ref=${stats.referralCode}`;
 
+  // Get commission amount based on role
+  const getCommissionAmount = () => {
+    return userProfile?.role === 'affiliator' ? '200.000' : '500.000';
+  };
+
 
   if (loading) {
     return (
@@ -454,7 +459,7 @@ const AgentDashboardNew: React.FC = () => {
                       </div>
                       <div>
                         <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-white">Kode Referral Anda</h2>
-                        <p className="text-white/90 text-xs sm:text-sm">Bagikan untuk mendapatkan komisi Rp500.000/referral</p>
+                        <p className="text-white/90 text-xs sm:text-sm">Bagikan untuk mendapatkan komisi Rp{getCommissionAmount()}/referral</p>
                       </div>
                     </div>
 
@@ -531,7 +536,7 @@ const AgentDashboardNew: React.FC = () => {
                         </div>
                         <div>
                           <p className="font-semibold text-gray-900 mb-1">Admin Approve Pembayaran</p>
-                          <p className="text-sm text-gray-600">Komisi Rp500.000 otomatis aktif setelah pembayaran disetujui</p>
+                          <p className="text-sm text-gray-600">Komisi Rp{getCommissionAmount()} otomatis aktif setelah pembayaran disetujui</p>
                         </div>
                       </div>
                       <div className="flex items-start gap-3 bg-white/90 backdrop-blur-sm p-4 rounded-xl shadow-sm border border-gray-200">
