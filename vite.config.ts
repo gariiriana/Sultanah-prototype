@@ -4,6 +4,100 @@ import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 
 // ✅ Plugin to handle figma:asset imports (replace with placeholder images)
+import jsPDF from 'jspdf'; // Ensure jsPDF is available or remove if not needed for this config
+import midtransClient from 'midtrans-client';
+import { loadEnv } from 'vite';
+
+// ✅ Plugin to handle Midtrans API requests locally
+function midtransApiPlugin() {
+  return {
+    name: 'midtrans-api-middleware',
+    configureServer(server: any) {
+      server.middlewares.use('/api/midtrans/create-transaction', async (req: any, res: any, next: any) => {
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ error: 'Method Not Allowed' }));
+          return;
+        }
+
+        try {
+          // Parse Body
+          const buffers = [];
+          for await (const chunk of req) {
+            buffers.push(chunk);
+          }
+          const body = JSON.parse(Buffer.concat(buffers).toString());
+          const { orderId, grossAmount, customerDetails, paymentType, bank } = body;
+
+          // Load Env (Vite loads envs into process.env differently in config, use loadEnv)
+          const env = loadEnv(process.env.NODE_ENV || 'development', process.cwd(), '');
+          const SERVER_KEY = env.MIDTRANS_SERVER_KEY;
+          const CLIENT_KEY = env.VITE_MIDTRANS_CLIENT_KEY;
+
+          if (!SERVER_KEY || !CLIENT_KEY) {
+            console.error('Missing Midtrans Keys in Env');
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: 'Server Config Error: Missing Keys' }));
+            return;
+          }
+
+          // Initialize Midtrans Core
+          let core = new midtransClient.CoreApi({
+            isProduction: false,
+            serverKey: SERVER_KEY,
+            clientKey: CLIENT_KEY
+          });
+
+          // Construct Parameters
+          let parameter: any = {
+            payment_type: paymentType || 'bank_transfer',
+            transaction_details: {
+              order_id: orderId,
+              gross_amount: grossAmount
+            },
+            customer_details: {
+              first_name: customerDetails.name,
+              email: customerDetails.email,
+              phone: customerDetails.phone
+            }
+          };
+
+          // Logic from api/create-transaction.ts
+          if (paymentType === 'bank_transfer') {
+            if (bank === 'permata') {
+              parameter.payment_type = 'permata';
+            } else if (bank === 'mandiri') {
+              parameter.payment_type = 'echannel';
+              parameter.echannel = { bill_info1: "Payment For:", bill_info2: "Umroh Package" };
+            } else {
+              parameter.bank_transfer = { bank: bank };
+            }
+          } else if (paymentType === 'gopay') {
+            parameter.payment_type = 'gopay';
+          } else if (paymentType === 'qris') {
+            parameter.payment_type = 'qris';
+            parameter.qris = { acquirer: 'gopay' };
+          }
+
+          console.log('[Midtrans Middleware] Creating transaction:', orderId);
+          const chargeResponse = await core.charge(parameter);
+          console.log('[Midtrans Middleware] Response:', chargeResponse);
+
+          res.setHeader('Content-Type', 'application/json');
+          res.statusCode = 200;
+          res.end(JSON.stringify(chargeResponse));
+
+        } catch (error: any) {
+          console.error('[Midtrans Middleware] Error:', error);
+          res.setHeader('Content-Type', 'application/json');
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: error.message || 'Internal Server Error' }));
+        }
+      });
+    }
+  };
+}
+
 function figmaAssetPlugin() {
   return {
     name: 'figma-asset-handler',
@@ -18,7 +112,7 @@ function figmaAssetPlugin() {
       if (id.startsWith('figma:asset/')) {
         // Extract the hash from the import
         const hash = id.replace('figma:asset/', '').replace('.png', '');
-        
+
         // Create inline SVG placeholders with Islamic/Mecca themes
         // These are Data URLs so they work OFFLINE and INSTANTLY!
         const inlineImages: Record<string, string> = {
@@ -39,7 +133,7 @@ function figmaAssetPlugin() {
               <text x="200" y="310" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle" opacity="0.9">HAJJ - UMRAH | HOLIDAY</text>
             </svg>
           `)}`,
-          
+
           '9ee9e221758644d2591e4ab49b751bf0f4075c4c': `data:image/svg+xml;base64,${btoa(`
             <svg xmlns="http://www.w3.org/2000/svg" width="400" height="400" viewBox="0 0 400 400">
               <defs>
@@ -56,7 +150,7 @@ function figmaAssetPlugin() {
               <text x="200" y="310" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle" opacity="0.9">HAJJ - UMRAH | HOLIDAY</text>
             </svg>
           `)}`,
-          
+
           // Kaaba/Masjid al-Haram background - Beautiful Islamic architecture scene
           '20975334a0499df0d7013517117f8aa5a8f346ed': `data:image/svg+xml;base64,${btoa(`
             <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
@@ -113,7 +207,7 @@ function figmaAssetPlugin() {
               <circle cx="920" cy="250" r="3" fill="#d4af37" opacity="0.6"/>
             </svg>
           `)}`,
-          
+
           // Jamaah hero image - Pilgrimage scene
           '679778c08c2456a4c7d2207a690cd0c5b45f0fc0': `data:image/svg+xml;base64,${btoa(`
             <svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
@@ -151,7 +245,7 @@ function figmaAssetPlugin() {
             </svg>
           `)}`,
         };
-        
+
         // Return the inline image (works offline!)
         const imageUrl = inlineImages[hash] || `data:image/svg+xml;base64,${btoa(`
           <svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">
@@ -159,7 +253,7 @@ function figmaAssetPlugin() {
             <text x="400" y="300" font-family="Arial" font-size="32" fill="white" text-anchor="middle">SULTANAH</text>
           </svg>
         `)}`;
-        
+
         // Return ES module that exports the image URL
         return `export default "${imageUrl}";`;
       }
@@ -175,6 +269,7 @@ export default defineConfig({
     react(),
     tailwindcss(),
     figmaAssetPlugin(), // ✅ Add figma asset handler
+    midtransApiPlugin(), // ✅ Add Midtrans API Middleware
   ],
   resolve: {
     alias: {
