@@ -270,20 +270,20 @@ const AppContent = () => {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </>
-      ) : userProfile?.role === 'brand_ambassador' || userProfile?.role === 'agen' ? (
+      ) : (userProfile?.role === 'brand_ambassador' || userProfile?.role === 'agen' || userProfile?.role === 'influencer') ? (
         userProfile?.approvalStatus === 'approved' ? (
           <>
-            {console.log('✅ Rendering Agent Dashboard')}
+            {console.log('✅ Rendering Agent/Influencer Dashboard')}
             <Routes>
-              <Route path="/" element={<Navigate to="/agent/dashboard" replace />} />
+              <Route path="/" element={<Navigate to="/profile" replace />} />
               <Route path="/agent/dashboard" element={<AgentDashboard />} />
               <Route path="/agent/profile" element={<AgentProfilePage />} />
-              <Route path="*" element={<Navigate to="/agent/dashboard" replace />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </>
         ) : (
           <>
-            {console.log('⏳ Agent pending approval → Waiting Approval Page')}
+            {console.log('⏳ Pending approval → Waiting Approval Page')}
             {console.log('🔒 PERSISTING on Waiting Approval - NO AUTO REDIRECT')}
             <WaitingApprovalPage />
           </>

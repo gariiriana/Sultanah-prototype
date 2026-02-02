@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
+import { toast } from 'sonner';
+import { collection, query, getDocs, deleteDoc, doc, writeBatch } from 'firebase/firestore';
+import { db } from '../../../../config/firebase';
+import { useAuth } from '../../../../contexts/AuthContext';
+import imageCompression from 'browser-image-compression';
+import jsPDF from 'jspdf';
 import {
   Camera,
   Upload,
   Trash2,
   X,
   ImageIcon,
-  Eye
+  Eye,
+  Printer
 } from 'lucide-react';
-import { Button } from '../../../components/ui/button';
-import { Input } from '../../../components/ui/input';
-import { toast } from 'sonner';
-import { collection, addDoc, query, getDocs, deleteDoc, doc } from 'firebase/firestore';
-import { db } from '../../../../config/firebase';
-import { useAuth } from '../../../../contexts/AuthContext';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -44,16 +47,26 @@ const TripGallerySection: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<TripPhoto | null>(null);
-  const [previewImage, setPreviewImage] = useState<string>('');
-  const [deleteId, setDeleteId] = useState<string | null>(null); // ✅ NEW: For custom delete confirmation
+  const [previewImages, setPreviewImages] = useState<string[]>([]);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [exportingPDF, setExportingPDF] = useState(false);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [selectedExportCategories, setSelectedExportCategories] = useState<TripPhoto['category'][]>(['masjid', 'hotel', 'activity', 'group', 'other']);
+  const [deleteCategoryData, setDeleteCategoryData] = useState<TripPhoto['category'] | null>(null);
 
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
     location: '',
-    date: '',
+    date: new Date().toISOString().split('T')[0],
     category: 'activity' as TripPhoto['category'],
   });
+
+  const categories: { id: TripPhoto['category']; label: string; icon: string }[] = [
+    { id: 'masjid', label: 'Masjid & Landmark', icon: '🕌' },
+    { id: 'hotel', label: 'Hotel & Akomodasi', icon: '🏨' },
+    { id: 'activity', label: 'Kegiatan & Manasik', icon: '🎯' },
+    { id: 'group', label: 'Foto Grup / Jamaah', icon: '👥' },
+    { id: 'other', label: 'Lain-lain', icon: '📷' },
+  ];
 
   useEffect(() => {
     fetchPhotos();
@@ -85,78 +98,301 @@ const TripGallerySection: React.FC = () => {
     }
   };
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
 
-    // Check file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size must be less than 5MB');
-      return;
+    const validFiles = files.filter(file => {
+      if (file.size > 10 * 1024 * 1024) { // 10MB limit for bulk
+        toast.error(`${file.name} is too large (>10MB)`);
+        return false;
+      }
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} is not an image`);
+        return false;
+      }
+      return true;
+    });
+
+    if (validFiles.length === 0) return;
+
+    setUploading(true);
+    try {
+      const compressedImages = await Promise.all(
+        validFiles.map(async (file) => {
+          const options = {
+            maxSizeMB: 0.6, // Safer for Firestore 1MB limit (base64 adds +33%)
+            maxWidthOrHeight: 1000,
+            useWebWorker: true,
+          };
+          const compressedFile = await imageCompression(file, options);
+          return new Promise<string>((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.readAsDataURL(compressedFile);
+          });
+        })
+      );
+
+      setPreviewImages(prev => [...prev, ...compressedImages]);
+      toast.success(`${compressedImages.length} foto ditambahkan ke antrean`);
+    } catch (error) {
+      console.error('Error processing images:', error);
+      toast.error('Gagal memproses gambar');
+    } finally {
+      setUploading(false);
     }
-
-    // Check file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
-      return;
-    }
-
-    // Convert to base64
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewImage(reader.result as string);
-    };
-    reader.readAsDataURL(file);
   };
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!previewImage) {
-      toast.error('Please select an image');
+    if (previewImages.length === 0) {
+      toast.error('Silakan pilih minimal satu foto');
       return;
     }
 
-    if (!formData.title.trim()) {
-      toast.error('Please enter a title');
+    if (!formData.location.trim()) {
+      toast.error('Silakan isi lokasi trip (contoh: Madinah)');
       return;
     }
 
     setUploading(true);
 
     try {
-      const newPhoto: Omit<TripPhoto, 'id'> = {
-        ...formData,
-        imageBase64: previewImage,
-        uploadedBy: userProfile?.uid || '',
-        uploadedByName: userProfile?.displayName || 'Tour Leader',
-        uploadedAt: new Date().toISOString(),
-      };
+      const batch = writeBatch(db);
+      const galleryRef = collection(db, 'tripGallery');
 
-      await addDoc(collection(db, 'tripGallery'), newPhoto);
+      previewImages.forEach((imgBase64, index) => {
+        // Safe check for base64 size (1 character ≈ 1 byte)
+        if (imgBase64.length > 1000000) {
+          toast.error(`Foto ke-${index + 1} terlalu besar bahkan setelah dikompres.`);
+          return;
+        }
 
-      toast.success('Photo uploaded successfully!');
-
-      // Reset form
-      setFormData({
-        title: '',
-        description: '',
-        location: '',
-        date: '',
-        category: 'activity',
+        const newDocRef = doc(galleryRef);
+        const photoData: Omit<TripPhoto, 'id'> = {
+          title: `Trip Update ${formData.location}`,
+          description: '',
+          location: formData.location,
+          date: formData.date,
+          category: formData.category,
+          imageBase64: imgBase64,
+          uploadedBy: userProfile?.uid || '',
+          uploadedByName: userProfile?.displayName || 'Tour Leader',
+          uploadedAt: new Date().toISOString(),
+        };
+        batch.set(newDocRef, photoData);
       });
-      setPreviewImage('');
 
-      // Clear file input
-      const fileInput = document.getElementById('photo-upload') as HTMLInputElement;
-      if (fileInput) fileInput.value = '';
-
+      await batch.commit();
+      toast.success(`${previewImages.length} foto berhasil diunggah!`);
+      setPreviewImages([]);
       fetchPhotos();
     } catch (error) {
-      console.error('Error uploading photo:', error);
-      toast.error('Failed to upload photo');
+      console.error('Error batch uploading:', error);
+      toast.error('Gagal mengunggah foto');
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleExportPDF = async (selectedCats: TripPhoto['category'][]) => {
+    const filteredPhotos = photos.filter(p => selectedCats.includes(p.category));
+
+    if (filteredPhotos.length === 0) {
+      toast.error('Tidak ada foto dalam kategori yang dipilih');
+      return;
+    }
+
+    setExportingPDF(true);
+    setIsExportModalOpen(false);
+    const toastId = toast.loading('Membuat Album PDF Selektif...');
+
+    try {
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 15;
+      const contentWidth = pageWidth - (margin * 2);
+
+      // Helper function for consistent page design
+      const drawPageDesign = (pageNum: number) => {
+        // Deep Navy Background
+        doc.setFillColor(15, 15, 35);
+        doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+        // Sultanah Branding Header
+        doc.setTextColor(212, 175, 55); // Gold
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.text('SULTANAH', margin, 20);
+
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(255, 255, 255, 0.6);
+        doc.text('UMRAH & HALAL TRAVEL', margin, 25);
+
+        // Trip Info Header (Right)
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.text(formData.location || 'Trip Gallery', pageWidth - margin, 20, { align: 'right' });
+
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text(`Dicetak: ${new Date().toLocaleDateString('id-ID')}`, pageWidth - margin, 25, { align: 'right' });
+
+        // Decorative Line
+        doc.setDrawColor(212, 175, 55, 0.3);
+        doc.line(margin, 30, pageWidth - margin, 30);
+
+        // Footer
+        doc.setFontSize(8);
+        doc.setTextColor(255, 255, 255, 0.4);
+        doc.text(`Halaman ${pageNum}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+      };
+
+      // --- PAGE 1: COVER ---
+      doc.setFillColor(15, 15, 35);
+      doc.rect(0, 0, pageWidth, pageHeight, 'F');
+
+      // Hero Text
+      doc.setTextColor(212, 175, 55);
+      doc.setFontSize(50);
+      doc.setFont('helvetica', 'bold');
+      doc.text('SULTANAH', pageWidth / 2, 80, { align: 'center' });
+
+      doc.setFontSize(18);
+      doc.setTextColor(255, 255, 255);
+      doc.text('ALBUM MEMORI PERJALANAN', pageWidth / 2, 95, { align: 'center', charSpace: 2 });
+
+      doc.setDrawColor(212, 175, 55);
+      doc.setLineWidth(1);
+      doc.line(40, 110, pageWidth - 40, 110);
+
+      doc.setFontSize(22);
+      doc.text((formData.location || 'ALBUM TRIP').toUpperCase(), pageWidth / 2, 130, { align: 'center' });
+
+      doc.setFontSize(12);
+      doc.setTextColor(200, 200, 200);
+      doc.text(`Bersama: ${userProfile?.displayName || 'Tour Leader'}`, pageWidth / 2, 145, { align: 'center' });
+
+      // --- PHOTO ENTRIES ---
+      const photosPerPage = 4;
+      const cardMargin = 8;
+      const cardWidth = (contentWidth / 2) - (cardMargin / 2);
+      const cardHeight = (pageHeight - 60) / 2;
+
+      for (let i = 0; i < filteredPhotos.length; i++) {
+        if (i % photosPerPage === 0) {
+          doc.addPage();
+          drawPageDesign(Math.floor(i / photosPerPage) + 1);
+        }
+
+        const photo = filteredPhotos[i];
+        const pageIdx = i % photosPerPage;
+        const col = pageIdx % 2;
+        const row = Math.floor(pageIdx / 2);
+
+        const currentX = margin + (col * (cardWidth + cardMargin));
+        const currentY = 40 + (row * (cardHeight + cardMargin));
+
+        // Individual Photo Card Logic
+        (doc as any).saveGraphicsState();
+        try {
+          doc.setFillColor(255, 255, 255, 0.05);
+          doc.roundedRect(currentX, currentY, cardWidth, cardHeight, 4, 4, 'F');
+          doc.setDrawColor(255, 255, 255, 0.1);
+          doc.roundedRect(currentX, currentY, cardWidth, cardHeight, 4, 4, 'S');
+
+          const locText = (photo.location || 'Trip Memory').toUpperCase();
+          const dateText = new Date(photo.date || photo.uploadedAt || new Date()).toLocaleDateString('id-ID', {
+            day: 'numeric', month: 'long', year: 'numeric'
+          });
+
+          doc.setFontSize(10);
+          doc.setTextColor(212, 175, 55);
+          doc.setFont('helvetica', 'bold');
+          doc.text(locText, currentX + 5, currentY + 10);
+
+          doc.setFontSize(7);
+          doc.setTextColor(200, 200, 200);
+          doc.setFont('helvetica', 'normal');
+          doc.text(dateText, currentX + 5, currentY + 14);
+
+          if (photo.imageBase64) {
+            try {
+              const imgAreaX = currentX + 5;
+              const imgAreaY = currentY + 18;
+              const imgAreaW = cardWidth - 10;
+              const imgAreaH = cardHeight - 25;
+
+              const imgProps = (doc as any).getImageProperties(photo.imageBase64);
+              const ratio = imgProps.width / imgProps.height;
+
+              let drawW = imgAreaW;
+              let drawH = imgAreaW / ratio;
+              if (drawH > imgAreaH) {
+                drawH = imgAreaH;
+                drawW = imgAreaH * ratio;
+              }
+
+              const offX = (imgAreaW - drawW) / 2;
+              const offY = (imgAreaH - drawH) / 2;
+              const finalX = imgAreaX + offX;
+              const finalY = imgAreaY + offY;
+
+              const mimeMatch = photo.imageBase64.match(/^data:image\/(\w+);base64,/);
+              const format = (mimeMatch ? mimeMatch[1].toUpperCase() : 'JPEG') as any;
+
+              (doc as any).saveGraphicsState();
+              try {
+                doc.roundedRect(finalX, finalY, drawW, drawH, 3, 3, 'S');
+                doc.clip();
+                doc.addImage(photo.imageBase64, format, finalX, finalY, drawW, drawH, undefined, 'FAST');
+              } finally {
+                (doc as any).restoreGraphicsState();
+              }
+            } catch (err) {
+              console.warn(`Error rendering image ${i + 1}:`, err);
+            }
+          }
+        } finally {
+          (doc as any).restoreGraphicsState();
+        }
+      }
+
+      doc.save(`Sultanah-Album-Selektif.pdf`);
+      toast.success('Album PDF Selektif berhasil diunduh!');
+    } catch (error) {
+      console.error('PDF Export Error:', error);
+      toast.error('Gagal membuat PDF.');
+    } finally {
+      setExportingPDF(false);
+      toast.dismiss(toastId);
+    }
+  };
+
+  const handleBulkDelete = async (category: TripPhoto['category']) => {
+    const photosToDelete = photos.filter(p => p.category === category);
+    if (photosToDelete.length === 0) return;
+
+    const toastId = toast.loading(`Menghapus ${photosToDelete.length} foto...`);
+    try {
+      const batch = writeBatch(db);
+      photosToDelete.forEach(p => {
+        batch.delete(doc(db, 'tripGallery', p.id));
+      });
+      await batch.commit();
+      toast.success(`Berhasil menghapus kategori ${category}`);
+      setDeleteCategoryData(null);
+      fetchPhotos();
+    } catch (error) {
+      console.error('Bulk Delete Error:', error);
+      toast.error('Gagal menghapus foto massal');
+    } finally {
+      toast.dismiss(toastId);
     }
   };
 
@@ -234,65 +470,54 @@ const TripGallerySection: React.FC = () => {
           {/* Image Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Select Photo
+              Select Photos (Bisa pilih banyak)
             </label>
             <div className="relative">
               <input
                 id="photo-upload"
                 type="file"
                 accept="image/*"
+                multiple
                 onChange={handleImageSelect}
                 className="hidden"
               />
-              <label
-                htmlFor="photo-upload"
-                className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-xl hover:border-[#D4AF37] transition-colors cursor-pointer bg-gray-50 hover:bg-gray-100"
-              >
-                {previewImage ? (
-                  <div className="relative w-full h-full">
-                    <img
-                      src={previewImage}
-                      alt="Preview"
-                      className="w-full h-full object-cover rounded-xl"
-                    />
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setPreviewImage('');
-                      }}
-                      className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
+              <div className="space-y-4">
+                <label
+                  htmlFor="photo-upload"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl hover:border-[#D4AF37] transition-colors cursor-pointer bg-gray-50 hover:bg-gray-100"
+                >
+                  <Camera className="w-10 h-10 text-gray-400 mb-2" />
+                  <p className="text-sm font-medium text-gray-600">Klik untuk pilih foto-foto trip</p>
+                  <p className="text-xs text-gray-500 mt-1">Saran: Maksimal 10 foto sekaligus untuk performa terbaik</p>
+                </label>
+
+                {previewImages.length > 0 && (
+                  <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 gap-2">
+                    {previewImages.map((img, idx) => (
+                      <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group">
+                        <img src={img} className="w-full h-full object-cover" alt={`Preview ${idx}`} />
+                        <button
+                          type="button"
+                          onClick={() => setPreviewImages(prev => prev.filter((_, i) => i !== idx))}
+                          className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ))}
+                    <label
+                      htmlFor="photo-upload"
+                      className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:border-[#D4AF37] hover:bg-gray-50"
                     >
-                      <X className="w-4 h-4" />
-                    </button>
+                      <Upload className="w-5 h-5 text-gray-400" />
+                    </label>
                   </div>
-                ) : (
-                  <>
-                    <Camera className="w-12 h-12 text-gray-400 mb-3" />
-                    <p className="text-sm font-medium text-gray-600">Click to upload photo</p>
-                    <p className="text-xs text-gray-500 mt-1">Max size: 5MB</p>
-                  </>
                 )}
-              </label>
+              </div>
             </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Title */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Title
-              </label>
-              <Input
-                type="text"
-                placeholder="e.g., Visit to Masjid Nabawi"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                className="h-12"
-                required
-              />
-            </div>
-
             {/* Location */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -307,9 +532,23 @@ const TripGallerySection: React.FC = () => {
                 required
               />
             </div>
+
+            {/* Date */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Trip Date
+              </label>
+              <Input
+                type="date"
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className="h-12"
+                required
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
             {/* Category */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -327,50 +566,23 @@ const TripGallerySection: React.FC = () => {
                 <option value="other">📷 Other</option>
               </select>
             </div>
-
-            {/* Date */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Date
-              </label>
-              <Input
-                type="date"
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="h-12"
-                required
-              />
-            </div>
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Description (Optional)
-            </label>
-            <textarea
-              placeholder="Add a description..."
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full h-24 px-3 py-2 border border-gray-300 rounded-xl focus:border-[#D4AF37] focus:ring-[#D4AF37]/30 focus:outline-none resize-none"
-            />
           </div>
 
           {/* Submit */}
           <Button
             type="submit"
-            disabled={uploading || !previewImage}
+            disabled={uploading || previewImages.length === 0}
             className="w-full h-12 bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] hover:opacity-90 text-white shadow-lg font-semibold"
           >
             {uploading ? (
               <span className="flex items-center gap-2">
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                Uploading...
+                Memproses {previewImages.length} Foto...
               </span>
             ) : (
               <span className="flex items-center gap-2">
                 <Upload className="w-5 h-5" />
-                Upload Photo
+                Unggah {previewImages.length} Foto ke Galeri
               </span>
             )}
           </Button>
@@ -390,72 +602,170 @@ const TripGallerySection: React.FC = () => {
                 <p className="text-white/90 text-sm">{photos.length} photos</p>
               </div>
             </div>
+
+            {/* ✅ NEW: PDF Export Button */}
+            <Button
+              onClick={() => setIsExportModalOpen(true)}
+              disabled={exportingPDF || photos.length === 0}
+              className="bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/30 text-white gap-2 shadow-xl"
+            >
+              {exportingPDF ? (
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              ) : (
+                <Printer className="w-4 h-4" />
+              )}
+              {exportingPDF ? 'Sabar Ya...' : 'Buat Album PDF'}
+            </Button>
           </div>
         </div>
 
-        <div className="p-6">
-          {photos.length === 0 ? (
-            <div className="text-center py-12">
+        {/* Gallery Sections by Category */}
+        <div className="space-y-12 p-6">
+          {categories.map((cat) => {
+            const catPhotos = photos.filter(p => p.category === cat.id);
+            if (catPhotos.length === 0) return null;
+
+            return (
+              <div key={cat.id} className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+                <div className="bg-gray-50 p-6 border-b border-gray-100 italic">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-3xl">{cat.icon}</span>
+                      <div>
+                        <h3 className="text-xl font-bold text-gray-800">{cat.label}</h3>
+                        <p className="text-gray-500 text-sm">{catPhotos.length} foto tersedia</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setDeleteCategoryData(cat.id)}
+                        className="rounded-lg gap-2"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        Hapus Kategori
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {catPhotos.map((photo, index) => (
+                      <motion.div
+                        key={photo.id}
+                        initial={{ opacity: 0, scale: 0.9 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="group relative bg-gray-50 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer border border-gray-100"
+                        onClick={() => setSelectedPhoto(photo)}
+                      >
+                        <div className="aspect-square overflow-hidden">
+                          <img
+                            src={photo.imageBase64}
+                            alt={photo.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                          <div className="flex items-center justify-between w-full">
+                            <p className="text-white text-xs font-medium truncate">{photo.location}</p>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setDeleteId(photo.id); }}
+                              className="p-1.5 bg-red-500 text-white rounded-md"
+                            >
+                              <Trash2 className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+
+          {photos.length === 0 && (
+            <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-12 text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <ImageIcon className="w-8 h-8 text-gray-400" />
               </div>
-              <p className="text-gray-600 font-medium">No photos uploaded yet</p>
-              <p className="text-sm text-gray-500 mt-1">Upload your first trip photo above</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {photos.map((photo, index) => (
-                <motion.div
-                  key={photo.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.05 }}
-                  className="group relative bg-gray-100 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all cursor-pointer"
-                  onClick={() => setSelectedPhoto(photo)}
-                >
-                  {/* Image */}
-                  <div className="aspect-square overflow-hidden">
-                    <img
-                      src={photo.imageBase64}
-                      alt={photo.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    />
-                  </div>
-
-                  {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="absolute bottom-0 left-0 right-0 p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(photo.category)}`}>
-                          {getCategoryIcon(photo.category)} {photo.category}
-                        </span>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteId(photo.id);
-                          }}
-                          className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <h3 className="font-semibold text-white text-sm mb-1">{photo.title}</h3>
-                      <p className="text-white/80 text-xs">{photo.location}</p>
-                    </div>
-                  </div>
-
-                  {/* View Icon */}
-                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                      <Eye className="w-5 h-5 text-white" />
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+              <p className="text-gray-600 font-medium">Berapa foto pun belum ada di galeri</p>
             </div>
           )}
         </div>
       </div>
+
+      {/* --- MODALS --- */}
+
+      {/* Selective Export Modal */}
+      <AlertDialog open={isExportModalOpen} onOpenChange={setIsExportModalOpen}>
+        <AlertDialogContent className="bg-white rounded-2xl max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Pilih Kategori untuk Album</AlertDialogTitle>
+            <AlertDialogDescription>
+              Pilih kategori foto yang ingin dimasukkan ke dalam album PDF.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4 space-y-3">
+            {categories.map(cat => {
+              const count = photos.filter(p => p.category === cat.id).length;
+              if (count === 0) return null;
+              return (
+                <label key={cat.id} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedExportCategories.includes(cat.id)}
+                    onChange={(e) => {
+                      if (e.target.checked) setSelectedExportCategories(prev => [...prev, cat.id]);
+                      else setSelectedExportCategories(prev => prev.filter(c => c !== cat.id));
+                    }}
+                    className="w-5 h-5 rounded accent-[#D4AF37]"
+                  />
+                  <div className="flex-1">
+                    <span className="flex items-center gap-2 font-medium">
+                      {cat.icon} {cat.label}
+                    </span>
+                    <span className="text-xs text-gray-500">{count} foto</span>
+                  </div>
+                </label>
+              );
+            })}
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleExportPDF(selectedExportCategories)}
+              className="bg-[#D4AF37] hover:bg-[#B48F27] text-white rounded-xl"
+            >
+              Gas, Buat PDF!
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Category Confirmation */}
+      <AlertDialog open={!!deleteCategoryData} onOpenChange={() => setDeleteCategoryData(null)}>
+        <AlertDialogContent className="bg-white rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus Seluruh Kategori?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Semua foto dalam kategori <strong>{categories.find(c => c.id === deleteCategoryData)?.label}</strong> akan dihapus permanen.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="rounded-xl">Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteCategoryData && handleBulkDelete(deleteCategoryData)}
+              className="bg-red-500 hover:bg-red-600 text-white rounded-xl"
+            >
+              Iya, Hapus Semua
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Photo Detail Modal */}
       <AnimatePresence>

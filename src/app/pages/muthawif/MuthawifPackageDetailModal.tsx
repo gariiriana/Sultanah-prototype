@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  X, 
-  Calendar, 
-  Users, 
-  MapPin, 
-  Clock, 
+import {
+  X,
+  Calendar,
+  Users,
+  MapPin,
+  Clock,
   DollarSign,
   User,
   Phone,
@@ -170,11 +170,11 @@ const MuthawifPackageDetailModal: React.FC<MuthawifPackageDetailModalProps> = ({
             // Filter valid statuses
             const validDocs = allBookingsSnapshot.docs.filter(doc => {
               const status = doc.data().status?.toLowerCase();
-              return status === 'active' || 
-                     status === 'confirmed' || 
-                     status === 'completed' ||
-                     status === 'approved' ||
-                     status === 'paid';
+              return status === 'active' ||
+                status === 'confirmed' ||
+                status === 'completed' ||
+                status === 'approved' ||
+                status === 'paid';
             });
 
             jamaahData = validDocs.map(doc => {
@@ -227,7 +227,7 @@ const MuthawifPackageDetailModal: React.FC<MuthawifPackageDetailModalProps> = ({
       }
 
       console.log('🔍 Fetching tour leader profile for ID:', packageData.tourLeaderId);
-      
+
       // ✅ FIXED: Use correct collection name 'tourLeaderProfiles'
       const tourLeaderDocRef = doc(db, 'tourLeaderProfiles', packageData.tourLeaderId);
       const tourLeaderSnapshot = await getDoc(tourLeaderDocRef);
@@ -359,11 +359,10 @@ const MuthawifPackageDetailModal: React.FC<MuthawifPackageDetailModalProps> = ({
           <div className="flex border-b border-gray-200 bg-gray-50">
             <button
               onClick={() => setActiveTab('info')}
-              className={`flex-1 px-6 py-4 font-semibold transition-all ${
-                activeTab === 'info'
+              className={`flex-1 px-6 py-4 font-semibold transition-all ${activeTab === 'info'
                   ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-center gap-2">
                 <FileText className="w-4 h-4" />
@@ -372,11 +371,10 @@ const MuthawifPackageDetailModal: React.FC<MuthawifPackageDetailModalProps> = ({
             </button>
             <button
               onClick={() => setActiveTab('jamaah')}
-              className={`flex-1 px-6 py-4 font-semibold transition-all ${
-                activeTab === 'jamaah'
+              className={`flex-1 px-6 py-4 font-semibold transition-all ${activeTab === 'jamaah'
                   ? 'text-[#D4AF37] border-b-2 border-[#D4AF37] bg-white'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-center gap-2">
                 <Users className="w-4 h-4" />
@@ -445,7 +443,7 @@ const MuthawifPackageDetailModal: React.FC<MuthawifPackageDetailModalProps> = ({
                 <Card className="border-2 border-gray-200">
                   <CardContent className="p-6 space-y-4">
                     <h3 className="text-lg font-bold text-gray-900 mb-4">Detail Paket</h3>
-                    
+
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50">
                         <Calendar className="w-5 h-5 text-blue-600 mt-0.5" />
@@ -482,15 +480,105 @@ const MuthawifPackageDetailModal: React.FC<MuthawifPackageDetailModalProps> = ({
                       </div>
 
                       {packageData.tourLeaderName && (
-                        <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 md:col-span-2">
+                        <div className="flex items-start gap-3 p-3 rounded-lg bg-indigo-50 border border-indigo-100 md:col-span-2">
                           <UserCheck className="w-5 h-5 text-indigo-600 mt-0.5" />
-                          <div>
-                            <p className="text-xs text-gray-600 mb-1">Tour Leader</p>
-                            <p className="font-semibold text-gray-900">{packageData.tourLeaderName}</p>
+                          <div className="flex-1">
+                            <p className="text-xs text-indigo-600 mb-1">Tour Leader</p>
+                            <p className="font-bold text-gray-900">{packageData.tourLeaderName}</p>
                           </div>
+                          {tourLeaderProfile && (
+                            <div className="flex items-center gap-2">
+                              <a
+                                href={`https://wa.me/${tourLeaderProfile.whatsappNumber || tourLeaderProfile.phoneNumber?.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-all shadow-md"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                                WhatsApp TL
+                              </a>
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
+
+                    {/* ✅ NEW: Comprehensive Tour Leader Profile Card for Mutawwif */}
+                    {tourLeaderProfile && (
+                      <div className="mt-8 pt-6 border-t border-gray-100">
+                        <h4 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
+                          <Award className="w-4 h-4 text-[#D4AF37]" />
+                          Profil Tour Leader Pendamping
+                        </h4>
+                        <div className="bg-gradient-to-br from-[#1a1a2e] to-[#2d2d44] rounded-2xl p-6 text-white relative overflow-hidden group">
+                          {/* Decorative Arabic Pattern Background */}
+                          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxwYXRoIGQ9Ik0zNiAxOGMzLjMxNCAwIDYgMi42ODYgNiA2cy0yLjY4NiA2LTYgNi02LTIuNjg2LTYtNiAyLjY4Ni02IDYtNnoiIHN0cm9rZT0iI0Q0QUYzNyIgc3Ryb2tlLW9wYWNpdHk9Ii4wNSIvPjwvPjwvc3ZnPg==')] opacity-40"></div>
+
+                          <div className="relative flex flex-col md:flex-row gap-6">
+                            {/* Avatar/Initial */}
+                            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#C19B2B] flex items-center justify-center text-3xl font-bold shadow-2xl flex-shrink-0 border-2 border-white/10 group-hover:scale-105 transition-transform duration-300">
+                              {tourLeaderProfile.fullName.charAt(0)}
+                            </div>
+
+                            <div className="flex-1">
+                              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                                <div>
+                                  <h5 className="text-xl font-bold text-[#D4AF37] mb-1">{tourLeaderProfile.fullName}</h5>
+                                  <div className="flex items-center gap-3 text-sm text-gray-300">
+                                    <div className="flex items-center gap-1.5">
+                                      <Mail className="w-3.5 h-3.5 text-[#D4AF37]" />
+                                      <span>{tourLeaderProfile.email}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                      <Phone className="w-3.5 h-3.5 text-[#D4AF37]" />
+                                      <span>{tourLeaderProfile.phoneNumber}</span>
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <a
+                                    href={`https://wa.me/${tourLeaderProfile.whatsappNumber || tourLeaderProfile.phoneNumber?.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 px-4 py-2 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-all shadow-lg active:scale-95"
+                                  >
+                                    <MessageCircle className="w-4 h-4" />
+                                    Koordinasi dengan TL
+                                  </a>
+                                </div>
+                              </div>
+
+                              {/* Stats & Info Grid */}
+                              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                                  <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Pengalaman</p>
+                                  <p className="text-sm font-bold text-white">{tourLeaderProfile.experience ? `${tourLeaderProfile.experience} Tahun` : '-'}</p>
+                                </div>
+                                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                                  <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Bahasa</p>
+                                  <p className="text-sm font-bold text-white truncate">{tourLeaderProfile.languages || '-'}</p>
+                                </div>
+                                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                                  <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Total Trip</p>
+                                  <p className="text-sm font-bold text-white">{tourLeaderProfile.totalTrips || '-'}</p>
+                                </div>
+                                <div className="p-3 rounded-xl bg-white/5 border border-white/10">
+                                  <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Total Jamaah</p>
+                                  <p className="text-sm font-bold text-white">{tourLeaderProfile.totalPilgrims || '-'}</p>
+                                </div>
+                              </div>
+
+                              {tourLeaderProfile.bio && (
+                                <div className="mt-4 p-3 rounded-xl bg-white/5 border border-white/10">
+                                  <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Tentang TL</p>
+                                  <p className="text-xs text-gray-300 italic line-clamp-2 leading-relaxed">"{tourLeaderProfile.bio}"</p>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
 
                     {packageData.description && (
                       <div className="pt-4 border-t border-gray-200">

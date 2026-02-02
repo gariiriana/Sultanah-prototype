@@ -271,8 +271,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     const selectedRole = role || 'prospective-jamaah';
 
-    // ✅ NEW: Set approval status for tour-leader, mutawwif & agen
-    const requiresApproval = selectedRole === 'tour-leader' || selectedRole === 'mutawwif' || selectedRole === 'agen';
+    // ✅ NEW: Set approval status for tour-leader, mutawwif, agen & influencer
+    const requiresApproval = selectedRole === 'tour-leader' || selectedRole === 'mutawwif' || selectedRole === 'agen' || selectedRole === 'influencer';
 
     // Create user profile in Firestore
     const userProfile: UserProfile = {
