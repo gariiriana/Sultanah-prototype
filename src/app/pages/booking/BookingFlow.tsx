@@ -136,9 +136,22 @@ const BookingFlow: React.FC = () => {
                 })
             });
 
-            const data = await response.json();
+            // Check Content-Type to prevent "Unexpected token" errors if HTML is returned
+            const contentType = response.headers.get("content-type");
+            let data;
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                console.error("Non-JSON API Response:", text);
+                throw new Error("Gagal menghubungi server pembayaran (Invalid Response). Cek koneksi atau konfigurasi Midtrans.");
+            }
 
             if (!response.ok) {
+                // Handle specific Midtrans 401
+                if (response.status === 401) {
+                    throw new Error("Midtrans Unauthorized: Cek Server Key Anda (Pastikan tidak ada spasi & sesuai Environment).");
+                }
                 throw new Error(data.error || "Gagal memproses pembayaran");
             }
 
