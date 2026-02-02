@@ -5,6 +5,8 @@ import { Button } from '../components/ui/button';
 interface WelcomeNotificationProps {
     isOpen: boolean;
     onClose: () => void;
+    onAction?: () => void;
+    actionLabel?: string;
     bookingData: {
         packageName: string;
         totalAmount: number;
@@ -13,7 +15,7 @@ interface WelcomeNotificationProps {
     };
 }
 
-export default function WelcomeNotification({ isOpen, onClose, bookingData }: WelcomeNotificationProps) {
+export default function WelcomeNotification({ isOpen, onClose, onAction, actionLabel, bookingData }: WelcomeNotificationProps) {
     return (
         <AnimatePresence>
             {isOpen && (
@@ -113,10 +115,10 @@ export default function WelcomeNotification({ isOpen, onClose, bookingData }: We
                                 {/* Action Buttons */}
                                 <div className="flex gap-3 pt-2">
                                     <Button
-                                        onClick={onClose}
+                                        onClick={onAction || onClose}
                                         className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white h-12 text-sm font-bold uppercase tracking-wide shadow-lg shadow-emerald-200"
                                     >
-                                        Lihat Dashboard
+                                        {actionLabel || 'Lihat Dashboard'}
                                     </Button>
                                 </div>
                             </div>

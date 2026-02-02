@@ -334,7 +334,6 @@ export default function UserManagementNew() {
 
   const roleOptions = [
     { value: 'all', label: '👥 All Users', count: users.length },
-    { value: 'prospective-jamaah', label: '🕌 Calon Jamaah', count: users.filter(u => u.role === 'prospective-jamaah').length },
     { value: 'current-jamaah', label: '✈️ Jamaah Umroh', count: users.filter(u => u.role === 'current-jamaah').length },
     { value: 'alumni', label: '🏆 Alumni Jamaah', count: users.filter(u => u.role === 'alumni').length },
     { value: 'tour-leader', label: '🧑‍✈️ Tour Leader', count: users.filter(u => u.role === 'tour-leader').length },

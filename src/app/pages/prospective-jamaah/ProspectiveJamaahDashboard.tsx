@@ -2321,20 +2321,22 @@ const ProspectiveJamaahDashboard = () => {
               className="space-y-4"
             >
               {/* WhatsApp */}
-              <Card className="bg-gradient-to-br from-green-50 to-green-100/50 border-2 border-green-200 hover:shadow-lg transition-all">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 shadow-md">
-                      <MessageCircle className="w-7 h-7 text-green-600" />
+              <a href="https://wa.me/6281234700116" target="_blank" rel="noopener noreferrer" className="block transform transition-transform hover:scale-102">
+                <Card className="bg-gradient-to-br from-green-50 to-green-100/50 border-2 border-green-200 hover:shadow-lg transition-all">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 shadow-md">
+                        <MessageCircle className="w-7 h-7 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900 mb-1">WhatsApp</h3>
+                        <p className="text-lg font-semibold text-green-700 mb-0.5">+62 812-3470-0116</p>
+                        <p className="text-sm text-green-600">Respon cepat 24/7</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-gray-900 mb-1">WhatsApp</h3>
-                      <p className="text-lg font-semibold text-green-700 mb-0.5">+62 857-2337-5324</p>
-                      <p className="text-sm text-green-600">Respon cepat 24/7</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </a>
 
               {/* Telepon */}
               <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 border-2 border-blue-200 hover:shadow-lg transition-all">
@@ -2345,7 +2347,7 @@ const ProspectiveJamaahDashboard = () => {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-bold text-gray-900 mb-1">Telepon</h3>
-                      <p className="text-lg font-semibold text-blue-700 mb-0.5">+62 21 1234 5678</p>
+                      <p className="text-lg font-semibold text-blue-700 mb-0.5">+62 812-3470-0116</p>
                       <p className="text-sm text-blue-600">Senin-Jumat 09:00-18:00</p>
                     </div>
                   </div>
@@ -2488,9 +2490,17 @@ const ProspectiveJamaahDashboard = () => {
             <div>
               <h4 className="text-lg font-bold mb-4 text-[#D4AF37]">Hubungi Kami</h4>
               <ul className="space-y-3">
-                <li className="flex items-center gap-3 text-gray-400">
-                  <Phone className="w-5 h-5 text-[#D4AF37]" />
-                  <span>+62 21 1234 5678</span>
+                <li className="flex items-center gap-3">
+                  <a href="https://wa.me/6281234700116" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-400 hover:text-[#D4AF37] transition-colors">
+                    <MessageCircle className="w-5 h-5 text-[#D4AF37]" />
+                    <span>+62 812-3470-0116</span>
+                  </a>
+                </li>
+                <li className="flex items-center gap-3">
+                  <a href="tel:+6281234700116" className="flex items-center gap-3 text-gray-400 hover:text-[#D4AF37] transition-colors">
+                    <Phone className="w-5 h-5 text-[#D4AF37]" />
+                    <span>+62 812-3470-0116</span>
+                  </a>
                 </li>
                 <li className="flex items-center gap-3 text-gray-400">
                   <Mail className="w-5 h-5 text-[#D4AF37]" />

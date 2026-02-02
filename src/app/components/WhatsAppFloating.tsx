@@ -4,8 +4,8 @@ const WhatsAppFloating: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  const whatsappLink = 'https://api.whatsapp.com/send/?phone=6281234700116&text&type=phone_number&app_absent=0';
-  const phoneNumber = '+62-857-2337-5324';
+  const whatsappLink = 'https://wa.me/6281234700116';
+  const phoneNumber = '+62 812-3470-0116';
 
 
   useEffect(() => {

@@ -708,7 +708,8 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
               className="bg-white/50 hover:bg-white/80 text-gray-700 border border-gray-300"
             >
               <Home className="w-4 h-4 mr-2" />
-              Back to Dashboard
+              <span className="hidden sm:inline">Back to Dashboard</span>
+              <span className="inline sm:hidden">Back</span>
             </Button>
           </div>
         </div>

@@ -20,7 +20,6 @@ import AllPromosPage from '../prospective-jamaah/AllPromosPage';
 import AllEducationPage from '../prospective-jamaah/AllEducationPage';
 import AllTestimonialsPage from '../user/AllTestimonialsPage'; // ✅ NEW
 import FloatingAnnouncementWidget from '../../components/FloatingAnnouncementWidget';
-import AdsBanner from '../../components/AdsBanner'; // ✅ NEW: Ads Banner
 // ✅ NEW: Shared components for unified UI
 import TestimonialSection from '../../components/shared/TestimonialSection';
 import WelcomeNotification from '../../components/WelcomeNotification'; // ✅ NEW: Post-payment notification
@@ -32,9 +31,10 @@ import { toast } from 'sonner';
 import { Promo } from '../../../types';
 
 // ✅ BEAUTIFUL IMAGE: Mecca Pilgrims
-const jamaahHeroImage = 'https://images.unsplash.com/photo-1676607185227-4f0e70228d3f?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWNjYSUyMHBpbGdyaW1zfGVufDF8fHx8MTc2ODE4NDU0OXww&ixlib=rb-4.1.0&q=80&w=1080';
+import jamaahHeroImage from '../../../assets/jamaah-hero-bg.jpg';
 import {
   User,
+  Home, // ✅ ADDED: Home icon
   MapPin,
   Calendar,
   Package,
@@ -59,13 +59,22 @@ import {
   Clock3,
   Facebook,
   Instagram,
-  Twitter
+  Twitter,
+  Menu // ✅ ADDED: Menu icon for mobile sidebar
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { Label } from '../../components/ui/label';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger
+} from '../../components/ui/sheet'; // ✅ ADDED: Sheet components
 
 // Import Sultanah logo
 // ✅ LOGO: Mosque dome with gold
@@ -679,9 +688,9 @@ const CurrentJamaahDashboard = () => {
               <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg overflow-hidden flex-shrink-0 shadow-md">
                 <img src={sultanahLogo} alt="Sultanah Travel" className="w-full h-full object-contain" />
               </div>
-              <div className="hidden sm:block">
-                <h1 className="font-bold text-gray-900 text-sm">Jamaah Umroh Sultanah</h1>
-                <p className="text-xs text-gray-600">Selamat datang, {userProfile?.displayName || 'Tamu'}</p>
+              <div className="block ml-2">
+                <h1 className="font-bold text-gray-900 text-xs md:text-sm leading-tight">Jamaah Umroh Sultanah</h1>
+                <p className="text-[10px] md:text-xs text-gray-600 leading-tight">Selamat datang, {userProfile?.displayName ? userProfile.displayName.split(' ')[0] : 'Tamu'}</p>
               </div>
             </div>
 
@@ -692,20 +701,6 @@ const CurrentJamaahDashboard = () => {
                 className="text-gray-700 hover:text-[#D4AF37] transition-all text-sm font-medium relative group whitespace-nowrap px-2"
               >
                 <span className="relative z-10">Beranda</span>
-                <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
-              </button>
-              <button
-                onClick={() => scrollToSection(packagesRef)}
-                className="text-gray-700 hover:text-[#D4AF37] transition-all text-sm font-medium relative group whitespace-nowrap px-2"
-              >
-                <span className="relative z-10">Paket</span>
-                <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
-              </button>
-              <button
-                onClick={() => scrollToSection(promosRef)}
-                className="text-gray-700 hover:text-[#D4AF37] transition-all text-sm font-medium relative group whitespace-nowrap px-2"
-              >
-                <span className="relative z-10">Promo</span>
                 <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </button>
               <button
@@ -783,6 +778,105 @@ const CurrentJamaahDashboard = () => {
                   <span className="hidden md:inline">Profil</span>
                 </Button>
               </div>
+
+              {/* Mobile Menu Button - Visible ONLY on Mobile */}
+              <div className="flex lg:hidden items-center ml-2">
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" className="text-gray-700 hover:text-[#D4AF37]">
+                      <Menu className="h-6 w-6" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="right" className="w-[85vw] sm:w-[400px] overflow-y-auto">
+                    <SheetHeader className="mb-6 text-left">
+                      <SheetTitle className="text-xl font-bold flex items-center gap-2">
+                        <img src={sultanahLogo} alt="Sultanah Travel" className="w-8 h-8 rounded-lg" />
+                        <span>Menu Navigasi</span>
+                      </SheetTitle>
+                      <SheetDescription>
+                        Akses cepat ke semua fitur dashboard
+                      </SheetDescription>
+                    </SheetHeader>
+
+                    <div className="flex flex-col gap-6">
+                      {/* User Info Mobile */}
+                      <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="w-10 h-10 rounded-full bg-[#D4AF37]/10 flex items-center justify-center text-[#D4AF37]">
+                            <User className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="font-semibold text-gray-900">{userProfile?.displayName || 'Tamu'}</p>
+                            <p className="text-xs text-gray-500">Jamaah Umroh</p>
+                          </div>
+                        </div>
+                        <Button
+                          onClick={() => setShowProfilePage(true)}
+                          variant="outline"
+                          size="sm"
+                          className="w-full justify-start text-[#D4AF37] border-[#D4AF37]/30 hover:bg-[#D4AF37]/5"
+                        >
+                          <User className="w-4 h-4 mr-2" />
+                          Edit Profil
+                        </Button>
+                      </div>
+
+                      {/* Navigation Links Mobile */}
+                      <div className="space-y-2">
+                        <p className="text-sm font-semibold text-gray-500 pl-1 mb-2">MENU UTAMA</p>
+
+                        <Button onClick={() => scrollToSection(dashboardRef)} variant="ghost" className="w-full justify-start text-lg h-12 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5">
+                          <Home className="w-5 h-5 mr-3" /> Beranda
+                        </Button>
+                        <Button onClick={() => scrollToSection(packagesRef)} variant="ghost" className="w-full justify-start text-lg h-12 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5">
+                          <Package className="w-5 h-5 mr-3" /> Paket
+                        </Button>
+                        <Button onClick={() => scrollToSection(promosRef)} variant="ghost" className="w-full justify-start text-lg h-12 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5">
+                          <Tag className="w-5 h-5 mr-3" /> Promo
+                        </Button>
+                        <Button onClick={() => scrollToSection(educationRef)} variant="ghost" className="w-full justify-start text-lg h-12 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5">
+                          <GraduationCap className="w-5 h-5 mr-3" /> Edukasi
+                        </Button>
+                        <Button onClick={() => scrollToSection(newsRef)} variant="ghost" className="w-full justify-start text-lg h-12 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5">
+                          <Newspaper className="w-5 h-5 mr-3" /> Artikel
+                        </Button>
+                        <Button onClick={() => scrollToSection(testimonialsRef)} variant="ghost" className="w-full justify-start text-lg h-12 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5">
+                          <MessageCircle className="w-5 h-5 mr-3" /> Testimoni
+                        </Button>
+                        <Button onClick={() => scrollToSection(contactRef)} variant="ghost" className="w-full justify-start text-lg h-12 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5">
+                          <Phone className="w-5 h-5 mr-3" /> Kontak
+                        </Button>
+                      </div>
+
+                      {/* Quick Actions Mobile */}
+                      <div className="space-y-3 pt-4 border-t border-gray-100">
+                        <p className="text-sm font-semibold text-gray-500 pl-1 mb-2">AKSES CEPAT</p>
+
+                        <Button
+                          onClick={() => setShowPesananPage(true)}
+                          className="w-full bg-blue-50 text-blue-600 hover:bg-blue-100 justify-start h-12"
+                        >
+                          <ShoppingBag className="w-5 h-5 mr-3" /> Pesanan Saya
+                        </Button>
+
+                        <Button
+                          onClick={() => navigate('/marketplace')}
+                          className="w-full bg-purple-50 text-purple-600 hover:bg-purple-100 justify-start h-12"
+                        >
+                          <ShoppingCart className="w-5 h-5 mr-3" /> Marketplace
+                        </Button>
+
+                        <Button
+                          onClick={() => setShowItinerary(true)}
+                          className="w-full bg-teal-50 text-teal-600 hover:bg-teal-100 justify-start h-12"
+                        >
+                          <Calendar className="w-5 h-5 mr-3" /> Jadwal Perjalanan
+                        </Button>
+                      </div>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              </div>
             </div>
           </div>
         </div>
@@ -813,24 +907,9 @@ const CurrentJamaahDashboard = () => {
               perjalanan spiritual Anda.
             </p>
 
-            {/* CTA Buttons */}
+            {/* CTA Buttons - REMOVED for Current Jamaah */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6 md:mb-8">
-              <Button
-                onClick={() => scrollToSection(contactRef)}
-                size="lg"
-                className="bg-white text-[#D4AF37] hover:bg-gray-100 border-0 shadow-xl px-8 py-6 text-base md:text-lg font-semibold rounded-full transition-all duration-300 hover:scale-105 w-full sm:w-auto"
-              >
-                <MessageCircle className="w-5 h-5 mr-2" />
-                Konsultasi Gratis
-              </Button>
-              <Button
-                onClick={() => scrollToSection(packagesRef)}
-                size="lg"
-                className="bg-gradient-to-r from-[#D4AF37] to-[#C5A572] hover:opacity-90 text-white border-0 shadow-xl px-8 py-6 text-base md:text-lg font-semibold rounded-full transition-all duration-300 hover:scale-105 w-full sm:w-auto"
-              >
-                <Package className="w-5 h-5 mr-2" />
-                Beli Paket
-              </Button>
+              {/* Buttons removed as per user request */}
             </div>
 
             <div className="flex items-center justify-center gap-2 text-xs md:text-sm">
@@ -841,355 +920,9 @@ const CurrentJamaahDashboard = () => {
         </div>
       </section>
 
-      {/* ads Banner Section */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10 md:-mt-16 mb-12 relative z-30">
-        <AdsBanner role="current-jamaah" />
-      </div>
 
-      {/* Packages Section */}
-      <section
-        ref={packagesRef}
-        className="relative min-h-[50vh] md:min-h-screen bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(https://images.unsplash.com/photo-1676200928665-8b97df7ab979?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1bXJhaCUyMHBpbGdyaW1hZ2UlMjBtb3NxdWV8ZW58MXx8fHwxNzY3MTE2MzU0fDA&ixlib=rb-4.1.0&q=80&w=1080)` }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/70"></div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20">
-          <div className="text-center mb-8 md:mb-12">
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-2 md:mb-4">Paket Umrah</h2>
-            <p className="text-sm md:text-xl text-white/90">Pilih paket umrah yang sesuai dengan kebutuhan Anda</p>
-          </div>
 
-          {packages.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-                {/* ✅ UPDATED: Show only first 3 packages */}
-                {packages.slice(0, 3).map((pkg, index) => (
-                  <motion.div
-                    key={pkg.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1, duration: 0.5 }}
-                    whileHover={{ y: -10 }}
-                    className="group h-full"
-                  >
-                    <div className="relative h-full flex flex-col rounded-3xl bg-white border border-gray-200 hover:border-[#D4AF37]/40 shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden">
-                      {/* Gradient overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-br from-[#D4AF37]/0 to-[#FFD700]/0 group-hover:from-[#D4AF37]/5 group-hover:to-[#FFD700]/5 transition-all duration-500 pointer-events-none" />
-
-                      {/* Package Image */}
-                      {(pkg.image || pkg.photo) && (
-                        <div className="relative h-40 md:h-56 overflow-hidden">
-                          <motion.img
-                            whileHover={{ scale: 1.1 }}
-                            transition={{ duration: 0.6 }}
-                            src={pkg.image || pkg.photo}
-                            alt={pkg.name}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-
-                          {/* Badge */}
-                          {pkg.type && (
-                            <div className="absolute top-2 md:top-4 right-2 md:right-4">
-                              <span className="px-2 md:px-4 py-1 md:py-1.5 rounded-full bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] text-white text-xs md:text-sm font-semibold shadow-lg">
-                                {pkg.type.toUpperCase()}
-                              </span>
-                            </div>
-                          )}
-
-                          {/* Rating */}
-                          <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 flex items-center gap-1 px-2 md:px-3 py-1 md:py-1.5 rounded-full bg-white/90 backdrop-blur-sm">
-                            <Star className="w-3 h-3 md:w-4 md:h-4 text-[#FFD700] fill-[#FFD700]" />
-                            <span className="text-xs md:text-sm font-semibold">{pkg.rating || 4.9}</span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Content */}
-                      <div className="relative flex-grow flex flex-col p-4 md:p-6">
-                        <div className="flex-grow">
-                          <h3 className="text-lg md:text-2xl font-semibold mb-1 md:mb-2 text-gray-900 group-hover:text-[#D4AF37] transition-colors">
-                            {pkg.name}
-                          </h3>
-
-                          {/* Price */}
-                          <div className="mb-3 md:mb-6">
-                            <div className="text-xs md:text-sm text-gray-500 mb-0.5 md:mb-1">Mulai dari</div>
-                            <div className="text-xl md:text-3xl font-bold bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] bg-clip-text text-transparent">
-                              {formatCurrency(pkg.price)}
-                            </div>
-                            <div className="text-xs md:text-sm text-gray-500">per orang</div>
-                          </div>
-
-                          {/* Info Cards */}
-                          <div className="grid grid-cols-3 gap-1.5 md:gap-2 mb-3 md:mb-6">
-                            <div className="flex flex-col items-center p-2 md:p-3 rounded-lg md:rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50">
-                              <Clock className="w-3.5 h-3.5 md:w-5 md:h-5 text-blue-600 mb-0.5 md:mb-1" />
-                              <span className="text-[10px] md:text-xs font-semibold text-blue-900">{pkg.duration}D</span>
-                            </div>
-                            <div className="flex flex-col items-center p-2 md:p-3 rounded-lg md:rounded-xl bg-gradient-to-br from-green-50 to-green-100/50 border border-green-200/50">
-                              <Calendar className="w-3.5 h-3.5 md:w-5 md:h-5 text-green-600 mb-0.5 md:mb-1" />
-                              <span className="text-[10px] md:text-xs font-semibold text-green-900">{pkg.departureDate ? new Date(pkg.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD'}</span>
-                            </div>
-                            <div className="flex flex-col items-center p-2 md:p-3 rounded-lg md:rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/50">
-                              <Users className="w-3.5 h-3.5 md:w-5 md:h-5 text-purple-600 mb-0.5 md:mb-1" />
-                              <span className="text-[10px] md:text-xs font-semibold text-purple-900">{pkg.availableSlots || 0}</span>
-                            </div>
-                          </div>
-
-                          {/* Features */}
-                          {pkg.features && pkg.features.length > 0 && (
-                            <div className="border-t border-gray-200 pt-4">
-                              <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                                <Check className="w-4 h-4 mr-1 text-[#D4AF37]" />
-                                Paket Termasuk:
-                              </p>
-                              <ul className="space-y-2">
-                                {pkg.features.slice(0, 4).map((feature: string, i: number) => (
-                                  <li key={i} className="flex items-start text-sm text-gray-600">
-                                    <Check className="w-4 h-4 mr-2 text-[#D4AF37] flex-shrink-0 mt-0.5" />
-                                    <span>{feature}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Book Now Button */}
-                        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="mt-6">
-                          <Button
-                            onClick={() => {
-                              setSelectedPackageId(pkg.id);
-                              setShowPackageDetail(true);
-                            }}
-                            disabled={pkg.availableSlots === 0}
-                            className="w-full h-12 bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] hover:opacity-90 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {pkg.availableSlots === 0 ? '✕ Fully Booked' : '📦 Book Now'}
-                          </Button>
-                        </motion.div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* ✅ NEW: "Lihat Semua Paket" Button - Only show if more than 3 packages */}
-              {packages.length > 3 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="text-center mt-12"
-                >
-                  <button
-                    onClick={() => setShowAllPackagesPage(true)}
-                    className="group inline-flex items-center gap-3 px-8 py-4 bg-white hover:bg-emerald-50 border-2 border-emerald-600 rounded-xl text-emerald-700 font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    <span>Lihat Semua Paket</span>
-                    <span className="text-2xl group-hover:translate-x-2 transition-transform duration-300">→</span>
-                  </button>
-                  <p className="text-sm text-white/80 mt-3">
-                    Menampilkan 3 dari {packages.length} paket tersedia
-                  </p>
-                </motion.div>
-              )}
-            </>
-          ) : (
-            <Card className="bg-white/95 backdrop-blur-sm">
-              <CardContent className="text-center py-12">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center mx-auto mb-4">
-                  <Package className="w-10 h-10 text-[#D4AF37]" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Tidak Ada Paket Tersedia</h3>
-                <p className="text-gray-600">Paket umrah akan segera hadir.</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </section>
-
-      {/* Promo Section */}
-      <section
-        ref={promosRef}
-        className="relative min-h-[50vh] md:min-h-screen bg-cover bg-center bg-no-repeat py-12 md:py-20"
-        style={{ backgroundImage: `url(https://images.unsplash.com/photo-1720482229376-d5574ffeb0c8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWNjYSUyMGthYWJhJTIwYWVyaWFsJTIwdmlld3xlbnwxfHx8fDE3NjcxMjY1MjJ8MA&ixlib=rb-4.1.0&q=80&w=1080)` }}
-      >
-        {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/65 to-black/75"></div>
-
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8 md:mb-12">
-            <div className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#C5A572] mb-3 md:mb-6 shadow-lg">
-              <Gift className="w-6 h-6 md:w-8 md:h-8 text-white" />
-            </div>
-            <h2 className="text-3xl md:text-5xl font-bold text-white mb-2 md:mb-4 drop-shadow-lg">
-              Penawaran Terbaik Untuk Anda
-            </h2>
-            <p className="text-sm md:text-xl text-white/90 max-w-3xl mx-auto drop-shadow-md">
-              Dapatkan harga spesial dengan berbagai promo menarik kami
-            </p>
-          </div>
-
-          {promos.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-                {/* ✅ UPDATED: Show only first 3 promos */}
-                {promos.slice(0, 3).map((promo, index) => {
-                  // Dynamic color mapping
-                  const colorMap: Record<string, { bg: string; border: string; text: string; badge: string }> = {
-                    blue: {
-                      bg: 'from-blue-500 to-blue-600',
-                      border: 'border-blue-300',
-                      text: 'text-blue-800',
-                      badge: 'bg-blue-600'
-                    },
-                    gold: {
-                      bg: 'from-[#D4AF37] to-[#C5A572]',
-                      border: 'border-[#D4AF37]/30',
-                      text: 'text-[#C5A572]',
-                      badge: 'bg-[#D4AF37]'
-                    },
-                    green: {
-                      bg: 'from-green-500 to-green-600',
-                      border: 'border-green-300',
-                      text: 'text-green-800',
-                      badge: 'bg-green-600'
-                    }
-                  };
-
-                  const colors = colorMap[promo.color || 'gold'];
-
-                  // Handle view promo - direct WhatsApp (no profile check needed for current jamaah)
-                  const handleViewPromo = () => {
-                    const message = `Halo, saya tertarik dengan promo:\\n\\n` +
-                      `🎁 *${promo.title}*\\n` +
-                      `💰 Diskon: ${promo.discount}\\n` +
-                      `📅 Berlaku hingga: ${promo.validUntil}\\n\\n` +
-                      `Mohon informasi lebih lanjut tentang promo ini. Terima kasih!`;
-
-                    const whatsappUrl = `https://api.whatsapp.com/send/?phone=6281234700116&text=${encodeURIComponent(message)}&type=phone_number&app_absent=0`;
-                    window.open(whatsappUrl, '_blank');
-                  };
-
-                  return (
-                    <motion.div
-                      key={promo.id}
-                      initial={{ opacity: 0, y: 30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.1, duration: 0.5 }}
-                      whileHover={{ y: -10 }}
-                      className="group"
-                    >
-                      <div className="relative h-full flex flex-col rounded-3xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_20px_60px_rgba(212,175,55,0.25)] transition-all duration-500 overflow-hidden group-hover:scale-[1.02]">
-                        {/* Top accent bar */}
-                        <div className={`h-2 bg-gradient-to-r ${colors.bg}`} />
-
-                        {/* Badge */}
-                        {promo.badge && (
-                          <div className="absolute top-6 right-6 z-10">
-                            <span className={`px-4 py-1.5 rounded-full ${colors.badge} text-white text-xs font-bold shadow-lg uppercase tracking-wide`}>
-                              {promo.badge}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Promo Image */}
-                        {promo.image && (
-                          <div className="relative h-48 overflow-hidden">
-                            <motion.img
-                              whileHover={{ scale: 1.1 }}
-                              transition={{ duration: 0.6 }}
-                              src={promo.image}
-                              alt={promo.title}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className={`absolute inset-0 bg-gradient-to-t ${colors.bg} opacity-10`} />
-                          </div>
-                        )}
-
-                        {/* Content */}
-                        <div className="relative flex-grow flex flex-col p-6">
-                          <div className="flex-grow">
-                            <h3 className="text-2xl font-bold mb-3 text-gray-900 group-hover:text-[#D4AF37] transition-colors">
-                              {promo.title}
-                            </h3>
-
-                            {/* Discount Badge */}
-                            <div className="mb-4">
-                              <div className={`inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r ${colors.bg} text-white font-bold text-3xl shadow-lg`}>
-                                <Tag className="w-6 h-6 mr-2" />
-                                {promo.discount}
-                              </div>
-                            </div>
-
-                            {/* Description */}
-                            <p className="text-gray-600 mb-4 line-clamp-2">
-                              {promo.description}
-                            </p>
-
-                            {/* Valid Until */}
-                            <div className="flex items-center text-sm text-gray-500 mb-4">
-                              <Clock className="w-4 h-4 mr-2" />
-                              <span>Berlaku hingga {promo.validUntil}</span>
-                            </div>
-                          </div>
-
-                          {/* View Promo Button - Direct WhatsApp */}
-                          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="mt-4">
-                            <Button
-                              onClick={handleViewPromo}
-                              className={`w-full h-12 bg-gradient-to-r ${colors.bg} hover:opacity-90 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl font-semibold`}
-                            >
-                              <Sparkles className="w-4 h-4 mr-2" />
-                              Lihat Promo
-                            </Button>
-                          </motion.div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-
-              {/* ✅ NEW: "Lihat Semua Promo" Button - Only show if more than 3 promos */}
-              {promos.length > 3 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="text-center mt-12"
-                >
-                  <button
-                    onClick={() => setShowAllPromosPage(true)}
-                    className="group inline-flex items-center gap-3 px-8 py-4 bg-white hover:bg-emerald-50 border-2 border-emerald-600 rounded-xl text-emerald-700 font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    <span>Lihat Semua Promo</span>
-                    <span className="text-2xl group-hover:translate-x-2 transition-transform duration-300">→</span>
-                  </button>
-                  <p className="text-sm text-white/80 mt-3">
-                    Menampilkan 3 dari {promos.length} promo tersedia
-                  </p>
-                </motion.div>
-              )}
-            </>
-          ) : (
-            <Card className="bg-white/95 backdrop-blur-sm">
-              <CardContent className="text-center py-12">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center mx-auto mb-4">
-                  <Gift className="w-10 h-10 text-[#D4AF37]" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Belum Ada Promo</h3>
-                <p className="text-gray-600">Promo menarik akan segera hadir untuk Anda. Nantikan!</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </section>
 
       {/* Education Section */}
       <section
@@ -1414,37 +1147,7 @@ const CurrentJamaahDashboard = () => {
         </div>
       </section>
 
-      {/* Testimonials Section */}
-      <section
-        ref={testimonialsRef}
-        className="relative min-h-screen bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(https://images.unsplash.com/photo-1647221467105-a851179dccda?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxpc2xhbWljJTIwbW9zcXVlJTIwaW50ZXJpb3J8ZW58MXx8fHwxNzY3MTA3NzEyfDA&ixlib=rb-4.1.0&q=80&w=1080)` }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/70"></div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Testimoni Jamaah</h2>
-            <p className="text-xl text-white/90 max-w-3xl mx-auto">
-              Dengarkanlah kisah inspiratif dari ribuan jamaah yang telah merasakan pengalaman spiritual luar biasa bersama kami
-            </p>
-          </div>
-
-          {/* ✅ SHARED COMPONENT: Unified Testimonial Section */}
-          <TestimonialSection
-            testimonials={testimonials.map((testimonial) => ({
-              ...testimonial,
-              content: testimonial.comment || testimonial.review || '',
-              userName: testimonial.userName || testimonial.name || 'Anonymous',
-            }))}
-            loading={false}
-            emptyMessage="Belum Ada Testimoni"
-            showSubmitButton={false}
-            maxItems={3}
-            onViewAllTestimonials={() => setShowAllTestimonialsPage(true)}
-          />
-        </div>
-      </section>
 
 
       {/* Contact Section */}
@@ -1579,20 +1282,22 @@ const CurrentJamaahDashboard = () => {
               className="space-y-4"
             >
               {/* WhatsApp */}
-              <Card className="bg-gradient-to-br from-green-50 to-green-100/50 border-2 border-green-200 hover:shadow-lg transition-all">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 shadow-md">
-                      <MessageCircle className="w-7 h-7 text-green-600" />
+              <a href="https://wa.me/6281234700116" target="_blank" rel="noopener noreferrer" className="block transform transition-transform hover:scale-102">
+                <Card className="bg-gradient-to-br from-green-50 to-green-100/50 border-2 border-green-200 hover:shadow-lg transition-all">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 shadow-md">
+                        <MessageCircle className="w-7 h-7 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-bold text-gray-900 mb-1">WhatsApp</h3>
+                        <p className="text-lg font-semibold text-green-700 mb-0.5">+62 812-3470-0116</p>
+                        <p className="text-sm text-green-600">Respon cepat 24/7</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-bold text-gray-900 mb-1">WhatsApp</h3>
-                      <p className="text-lg font-semibold text-green-700 mb-0.5">+62 857-2337-5324</p>
-                      <p className="text-sm text-green-600">Respon cepat 24/7</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </a>
 
               {/* Telepon */}
               <Card className="bg-gradient-to-br from-blue-50 to-blue-100/50 border-2 border-blue-200 hover:shadow-lg transition-all">
@@ -1603,7 +1308,7 @@ const CurrentJamaahDashboard = () => {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-bold text-gray-900 mb-1">Telepon</h3>
-                      <p className="text-lg font-semibold text-blue-700 mb-0.5">+62 21 1234 5678</p>
+                      <p className="text-lg font-semibold text-blue-700 mb-0.5">+62 812-3470-0116</p>
                       <p className="text-sm text-blue-600">Senin-Jumat 09:00-18:00</p>
                     </div>
                   </div>
@@ -1709,16 +1414,7 @@ const CurrentJamaahDashboard = () => {
                     Beranda
                   </button>
                 </li>
-                <li>
-                  <button onClick={() => scrollToSection(packagesRef)} className="text-gray-400 hover:text-[#D4AF37] transition-colors">
-                    Paket
-                  </button>
-                </li>
-                <li>
-                  <button onClick={() => scrollToSection(promosRef)} className="text-gray-400 hover:text-[#D4AF37] transition-colors">
-                    Promo
-                  </button>
-                </li>
+
                 <li>
                   <button onClick={() => scrollToSection(educationRef)} className="text-gray-400 hover:text-[#D4AF37] transition-colors">
                     Edukasi
@@ -1746,9 +1442,17 @@ const CurrentJamaahDashboard = () => {
             <div>
               <h4 className="text-lg font-bold mb-4 text-[#D4AF37]">Hubungi Kami</h4>
               <ul className="space-y-3">
-                <li className="flex items-center gap-3 text-gray-400">
-                  <Phone className="w-5 h-5 text-[#D4AF37]" />
-                  <span>+62 21 1234 5678</span>
+                <li className="flex items-center gap-3">
+                  <a href="https://wa.me/6281234700116" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 text-gray-400 hover:text-[#D4AF37] transition-colors">
+                    <MessageCircle className="w-5 h-5 text-[#D4AF37]" />
+                    <span>+62 812-3470-0116</span>
+                  </a>
+                </li>
+                <li className="flex items-center gap-3">
+                  <a href="tel:+6281234700116" className="flex items-center gap-3 text-gray-400 hover:text-[#D4AF37] transition-colors">
+                    <Phone className="w-5 h-5 text-[#D4AF37]" />
+                    <span>+62 812-3470-0116</span>
+                  </a>
                 </li>
                 <li className="flex items-center gap-3 text-gray-400">
                   <Mail className="w-5 h-5 text-[#D4AF37]" />
@@ -1780,6 +1484,11 @@ const CurrentJamaahDashboard = () => {
         <WelcomeNotification
           isOpen={showWelcomeNotification}
           onClose={() => setShowWelcomeNotification(false)}
+          onAction={() => {
+            setShowWelcomeNotification(false);
+            setShowProfilePage(true);
+          }}
+          actionLabel="Lengkapi Dokumen"
           bookingData={welcomeBookingData}
         />
       )}

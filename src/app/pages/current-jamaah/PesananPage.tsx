@@ -89,36 +89,52 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
 
   const fetchPayments = async () => {
     if (!currentUser) return;
-    
+
     try {
       setLoading(true);
-      
-      // ✅ FIX: Ensure userId is defined before query
+
       const userId = userProfile?.id || currentUser.email;
+      const userEmail = currentUser.email;
+
       if (!userId) {
         console.log('No valid userId for payments fetch');
         setLoading(false);
         return;
       }
-      
-      const paymentsQuery = query(
-        collection(db, 'payments'),
-        where('userId', '==', userId)
-      );
-      
-      const snapshot = await getDocs(paymentsQuery);
-      const paymentsData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Payment[];
-      
-      // Sort by submittedAt descending (newest first) on client-side
+
+      // ✅ Strategy: Fetch by ID AND Email to ensure no history is lost
+      // Since Firestore doesn't support OR queries across different fields easily in v8/v9 modular without composite indexes sometimes,
+      // we'll fetch both and merge them client-side.
+
+      const queries = [
+        query(collection(db, 'payments'), where('userId', '==', userId))
+      ];
+
+      if (userEmail && userEmail !== userId) {
+        queries.push(query(collection(db, 'payments'), where('userId', '==', userEmail)));
+      }
+
+      // Execute all queries
+      const snapshots = await Promise.all(queries.map(q => getDocs(q)));
+
+      // Merge results and remove duplicates based on ID
+      const mergedPayments = new Map();
+
+      snapshots.forEach(snapshot => {
+        snapshot.docs.forEach(doc => {
+          mergedPayments.set(doc.id, { id: doc.id, ...doc.data() });
+        });
+      });
+
+      const paymentsData = Array.from(mergedPayments.values()) as Payment[];
+
+      // Sort by submittedAt descending (newest first)
       paymentsData.sort((a, b) => {
         const dateA = a.submittedAt?.toDate?.() || new Date(a.submittedAt);
         const dateB = b.submittedAt?.toDate?.() || new Date(b.submittedAt);
         return dateB.getTime() - dateA.getTime();
       });
-      
+
       setPayments(paymentsData);
     } catch (error) {
       console.error('Error fetching payments:', error);
@@ -130,9 +146,9 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
 
   const setupMarketplaceOrdersListener = () => {
     if (!currentUser) return;
-    
+
     setLoading(true); // ✅ Set loading before listener
-    
+
     // ✅ FIX: Ensure userId is defined before query
     const userId = userProfile?.id || currentUser.email;
     if (!userId) {
@@ -140,35 +156,35 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
       setLoading(false);
       return;
     }
-    
+
     const ordersQuery = query(
       collection(db, 'marketplaceOrders'),
       where('userId', '==', userId)
     );
-    
+
     const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
       const ordersData = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       })) as MarketplaceOrder[];
-      
+
       // Sort by createdAt descending (newest first) on client-side
       ordersData.sort((a, b) => {
         const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
         const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
         return dateB.getTime() - dateA.getTime();
       });
-      
+
       setOrders(ordersData);
       setLoading(false); // ✅ Set loading false after data received
-      
+
       console.log('🔄 Marketplace orders updated (real-time):', ordersData.length);
     }, (error) => {
       console.error('Error setting up marketplace orders listener:', error);
       toast.error('Gagal memuat data pesanan marketplace');
       setLoading(false); // ✅ Set loading false on error
     });
-    
+
     return unsubscribe;
   };
 
@@ -252,14 +268,14 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
   };
 
   // ✅ NEW: Filter payments based on status
-  const filteredPayments = statusFilter === 'all' 
-    ? payments 
+  const filteredPayments = statusFilter === 'all'
+    ? payments
     : payments.filter(p => p.status === statusFilter);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Hero Header with Background Image */}
-      <div 
+      <div
         className="relative h-56 overflow-hidden"
         style={{
           backgroundImage: 'url(https://images.unsplash.com/photo-1731975184484-2f5f6a03490e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtYXNqaWQlMjBuYWJhd2klMjBuaWdodCUyMGFlcmlhbHxlbnwxfHx8fDE3Njc2Mzc1MzB8MA&ixlib=rb-4.1.0&q=80&w=1080)',
@@ -269,7 +285,7 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
       >
         {/* Gradient Overlay - Emerald & Gold */}
         <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/90 via-emerald-800/85 to-[#D4AF37]/80"></div>
-        
+
         {/* Decorative Islamic Pattern Overlay */}
         <div className="absolute inset-0 opacity-10" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -302,7 +318,7 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
               <Package className="w-10 h-10 text-[#F4D03F]" />
               Pesanan Saya
             </motion.h1>
-            
+
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -321,11 +337,10 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
           <div className="flex justify-center gap-1 p-2">
             <button
               onClick={() => setActiveTab('umroh')}
-              className={`px-8 py-3.5 font-semibold transition-all relative rounded-xl ${
-                activeTab === 'umroh'
+              className={`px-8 py-3.5 font-semibold transition-all relative rounded-xl ${activeTab === 'umroh'
                   ? 'text-white bg-gradient-to-r from-[#C5A572] to-[#D4AF37] shadow-md'
                   : 'text-gray-600 hover:bg-gray-50'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                 <CreditCard className="w-5 h-5" />
@@ -335,11 +350,10 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
 
             <button
               onClick={() => setActiveTab('marketplace')}
-              className={`px-8 py-3.5 font-semibold transition-all relative rounded-xl ${
-                activeTab === 'marketplace'
+              className={`px-8 py-3.5 font-semibold transition-all relative rounded-xl ${activeTab === 'marketplace'
                   ? 'text-white bg-gradient-to-r from-[#C5A572] to-[#D4AF37] shadow-md'
                   : 'text-gray-600 hover:bg-gray-50'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-center gap-2 whitespace-nowrap">
                 <ShoppingBag className="w-5 h-5" />
@@ -366,43 +380,39 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
                   <div className="flex items-center gap-2 overflow-x-auto">
                     <button
                       onClick={() => setStatusFilter('all')}
-                      className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${
-                        statusFilter === 'all'
+                      className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${statusFilter === 'all'
                           ? 'bg-gradient-to-r from-[#C5A572] to-[#D4AF37] text-white shadow-md'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
+                        }`}
                     >
                       Semua ({payments.length})
                     </button>
                     <button
                       onClick={() => setStatusFilter('pending')}
-                      className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${
-                        statusFilter === 'pending'
+                      className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${statusFilter === 'pending'
                           ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-400 shadow-md'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
+                        }`}
                     >
                       <Clock className="w-4 h-4 inline mr-1" />
                       Pending ({payments.filter(p => p.status === 'pending').length})
                     </button>
                     <button
                       onClick={() => setStatusFilter('approved')}
-                      className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${
-                        statusFilter === 'approved'
+                      className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${statusFilter === 'approved'
                           ? 'bg-green-100 text-green-800 border-2 border-green-400 shadow-md'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
+                        }`}
                     >
                       <CheckCircle className="w-4 h-4 inline mr-1" />
                       Disetujui ({payments.filter(p => p.status === 'approved').length})
                     </button>
                     <button
                       onClick={() => setStatusFilter('rejected')}
-                      className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${
-                        statusFilter === 'rejected'
+                      className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${statusFilter === 'rejected'
                           ? 'bg-red-100 text-red-800 border-2 border-red-400 shadow-md'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}
+                        }`}
                     >
                       <XCircle className="w-4 h-4 inline mr-1" />
                       Ditolak ({payments.filter(p => p.status === 'rejected').length})
@@ -420,7 +430,7 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
                       {payments.length === 0 ? 'Belum Ada Pembayaran' : 'Tidak Ada Hasil'}
                     </h3>
                     <p className="text-gray-600">
-                      {payments.length === 0 
+                      {payments.length === 0
                         ? 'Anda belum memiliki riwayat pembayaran paket umroh'
                         : `Tidak ada pembayaran dengan status ${statusFilter}`
                       }
