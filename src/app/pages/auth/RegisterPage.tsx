@@ -285,27 +285,29 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onNavigateToLogin, onRegist
               </div>
             </div>
 
-            {/* Referral Code Input */}
-            <div>
-              <label htmlFor="referralCode" className="block text-sm font-medium text-white mb-2">
-                Kode Referral <span className="text-white/60 font-normal">(Opsional)</span>
-              </label>
-              <div className="relative">
-                <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70" />
-                <input
-                  type="text"
-                  id="referralCode"
-                  name="referralCode"
-                  value={formData.referralCode}
-                  onChange={handleChange}
-                  placeholder="SULTANAH-XXX (jika ada)"
-                  className="w-full pl-11 pr-4 py-3 rounded-xl border border-white/30 bg-white/10 text-white placeholder:text-white/50 focus:border-white/50 focus:ring-1 focus:ring-white/50 outline-none transition-all text-sm uppercase"
-                />
+            {/* Referral Code Input - Only for Jamaah */}
+            {formData.role === 'prospective-jamaah' && (
+              <div>
+                <label htmlFor="referralCode" className="block text-sm font-medium text-white mb-2">
+                  Kode Referral <span className="text-white/60 font-normal">(Opsional)</span>
+                </label>
+                <div className="relative">
+                  <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-white/70" />
+                  <input
+                    type="text"
+                    id="referralCode"
+                    name="referralCode"
+                    value={formData.referralCode}
+                    onChange={handleChange}
+                    placeholder="SULTANAH-XXX (jika ada)"
+                    className="w-full pl-11 pr-4 py-3 rounded-xl border border-white/30 bg-white/10 text-white placeholder:text-white/50 focus:border-white/50 focus:ring-1 focus:ring-white/50 outline-none transition-all text-sm uppercase"
+                  />
+                </div>
+                <p className="text-xs text-white/70 mt-1 ml-1">
+                  Masukkan kode referral dari Alumni atau Brand Ambassador untuk mendapatkan bonus
+                </p>
               </div>
-              <p className="text-xs text-white/70 mt-1 ml-1">
-                Masukkan kode referral dari Alumni atau Brand Ambassador untuk mendapatkan bonus
-              </p>
-            </div>
+            )}
 
             {/* Role Selection */}
             <div>
