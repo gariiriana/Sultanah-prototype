@@ -1228,17 +1228,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
           </Button>
         </div>
 
-        {profileCompletion < 100 && (
-          <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-3">
-            <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-medium text-orange-900">Profile Incomplete</p>
-              <p className="text-sm text-orange-700 mt-1">
-                Please fill in all required fields (marked with *) to save your profile and enable package booking.
-              </p>
-            </div>
-          </div>
-        )}
+
       </div>
 
       {/* Logout Confirmation Dialog */}

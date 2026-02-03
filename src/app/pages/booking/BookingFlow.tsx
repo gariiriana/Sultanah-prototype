@@ -497,33 +497,33 @@ const BookingFlow: React.FC = () => {
                                     initial={{ opacity: 0, x: -20 }}
                                     animate={{ opacity: 1, x: 0 }}
                                     exit={{ opacity: 0, x: 20 }}
-                                    className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border border-white/30 h-full flex flex-col"
+                                    className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border border-white/30 h-full flex flex-col justify-center items-center text-center"
                                 >
                                     <h2 className="text-xl font-bold mb-6">Konfirmasi Pembayaran</h2>
 
                                     <div className="flex-1 flex flex-col justify-center items-center text-center space-y-4">
-                                        <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100">
+                                        <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100 w-full max-w-sm">
                                             <p className="text-gray-500 mb-2 uppercase text-xs font-bold tracking-widest">Total Tagihan Anda</p>
                                             <p className="text-4xl font-black text-emerald-800 tracking-tighter">
                                                 Rp {(formData.pax * parseInt(pkg.price) - (formData.voucherCode ? VOUCHER_DISCOUNT : 0)).toLocaleString()}
                                             </p>
                                         </div>
-                                        <p className="text-gray-600 text-sm max-w-md">
-                                            Klik tombol di bawah untuk memilih metode pembayaran (Transfer Bank, Credit Card, GoPay, dll) melalui popup aman Midtrans.
-                                        </p>
+                                        <div className="bg-blue-50 p-4 rounded-xl border border-blue-100 max-w-sm">
+                                            <p className="text-blue-800 text-sm">
+                                                Klik tombol di bawah untuk melanjutkan pembayaran aman melalui <strong>Midtrans</strong>.
+                                            </p>
+                                        </div>
                                     </div>
 
-                                    <div className="mt-6 pt-4 border-t space-y-3">
-                                        <div className="flex gap-3">
-                                            <Button variant="outline" onClick={() => setStep(1)} className="flex-1">Kembali</Button>
-                                            <Button
-                                                className="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200"
-                                                onClick={handlePayment}
-                                                disabled={isProcessing}
-                                            >
-                                                {isProcessing ? <Loader2 className="animate-spin" /> : 'Bayar Sekarang & Pilih Metode'}
-                                            </Button>
-                                        </div>
+                                    <div className="mt-8 w-full max-w-sm space-y-3">
+                                        <Button
+                                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200 h-12 text-lg font-bold"
+                                            onClick={handlePayment}
+                                            disabled={isProcessing}
+                                        >
+                                            {isProcessing ? <Loader2 className="animate-spin mr-2" /> : 'Bayar Sekarang'}
+                                        </Button>
+                                        <Button variant="ghost" onClick={() => setStep(1)} className="w-full">Kembali</Button>
                                     </div>
                                 </motion.div>
                             )}
@@ -535,16 +535,16 @@ const BookingFlow: React.FC = () => {
                                     animate={{ opacity: 1, scale: 1 }}
                                     className="bg-white/90 backdrop-blur-xl p-6 rounded-2xl shadow-2xl border border-white/30 h-full flex flex-col justify-center items-center text-center"
                                 >
-                                    <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mb-6 animate-pulse">
-                                        <CheckCircle className="w-10 h-10 text-emerald-600" />
+                                    <div className="w-24 h-24 bg-emerald-100 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                                        <CheckCircle className="w-12 h-12 text-emerald-600" />
                                     </div>
-                                    <h2 className="text-2xl font-bold text-emerald-900 mb-2">Transaksi Diproses!</h2>
+                                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Order Diterima!</h2>
                                     <p className="text-gray-600 mb-8 max-w-sm">
-                                        Terima kasih. Pesanan Anda telah kami terima. Silakan cek dashboard untuk melihat status pembayaran dan melengkapi dokumen.
+                                        Silakan selesaikan pembayaran Anda melalui metode yang telah dipilih. Cek status pembayaran Anda di Dashboard.
                                     </p>
 
                                     <Button
-                                        className="w-full max-w-xs bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-200"
+                                        className="w-full max-w-xs bg-emerald-600 hover:bg-emerald-700 text-white"
                                         onClick={() => window.location.href = '/dashboard'}
                                     >
                                         Cek Status di Dashboard

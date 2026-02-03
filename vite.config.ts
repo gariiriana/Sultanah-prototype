@@ -253,6 +253,32 @@ function figmaAssetPlugin() {
   };
 }
 
+function htmlPlugin() {
+  return {
+    name: 'html-transform',
+    transformIndexHtml(html: string) {
+      // 1. Get Env
+      const env = loadEnv(process.env.NODE_ENV || 'development', process.cwd(), '');
+      const SERVER_KEY = (env.MIDTRANS_SERVER_KEY || '').trim();
+
+      // 2. Detect Mode
+      // If starts with SB-, it is Sandbox.
+      const isSandbox = SERVER_KEY.startsWith('SB-');
+      const snapUrl = isSandbox
+        ? 'https://app.sandbox.midtrans.com/snap/snap.js'
+        : 'https://app.midtrans.com/snap/snap.js';
+
+      console.log(`[HTML Transform] Injecting Snap URL: ${snapUrl} (${isSandbox ? 'Sandbox' : 'Production'})`);
+
+      // 3. Replace the hardcoded Sandbox URL with the dynamic one
+      // If the file already has the dynamic one, this might fail if we don't handle it,
+      // but assuming consistent index.html state.
+      // We'll replace the Sandbox URL if found.
+      return html.replace('https://app.sandbox.midtrans.com/snap/snap.js', snapUrl);
+    }
+  };
+}
+
 export default defineConfig({
   plugins: [
     // The React and Tailwind plugins are both required for Make, even if
@@ -261,6 +287,7 @@ export default defineConfig({
     tailwindcss(),
     figmaAssetPlugin(), // ✅ Add figma asset handler
     midtransApiPlugin(), // ✅ Add Midtrans API Middleware
+    htmlPlugin(), // ✅ Add Dynamic HTML Plugin
   ],
   resolve: {
     alias: {

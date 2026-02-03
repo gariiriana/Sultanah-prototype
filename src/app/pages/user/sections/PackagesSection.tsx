@@ -5,7 +5,7 @@ import { Button } from '../../../components/ui/button';
 
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../../config/firebase';
-import { useAuth } from '../../../../contexts/AuthContext';
+
 import { toast } from 'sonner';
 import { Package } from '../../../../types';
 
@@ -15,7 +15,6 @@ interface PackagesSectionProps {
 }
 
 const PackagesSection: React.FC<PackagesSectionProps> = ({ onViewPackageDetail, onViewAllPackages }) => {
-  const { currentUser } = useAuth();
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -249,13 +248,7 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({ onViewPackageDetail, 
                         {pkg.availableSlots === 0 ? 'Penuh' : '✓ Beli'}
                       </Button>
 
-                      {/* ✅ NEW: Profile incomplete warning */}
-                      {currentUser && pkg.availableSlots > 0 && (
-                        <div className="mt-2 text-xs text-amber-600 flex items-center justify-center gap-1">
-                          <span>⚠️</span>
-                          <span>Harap lengkapi profil di halaman profil</span>
-                        </div>
-                      )}
+
                     </motion.div>
                   </div>
                 </div>
