@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowLeft, Star, Upload, Image as ImageIcon, X } from 'lucide-react';
+import { ArrowLeft, Star, ImageIcon, X } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
 import { Textarea } from '../../components/ui/textarea';
@@ -33,9 +33,9 @@ const TestimonialFormPage: React.FC<TestimonialFormPageProps> = ({ onBack }) => 
       return;
     }
 
-    // Validate file size (max 5MB)
+    // Validate file size (max 5 MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Ukuran file maksimal 5MB');
+      toast.error('Ukuran file maksimal 5 MB');
       return;
     }
 
@@ -88,7 +88,7 @@ const TestimonialFormPage: React.FC<TestimonialFormPageProps> = ({ onBack }) => 
         userId: currentUser.uid,
         userName: userProfile.displayName || 'Anonymous',
         userEmail: userProfile.email || currentUser.email,
-        userCity: userProfile.identityInfo?.address?.city || 'Indonesia',
+        userCity: userProfile.identityInfo?.city || (typeof userProfile.identityInfo?.address === 'object' ? (userProfile.identityInfo?.address as any)?.city : userProfile.identityInfo?.address) || 'Indonesia',
         userPhoto: userProfile.profilePhoto || '',
         packageName: packageName.trim() || 'Paket Umrah',
         bookingId: '', // Empty for consultation-based system
@@ -171,11 +171,10 @@ const TestimonialFormPage: React.FC<TestimonialFormPageProps> = ({ onBack }) => 
                       className="transition-transform hover:scale-110"
                     >
                       <Star
-                        className={`w-10 h-10 ${
-                          star <= (hoveredRating || rating)
-                            ? 'fill-[#D4AF37] text-[#D4AF37]'
-                            : 'text-gray-300'
-                        }`}
+                        className={`w-10 h-10 ${star <= (hoveredRating || rating)
+                          ? 'fill-[#D4AF37] text-[#D4AF37]'
+                          : 'text-gray-300'
+                          }`}
                       />
                     </button>
                   ))}
@@ -223,7 +222,7 @@ const TestimonialFormPage: React.FC<TestimonialFormPageProps> = ({ onBack }) => 
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                   Foto Pengalaman (Opsional)
                 </label>
-                
+
                 {!photoPreview ? (
                   <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-[#D4AF37] transition-colors cursor-pointer">
                     <input
@@ -239,7 +238,7 @@ const TestimonialFormPage: React.FC<TestimonialFormPageProps> = ({ onBack }) => 
                         Klik untuk upload foto
                       </p>
                       <p className="text-xs text-gray-500">
-                        JPG, PNG, atau WebP (Max 5MB)
+                        JPG, PNG, atau WebP (Max 5 MB)
                       </p>
                     </label>
                   </div>

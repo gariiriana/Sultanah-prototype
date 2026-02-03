@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { 
-  ArrowLeft, 
-  Upload, 
-  DollarSign, 
-  CreditCard, 
-  Building2, 
-  User, 
+import {
+  ArrowLeft,
+  Upload,
+  DollarSign,
+  CreditCard,
+  Building2,
+  User,
   Calendar,
   FileText,
   CheckCircle,
@@ -92,9 +92,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
       return;
     }
 
-    // Validate file size (max 5MB)
+    // Validate file size (max 5 MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size too large. Maximum 5MB.');
+      toast.error('File size too large. Maximum 5 MB.');
       return;
     }
 
@@ -210,15 +210,15 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-[#FFF9F0]">
       {/* Hero Section with Mecca Background */}
-      <div 
+      <div
         className="relative h-[300px] md:h-[350px] bg-cover bg-center"
-        style={{ 
-          backgroundImage: `url(https://images.unsplash.com/photo-1704104501136-8f35402af395?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWNjYSUyMGthYWJhJTIwbW9zcXVlJTIwZ29sZGVuJTIwaG91cnxlbnwxfHx8fDE3NjcxOTA5NTZ8MA&ixlib=rb-4.1.0&q=80&w=1080)` 
+        style={{
+          backgroundImage: `url(https://images.unsplash.com/photo-1704104501136-8f35402af395?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWNjYSUyMGthYWJhJTIwbW9zcXVlJTIwZ29sZGVuJTIwaG91cnxlbnwxfHx8fDE3NjcxOTA5NTZ8MA&ixlib=rb-4.1.0&q=80&w=1080)`
         }}
       >
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
-        
+
         {/* Content */}
         <div className="relative z-10 h-full flex flex-col justify-between max-w-4xl mx-auto px-6 py-8">
           {/* Back Button */}
@@ -232,7 +232,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
           </motion.button>
 
           {/* Title */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -253,7 +253,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
 
       <div className="max-w-4xl mx-auto px-6 -mt-12 pb-12 relative z-20">
         {/* Form */}
-        <motion.form 
+        <motion.form
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -344,24 +344,20 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, paymentType: 'full', totalInstallments: 1, currentInstallment: 1 })}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      formData.paymentType === 'full'
+                    className={`p-4 rounded-xl border-2 transition-all ${formData.paymentType === 'full'
                         ? 'border-[#D4AF37] bg-[#D4AF37]/5'
                         : 'border-gray-200 hover:border-[#D4AF37]/50'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        formData.paymentType === 'full' ? 'bg-[#D4AF37]/20' : 'bg-gray-100'
-                      }`}>
-                        <DollarSign className={`w-6 h-6 ${
-                          formData.paymentType === 'full' ? 'text-[#D4AF37]' : 'text-gray-500'
-                        }`} />
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${formData.paymentType === 'full' ? 'bg-[#D4AF37]/20' : 'bg-gray-100'
+                        }`}>
+                        <DollarSign className={`w-6 h-6 ${formData.paymentType === 'full' ? 'text-[#D4AF37]' : 'text-gray-500'
+                          }`} />
                       </div>
                       <div className="text-left">
-                        <p className={`font-semibold ${
-                          formData.paymentType === 'full' ? 'text-[#D4AF37]' : 'text-gray-900'
-                        }`}>
+                        <p className={`font-semibold ${formData.paymentType === 'full' ? 'text-[#D4AF37]' : 'text-gray-900'
+                          }`}>
                           Bayar Penuh
                         </p>
                         <p className="text-sm text-gray-500">Lunas sekali bayar</p>
@@ -373,24 +369,20 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
                   <button
                     type="button"
                     onClick={() => setFormData({ ...formData, paymentType: 'installment', totalInstallments: 3, currentInstallment: 1 })}
-                    className={`p-4 rounded-xl border-2 transition-all ${
-                      formData.paymentType === 'installment'
+                    className={`p-4 rounded-xl border-2 transition-all ${formData.paymentType === 'installment'
                         ? 'border-[#D4AF37] bg-[#D4AF37]/5'
                         : 'border-gray-200 hover:border-[#D4AF37]/50'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        formData.paymentType === 'installment' ? 'bg-[#D4AF37]/20' : 'bg-gray-100'
-                      }`}>
-                        <Calculator className={`w-6 h-6 ${
-                          formData.paymentType === 'installment' ? 'text-[#D4AF37]' : 'text-gray-500'
-                        }`} />
+                      <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${formData.paymentType === 'installment' ? 'bg-[#D4AF37]/20' : 'bg-gray-100'
+                        }`}>
+                        <Calculator className={`w-6 h-6 ${formData.paymentType === 'installment' ? 'text-[#D4AF37]' : 'text-gray-500'
+                          }`} />
                       </div>
                       <div className="text-left">
-                        <p className={`font-semibold ${
-                          formData.paymentType === 'installment' ? 'text-[#D4AF37]' : 'text-gray-900'
-                        }`}>
+                        <p className={`font-semibold ${formData.paymentType === 'installment' ? 'text-[#D4AF37]' : 'text-gray-900'
+                          }`}>
                           Cicilan
                         </p>
                         <p className="text-sm text-gray-500">Bayar bertahap</p>
@@ -501,9 +493,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                     placeholder="0"
                     disabled={!!selectedPackage}
-                    className={`w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent ${
-                      selectedPackage ? 'bg-gray-50 text-gray-600 font-semibold' : ''
-                    }`}
+                    className={`w-full pl-12 pr-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#D4AF37] focus:border-transparent ${selectedPackage ? 'bg-gray-50 text-gray-600 font-semibold' : ''
+                      }`}
                     required
                   />
                 </div>
@@ -700,7 +691,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
                       <span className="text-[#D4AF37] font-semibold">Browse</span>
                     </p>
                     <p className="text-sm text-gray-500">
-                      Supports: JPG, PNG, PDF (max 5MB)
+                      Supports: JPG, PNG, PDF (max 5 MB)
                     </p>
                   </label>
                 </div>

@@ -525,10 +525,10 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // STRICT VALIDATION: Reject files larger than 500KB
-    const maxSizeKB = 500;
+    // STRICT VALIDATION: Reject files larger than 5 MB
+    const maxSizeKB = 5 * 1024; // 5 MB
     if (file.size > maxSizeKB * 1024) {
-      toast.error(`File size (${(file.size / 1024).toFixed(0)}KB) exceeds maximum allowed size of ${maxSizeKB}KB. Please choose a smaller file.`);
+      toast.error(`File size (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds maximum allowed size of 5 MB. Please choose a smaller file.`);
       // Clear the input
       e.target.value = '';
       return;
@@ -542,7 +542,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
         const compressedImage = await compressImage(file, 200);
 
         // Final check after compression
-        if (compressedImage.length > 500 * 1024) {
+        if (compressedImage.length > 5 * 1024 * 1024) {
           toast.dismiss();
           toast.error('Compressed file is still too large. Please use a smaller image.');
           e.target.value = '';
@@ -969,7 +969,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
               {/* Passport Photo */}
               <div>
                 <Label>Passport Photo</Label>
-                <p className="text-xs text-gray-500 mb-2">Max 500KB - Gambar akan otomatis dikompres</p>
+                <p className="text-xs text-gray-500 mb-2">Max 5 MB - Gambar akan otomatis di kompres</p>
                 {passportPhoto ? (
                   <div className="relative border-2 border-green-300 rounded-lg p-3 bg-green-50">
                     <button
@@ -1019,7 +1019,7 @@ const ProfileForm: React.FC<ProfileFormProps> = ({ userProfile, currentUser, onB
               {/* KTP Photo */}
               <div>
                 <Label>KTP Photo <span className="text-red-500">*</span></Label>
-                <p className="text-xs text-gray-500 mb-2">Max 500KB - Gambar akan otomatis dikompres</p>
+                <p className="text-xs text-gray-500 mb-2">Max 5 MB - Gambar akan otomatis di kompres</p>
                 {ktpPhoto ? (
                   <div className="relative border-2 border-green-300 rounded-lg p-3 bg-green-50">
                     <button
@@ -1292,7 +1292,7 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ label, required, value,
       <Label>
         {label} {required && <span className="text-red-500">*</span>}
       </Label>
-      <p className="text-xs text-gray-500 mb-2">Max 500KB - Gambar akan otomatis dikompres</p>
+      <p className="text-xs text-gray-500 mb-2">Max 5 MB - Gambar akan otomatis di kompres</p>
       {value ? (
         <div className="relative border-2 border-green-300 rounded-lg p-3 bg-green-50">
           <button

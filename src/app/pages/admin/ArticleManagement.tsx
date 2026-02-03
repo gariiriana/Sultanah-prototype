@@ -266,9 +266,9 @@ const ArticleManagement = () => {
       return;
     }
 
-    // Validate file size (max 5MB - will be compressed)
+    // Validate file size (max 5 MB - will be compressed)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Ukuran file terlalu besar. Maksimal 5MB.');
+      toast.error('Ukuran file terlalu besar. Maksimal 5 MB.');
       return;
     }
 

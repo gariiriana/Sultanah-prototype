@@ -193,7 +193,7 @@ const MarketplaceManagement = () => {
                   </div>
                   <h4 className="font-semibold text-gray-700">Basic Information</h4>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-700">
                     Item Name <span className="text-red-500">*</span>
@@ -321,17 +321,17 @@ const MarketplaceManagement = () => {
                         Choose file
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        {formData.image ? '✓ Image uploaded' : 'PNG, JPG up to 5MB'}
+                        {formData.image ? '✓ Image uploaded' : 'PNG, JPG up to 5 MB'}
                       </p>
                     </div>
                   </label>
                 </div>
                 {formData.image && (
                   <div className="mt-4 relative group">
-                    <img 
-                      src={formData.image} 
-                      alt="Preview" 
-                      className="w-full h-48 object-cover rounded-xl border-2 border-purple-200 shadow-lg" 
+                    <img
+                      src={formData.image}
+                      alt="Preview"
+                      className="w-full h-48 object-cover rounded-xl border-2 border-purple-200 shadow-lg"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
                       <p className="text-white text-sm">📸 Preview Image</p>
@@ -350,7 +350,7 @@ const MarketplaceManagement = () => {
 
               {/* Submit Button */}
               <div className="pt-4 border-t border-purple-200/30">
-                <Button 
+                <Button
                   type="submit"
                   className="w-full h-12 bg-gradient-to-r from-purple-500 via-purple-600 to-purple-500 hover:from-purple-600 hover:via-purple-700 hover:to-purple-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                 >
@@ -401,9 +401,9 @@ const MarketplaceManagement = () => {
                 <TableRow key={item.id}>
                   <TableCell>
                     {item.image ? (
-                      <img 
-                        src={item.image} 
-                        alt={item.name} 
+                      <img
+                        src={item.image}
+                        alt={item.name}
                         className="w-12 h-12 object-cover rounded-lg border border-gray-200"
                       />
                     ) : (
@@ -457,26 +457,26 @@ const MarketplaceManagement = () => {
             <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center mb-4 animate-pulse">
               <AlertTriangle className="w-8 h-8 text-red-500" />
             </div>
-            
+
             <h3 className="text-2xl font-bold text-gray-900 mb-2">
               Delete Item?
             </h3>
-            
+
             <p className="text-gray-600 mb-6">
               Are you sure you want to delete this marketplace item?
               <br />
               <span className="text-sm text-red-500">This action cannot be undone.</span>
             </p>
-            
+
             <div className="flex gap-3 justify-center">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setDeleteDialogOpen(false)}
                 className="px-6 py-2 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 rounded-xl font-semibold transition-all"
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={confirmDelete}
                 className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
               >

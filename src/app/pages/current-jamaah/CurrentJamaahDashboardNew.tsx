@@ -31,7 +31,7 @@ import { toast } from 'sonner';
 import { Promo } from '../../../types';
 
 // ✅ BEAUTIFUL IMAGE: Mecca Pilgrims
-import jamaahHeroImage from '../../../assets/jamaah-hero-bg.jpg';
+const jamaahHeroImage = '/images/jamaah-dashboard-bg.jpg';
 import {
   User,
   Home, // ✅ ADDED: Home icon
@@ -885,14 +885,14 @@ const CurrentJamaahDashboard = () => {
       {/* Hero/Dashboard Section with Premium Jamaah Photo Background */}
       <section
         ref={dashboardRef}
-        className="relative min-h-[60vh] md:min-h-screen bg-cover bg-center bg-no-repeat flex items-center justify-center"
+        className="relative min-h-[60vh] md:min-h-screen bg-slate-900 bg-cover bg-center bg-no-repeat flex items-center justify-center transition-all duration-700"
         style={{ backgroundImage: `url(${jamaahHeroImage})` }}
       >
         {/* Premium Gradient Overlay - More vibrant for exclusive feel */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70"></div>
 
         {/* Content */}
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-white w-full">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-white w-full -mt-20">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -900,7 +900,7 @@ const CurrentJamaahDashboard = () => {
             className="text-center"
           >
             <h1 className="text-3xl md:text-6xl font-bold mb-3 md:mb-6 drop-shadow-lg">
-              Assalamu'alaikum, {userProfile?.displayName || 'Jamaah'}!
+              السلام عليكم, {userProfile?.displayName || 'Jamaah'}!
             </h1>
             <p className="text-base md:text-2xl mb-4 md:mb-8 max-w-3xl mx-auto drop-shadow-md">
               Selamat datang di Portal Jamaah Umroh. Nikmati fitur lengkap untuk mempermudah

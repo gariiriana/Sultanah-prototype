@@ -115,9 +115,9 @@ const CommissionWithdrawalManagement: React.FC = () => {
       return;
     }
 
-    // Validate file size (max 5MB)
+    // Validate file size (max 5 MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Ukuran file maksimal 5MB');
+      toast.error('Ukuran file maksimal 5 MB');
       return;
     }
 
@@ -734,7 +734,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
                       <p className="text-sm text-slate-600">
                         <span className="font-semibold">Klik untuk upload</span> atau drag & drop
                       </p>
-                      <p className="text-xs text-slate-500 mt-1">PNG, JPG max 5MB</p>
+                      <p className="text-xs text-slate-500 mt-1">PNG, JPG max 5 MB</p>
                     </div>
                     <input
                       id="transfer-proof"

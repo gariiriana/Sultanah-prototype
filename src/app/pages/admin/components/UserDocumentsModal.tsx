@@ -90,9 +90,9 @@ const UserDocumentsModal: React.FC<UserDocumentsModalProps> = ({ user, isOpen, o
         <div className="flex items-start gap-3">
           {/* File Preview/Icon */}
           {fileType.startsWith('image/') ? (
-            <img 
-              src={base64} 
-              alt={label} 
+            <img
+              src={base64}
+              alt={label}
               className="w-16 h-16 object-cover rounded-lg border-2 border-green-400"
             />
           ) : (
@@ -181,12 +181,12 @@ const UserDocumentsModal: React.FC<UserDocumentsModalProps> = ({ user, isOpen, o
                 </label>
                 <div className="px-4 py-3 bg-gradient-to-br from-gray-50 to-white rounded-lg border-2 border-[#D4AF37]/30 shadow-sm">
                   <p className="text-gray-900 font-semibold text-lg">
-                    {user.travelDocuments?.passportExpiry 
+                    {user.travelDocuments?.passportExpiry
                       ? new Date(user.travelDocuments.passportExpiry).toLocaleDateString('id-ID', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric'
-                        })
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
+                      })
                       : '01 Maret 2026'
                     }
                   </p>
@@ -206,24 +206,24 @@ const UserDocumentsModal: React.FC<UserDocumentsModalProps> = ({ user, isOpen, o
               {/* Row 1 */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 block mb-2">Foto Passport</label>
-                <p className="text-xs text-gray-500 mb-3">Max 3MB untuk gambar, 500KB untuk PDF/Word/Excel</p>
+                <p className="text-xs text-gray-500 mb-3">Max 5 MB - Gambar akan otomatis di kompres</p>
                 {renderDocumentCard('Passport', user.travelDocuments?.passportPhoto)}
               </div>
               <div>
                 <label className="text-sm font-semibold text-gray-700 block mb-2">Foto KTP</label>
-                <p className="text-xs text-gray-500 mb-3">Max 3MB untuk gambar, 500KB untuk PDF/Word/Excel</p>
+                <p className="text-xs text-gray-500 mb-3">Max 5 MB - Gambar akan otomatis di kompres</p>
                 {renderDocumentCard('KTP', user.travelDocuments?.ktpPhoto)}
               </div>
 
               {/* Row 2 */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 block mb-2">Kartu Keluarga (KK)</label>
-                <p className="text-xs text-gray-500 mb-3">Max 3MB untuk gambar, 500KB untuk PDF/Word/Excel</p>
+                <p className="text-xs text-gray-500 mb-3">Max 5 MB - Gambar akan otomatis di kompres</p>
                 {renderDocumentCard('KK', user.travelDocuments?.kkPhoto)}
               </div>
               <div>
                 <label className="text-sm font-semibold text-gray-700 block mb-2">Akta Lahir</label>
-                <p className="text-xs text-gray-500 mb-3">Max 3MB untuk gambar, 500KB untuk PDF/Word/Excel</p>
+                <p className="text-xs text-gray-500 mb-3">Max 5 MB - Gambar akan otomatis di kompres</p>
                 {renderDocumentCard('Birth Certificate', user.travelDocuments?.birthCertificate)}
               </div>
 
@@ -232,24 +232,24 @@ const UserDocumentsModal: React.FC<UserDocumentsModalProps> = ({ user, isOpen, o
                 <label className="text-sm font-semibold text-gray-700 block mb-2">
                   Buku Nikah <span className="text-xs text-gray-500 font-normal">(Opsional)</span>
                 </label>
-                <p className="text-xs text-gray-500 mb-3">Max 3MB untuk gambar, 500KB untuk PDF/Word/Excel</p>
+                <p className="text-xs text-gray-500 mb-3">Max 5 MB - Gambar akan otomatis di kompres</p>
                 {renderDocumentCard('Marriage Certificate', user.travelDocuments?.marriageCertificate, true)}
               </div>
               <div>
                 <label className="text-sm font-semibold text-gray-700 block mb-2">Visa Umroh</label>
-                <p className="text-xs text-gray-500 mb-3">Max 3MB untuk gambar, 500KB untuk PDF/Word/Excel</p>
+                <p className="text-xs text-gray-500 mb-3">Max 5 MB - Gambar akan otomatis di kompres</p>
                 {renderDocumentCard('Umrah Visa', user.travelDocuments?.umrahVisa)}
               </div>
 
               {/* Row 4 */}
               <div>
                 <label className="text-sm font-semibold text-gray-700 block mb-2">Tiket Pesawat</label>
-                <p className="text-xs text-gray-500 mb-3">Max 3MB untuk gambar, 500KB untuk PDF/Word/Excel</p>
+                <p className="text-xs text-gray-500 mb-3">Max 5 MB - Gambar akan otomatis di kompres</p>
                 {renderDocumentCard('Flight Ticket', user.travelDocuments?.flightTicket)}
               </div>
               <div>
                 <label className="text-sm font-semibold text-gray-700 block mb-2">Sertifikat Vaksinasi</label>
-                <p className="text-xs text-gray-500 mb-3">Max 3MB untuk gambar, 500KB untuk PDF/Word/Excel</p>
+                <p className="text-xs text-gray-500 mb-3">Max 5 MB - Gambar akan otomatis di kompres</p>
                 {renderDocumentCard('Vaccination Certificate', user.travelDocuments?.vaccinationCertificate)}
               </div>
             </div>

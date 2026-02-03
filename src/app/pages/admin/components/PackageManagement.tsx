@@ -833,7 +833,7 @@ const PackageManagement = () => {
                         Pilih file
                       </p>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        {formData.photo ? '✓ Gambar diunggah' : 'PNG, JPG maks 5MB'}
+                        {formData.photo ? '✓ Gambar diunggah' : 'PNG, JPG maks 5 MB'}
                       </p>
                     </div>
                   </label>

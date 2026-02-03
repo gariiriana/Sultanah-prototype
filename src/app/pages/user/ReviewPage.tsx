@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../../components/ui/button';
 import { Textarea } from '../../components/ui/textarea';
 import { Label } from '../../components/ui/label';
@@ -14,11 +14,9 @@ import { compressImage, validateImageFile } from '../../../utils/imageCompressio
 
 const ReviewPage = () => {
   const { packageId } = useParams();
-  const [searchParams] = useSearchParams();
-  const bookingId = searchParams.get('bookingId');
   const navigate = useNavigate();
   const { currentUser } = useAuth();
-  
+
   const [packageData, setPackageData] = useState<Package | null>(null);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -37,7 +35,7 @@ const ReviewPage = () => {
   const fetchPackageData = async () => {
     try {
       if (!packageId) return;
-      
+
       const docRef = doc(db, 'packages', packageId);
       const docSnap = await getDoc(docRef);
 
@@ -206,11 +204,10 @@ const ReviewPage = () => {
                     className="transition-transform hover:scale-110"
                   >
                     <Star
-                      className={`w-12 h-12 ${
-                        star <= (hoverRating || rating)
-                          ? 'fill-[#FFD700] text-[#FFD700]'
-                          : 'text-gray-300'
-                      } transition-colors`}
+                      className={`w-12 h-12 ${star <= (hoverRating || rating)
+                        ? 'fill-[#FFD700] text-[#FFD700]'
+                        : 'text-gray-300'
+                        } transition-colors`}
                     />
                   </button>
                 ))}
@@ -245,7 +242,7 @@ const ReviewPage = () => {
               <Label className="text-lg font-semibold text-gray-700 mb-4 block">
                 Add a photo (optional)
               </Label>
-              
+
               {!photo ? (
                 <div className="border-2 border-dashed border-[#D4AF37]/30 rounded-xl p-8 text-center hover:border-[#D4AF37] transition-colors">
                   <input
@@ -263,7 +260,7 @@ const ReviewPage = () => {
                       <Upload className="w-8 h-8 text-[#D4AF37]" />
                     </div>
                     <p className="font-semibold text-gray-700 mb-1">Click to upload photo</p>
-                    <p className="text-sm text-gray-500">PNG, JPG up to 5MB</p>
+                    <p className="text-sm text-gray-500">PNG, JPG up to 5 MB</p>
                   </label>
                 </div>
               ) : (

@@ -196,10 +196,10 @@ const PromoManagement = () => {
       return;
     }
 
-    // Validate file size (5MB)
+    // Validate file size (5 MB)
     const maxSize = 5 * 1024 * 1024;
     if (file.size > maxSize) {
-      toast.error('Ukuran file terlalu besar. Maksimal 5MB');
+      toast.error('Ukuran file terlalu besar. Maksimal 5 MB');
       e.target.value = ''; // Reset input
       return;
     }
@@ -441,7 +441,7 @@ const PromoManagement = () => {
                     >
                       <ImageIcon className="w-12 h-12 text-gray-400 mb-2" />
                       <p className="text-sm font-medium text-gray-600">Klik untuk upload foto</p>
-                      <p className="text-xs text-gray-400 mt-1">PNG, JPG, JPEG (Max 5MB)</p>
+                      <p className="text-xs text-gray-400 mt-1">PNG, JPG, JPEG (Max 5 MB)</p>
                     </label>
                   </div>
                 )}

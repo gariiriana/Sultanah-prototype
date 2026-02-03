@@ -310,7 +310,7 @@ const SavingsPage: React.FC = () => {
                                                         <Upload className="w-6 h-6" />
                                                     </div>
                                                     <span className="text-sm font-medium text-gray-900">Klik untuk upload foto bukti</span>
-                                                    <span className="text-xs text-gray-500 mt-1">JPG, PNG maksimal 5MB</span>
+                                                    <span className="text-xs text-gray-500 mt-1">JPG, PNG maksimal 5 MB</span>
                                                 </label>
                                             )}
                                         </div>

@@ -42,9 +42,9 @@ const TestimonialSubmitDialog: React.FC<TestimonialSubmitDialogProps> = ({
       return;
     }
 
-    // Validate file size (max 5MB)
+    // Validate file size (max 5 MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Ukuran file maksimal 5MB');
+      toast.error('Ukuran file maksimal 5 MB');
       return;
     }
 
@@ -95,7 +95,7 @@ const TestimonialSubmitDialog: React.FC<TestimonialSubmitDialogProps> = ({
       });
 
       toast.success('✅ Testimoni berhasil dikirim! Terima kasih atas sharingnya 🙏');
-      
+
       // Reset form
       setContent('');
       setRating(5);
@@ -161,11 +161,10 @@ const TestimonialSubmitDialog: React.FC<TestimonialSubmitDialogProps> = ({
                   className="transition-transform hover:scale-110"
                 >
                   <Star
-                    className={`w-10 h-10 transition-colors ${
-                      star <= (hoveredStar || rating)
+                    className={`w-10 h-10 transition-colors ${star <= (hoveredStar || rating)
                         ? 'fill-[#FFD700] text-[#FFD700]'
                         : 'fill-gray-200 text-gray-300'
-                    }`}
+                      }`}
                   />
                 </button>
               ))}
@@ -213,10 +212,10 @@ Minimal 20 karakter"
           {/* Photo Upload */}
           <div className="space-y-2">
             <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-              <ImageIcon className="w-4 h-4 text-[#D4AF37]"/>
+              <ImageIcon className="w-4 h-4 text-[#D4AF37]" />
               Upload Foto Pengalaman (Opsional)
             </label>
-            
+
             {!photoPreview ? (
               <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-[#D4AF37] transition-colors cursor-pointer">
                 <input
@@ -232,7 +231,7 @@ Minimal 20 karakter"
                     Klik untuk upload foto
                   </p>
                   <p className="text-xs text-gray-500">
-                    JPG, PNG, atau WebP (Max 5MB)
+                    JPG, PNG, atau WebP (Max 5 MB)
                   </p>
                 </label>
               </div>

@@ -341,7 +341,7 @@ const MarketplaceCheckout = () => {
                       <div>
                         <ImageIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                         <p className="text-sm font-semibold text-gray-700">Klik untuk upload</p>
-                        <p className="text-xs text-gray-500 mt-1">JPG, PNG (Max. 5MB)</p>
+                        <p className="text-xs text-gray-500 mt-1">JPG, PNG (Max. 5 MB)</p>
                       </div>
                     )}
                   </label>

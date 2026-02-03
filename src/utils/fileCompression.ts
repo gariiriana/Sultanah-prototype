@@ -42,54 +42,54 @@ export const formatFileSize = (bytes: number): string => {
 export const compressImage = async (file: File, maxWidth: number = 800, quality: number = 0.7): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    
+
     reader.onload = (e) => {
       const img = new Image();
       img.onload = () => {
         const canvas = document.createElement('canvas');
         let width = img.width;
         let height = img.height;
-        
+
         // Calculate new dimensions - more aggressive resize
         if (width > maxWidth) {
           height = (height * maxWidth) / width;
           width = maxWidth;
         }
-        
+
         canvas.width = width;
         canvas.height = height;
-        
+
         const ctx = canvas.getContext('2d');
         if (!ctx) {
           reject(new Error('Failed to get canvas context'));
           return;
         }
-        
+
         ctx.drawImage(img, 0, 0, width, height);
-        
+
         // Convert to base64 with compression - start with higher quality
         let currentQuality = quality;
         let base64 = canvas.toDataURL('image/jpeg', currentQuality);
-        
+
         // Iteratively reduce quality if file is still too large for Firestore
         // Firestore has 1MB document limit, base64 is ~33% larger than binary
         // So we target max 700KB base64 to be safe
         const maxBase64Size = 700 * 1024; // 700KB in bytes
         let attempts = 0;
-        
+
         while (base64.length > maxBase64Size && currentQuality > 0.3 && attempts < 5) {
           currentQuality -= 0.1;
           base64 = canvas.toDataURL('image/jpeg', currentQuality);
           attempts++;
         }
-        
+
         resolve(base64);
       };
-      
+
       img.onerror = () => reject(new Error('Failed to load image'));
       img.src = e.target?.result as string;
     };
-    
+
     reader.onerror = () => reject(new Error('Failed to read file'));
     reader.readAsDataURL(file);
   });
@@ -99,11 +99,11 @@ export const compressImage = async (file: File, maxWidth: number = 800, quality:
 export const fileToBase64 = async (file: File): Promise<string> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    
+
     reader.onload = () => {
       resolve(reader.result as string);
     };
-    
+
     reader.onerror = () => reject(new Error('Failed to read file'));
     reader.readAsDataURL(file);
   });
@@ -112,10 +112,10 @@ export const fileToBase64 = async (file: File): Promise<string> => {
 // Validate and process file (compress images, convert others to base64)
 export const processFile = async (file: File): Promise<{ base64: string; fileName: string; fileSize: number; fileType: string }> => {
   validateFile(file);
-  
+
   const fileType = getFileTypeCategory(file);
   let base64: string;
-  
+
   // Compress images, convert others directly
   if (fileType === 'image') {
     base64 = await compressImage(file);
@@ -124,22 +124,22 @@ export const processFile = async (file: File): Promise<{ base64: string; fileNam
     // Base64 encoding increases size by ~33%
     const estimatedBase64Size = file.size * 1.33;
     const maxFirestoreSize = 700 * 1024; // 700KB to be safe (Firestore limit is 1MB)
-    
+
     if (estimatedBase64Size > maxFirestoreSize) {
       throw new Error(`File terlalu besar untuk disimpan. Maksimal ${Math.round(maxFirestoreSize / 1.33 / 1024)}KB untuk PDF/Word/Excel. Silakan gunakan file yang lebih kecil atau compress terlebih dahulu.`);
     }
-    
+
     base64 = await fileToBase64(file);
   }
-  
+
   // Final safety check: validate base64 size
   const base64SizeInBytes = base64.length;
   const maxBase64Size = 700 * 1024; // 700KB
-  
+
   if (base64SizeInBytes > maxBase64Size) {
     throw new Error(`File hasil kompresi terlalu besar (${formatFileSize(base64SizeInBytes)}). Firestore limit 1MB. Silakan gunakan gambar dengan resolusi lebih kecil atau file yang lebih ringkas.`);
   }
-  
+
   return {
     base64,
     fileName: file.name,
@@ -151,23 +151,23 @@ export const processFile = async (file: File): Promise<{ base64: string; fileNam
 // Validate file type and size
 export const validateFile = (file: File): boolean => {
   // Stricter limits to ensure Base64 encoding stays under Firestore 1MB limit
-  const imageMaxSize = 3 * 1024 * 1024; // 3MB for images (will be compressed)
-  const documentMaxSize = 500 * 1024; // 500KB for PDF/Word/Excel (Base64 will be ~650KB)
-  
+  const imageMaxSize = 5 * 1024 * 1024; // 5 MB for images (will be compressed)
+  const documentMaxSize = 5 * 1024 * 1024; // 5 MB for PDF/Word/Excel
+
   if (!ALL_SUPPORTED_TYPES.includes(file.type)) {
     throw new Error('Tipe file tidak didukung. Silakan upload JPG, PNG, PDF, Word, atau Excel');
   }
-  
+
   const fileType = getFileTypeCategory(file);
-  
+
   if (fileType === 'image' && file.size > imageMaxSize) {
     throw new Error(`Ukuran gambar terlalu besar. Maksimal ${formatFileSize(imageMaxSize)}`);
   }
-  
+
   if (fileType !== 'image' && file.size > documentMaxSize) {
     throw new Error(`Ukuran file terlalu besar. Maksimal ${formatFileSize(documentMaxSize)} untuk PDF/Word/Excel`);
   }
-  
+
   return true;
 };
 

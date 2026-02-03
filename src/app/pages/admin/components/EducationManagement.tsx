@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '../../../components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
 import { Badge } from '../../../components/ui/badge';
-import { Plus, Edit, Trash, BookOpen, Image as ImageIcon, FileText, AlertTriangle, Eye } from 'lucide-react';
+import { Plus, Edit, Trash, BookOpen, AlertTriangle } from 'lucide-react';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, Timestamp } from 'firebase/firestore';
 import { db } from '../../../../config/firebase';
 import { toast } from 'sonner';
@@ -64,14 +64,14 @@ const EducationManagement = () => {
         id: doc.id,
         ...doc.data()
       })) as Education[];
-      
+
       // Sort by createdAt descending
       educationsData.sort((a, b) => {
         const dateA = a.createdAt?.toDate?.() || new Date(0);
         const dateB = b.createdAt?.toDate?.() || new Date(0);
         return dateB.getTime() - dateA.getTime();
       });
-      
+
       setEducations(educationsData);
     } catch (error) {
       toast.error('Failed to fetch education resources');
@@ -352,7 +352,7 @@ const EducationManagement = () => {
                     </div>
                   )}
                 </div>
-                <p className="text-xs text-gray-500">Maximum 5MB. JPG, PNG or WebP format.</p>
+                <p className="text-xs text-gray-500">Maximum 5 MB. JPG, PNG or WebP format.</p>
               </div>
 
               {/* Emoji */}

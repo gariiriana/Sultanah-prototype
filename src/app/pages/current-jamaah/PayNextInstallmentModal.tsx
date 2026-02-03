@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { 
-  Upload, 
-  CheckCircle, 
+import {
+  Upload,
+  CheckCircle,
   AlertCircle,
   FileText,
   Calendar,
@@ -37,10 +37,10 @@ interface PayNextInstallmentModalProps {
   onSuccess: () => void;
 }
 
-const PayNextInstallmentModal: React.FC<PayNextInstallmentModalProps> = ({ 
-  payment, 
-  onClose, 
-  onSuccess 
+const PayNextInstallmentModal: React.FC<PayNextInstallmentModalProps> = ({
+  payment,
+  onClose,
+  onSuccess
 }) => {
   const { userProfile } = useAuth();
   const [loading, setLoading] = useState(false);
@@ -74,7 +74,7 @@ const PayNextInstallmentModal: React.FC<PayNextInstallmentModalProps> = ({
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('File size too large. Maximum 5MB.');
+      toast.error('File size too large. Maximum 5 MB.');
       return;
     }
 
@@ -111,7 +111,7 @@ const PayNextInstallmentModal: React.FC<PayNextInstallmentModalProps> = ({
 
     try {
       const newPaymentNumber = `PAY${Date.now()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
-      
+
       const paymentData = {
         paymentNumber: newPaymentNumber,
         booking: payment.booking,
@@ -223,7 +223,7 @@ const PayNextInstallmentModal: React.FC<PayNextInstallmentModalProps> = ({
                     <span>{nextInstallment} / {payment.totalInstallments}</span>
                   </div>
                   <div className="w-full h-2 bg-blue-200 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full bg-blue-600 transition-all duration-500"
                       style={{ width: `${(nextInstallment / (payment.totalInstallments || 1)) * 100}%` }}
                     />
@@ -415,7 +415,7 @@ const PayNextInstallmentModal: React.FC<PayNextInstallmentModalProps> = ({
                     <span className="text-[#D4AF37] font-semibold">Browse</span>
                   </p>
                   <p className="text-sm text-gray-500">
-                    Supports: JPG, PNG, PDF (max 5MB)
+                    Supports: JPG, PNG, PDF (max 5 MB)
                   </p>
                 </label>
               </div>
