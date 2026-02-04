@@ -180,7 +180,7 @@ const AdminDashboard = () => {
                         activeTab === 'itineraries' ? 'Manajemen Jadwal Pemberangkatan' :
                           activeTab === 'item-requests' ? 'Pesanan Marketplace' : // ✅ RENAMED: Only Marketplace Orders
                             activeTab === 'marketplace' ? 'Manajemen Marketplace' :
-                              activeTab === 'referrals' ? 'Referral Management' :
+                              activeTab === 'referrals' ? 'Referral & Voucher Program' :
                                 activeTab === 'commission-withdrawals' ? 'Pencairan Profit' :
                                   activeTab === 'savings-approval' ? 'Tabungan' : // Updated title
                                     'Dashboard'}

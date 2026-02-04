@@ -136,6 +136,52 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
       });
 
       setPayments(paymentsData);
+
+      // ✅ DUMMY DATA FOR farisdwi@gmail.com
+      if (userEmail === 'farisdwi@gmail.com') {
+        const dummyPayments: Payment[] = [
+          {
+            id: 'dummy-pay-1',
+            paymentNumber: 'PAY-UMR-20240201-001',
+            booking: 'BOOK-001',
+            amount: 5000000,
+            paymentMethod: 'Bank Transfer - BCA',
+            status: 'approved',
+            submittedAt: { toDate: () => new Date('2024-02-01T10:00:00') },
+            reviewedAt: { toDate: () => new Date('2024-02-01T14:30:00') },
+            proofOfPayment: 'https://images.unsplash.com/photo-1556742049-0cfed4f7a07d?w=500&h=500&fit=crop',
+            proofFileName: 'bukti-transfer-dp.jpg',
+            paymentType: 'full'
+          },
+          {
+            id: 'dummy-pay-2',
+            paymentNumber: 'PAY-UMR-20240215-088',
+            booking: 'BOOK-001',
+            amount: 15000000,
+            paymentMethod: 'Bank Transfer - Mandiri',
+            status: 'pending',
+            submittedAt: { toDate: () => new Date('2024-02-15T09:15:00') },
+            reviewedAt: null,
+            proofOfPayment: 'https://images.unsplash.com/photo-1556742132-05f3295c5240?w=500&h=500&fit=crop',
+            proofFileName: 'pelunasan-umroh.pdf',
+            paymentType: 'full'
+          }
+        ];
+
+        // Merge dummy payments
+        const allPayments = [...paymentsData, ...dummyPayments];
+        // Re-sort
+        allPayments.sort((a, b) => {
+          const dateA = a.submittedAt?.toDate?.() || new Date(a.submittedAt);
+          const dateB = b.submittedAt?.toDate?.() || new Date(b.submittedAt);
+          return dateB.getTime() - dateA.getTime();
+        });
+
+        setPayments(allPayments);
+      } else {
+        setPayments(paymentsData);
+      }
+
     } catch (error) {
       console.error('Error fetching payments:', error);
       toast.error('Gagal memuat data pembayaran');
@@ -176,6 +222,63 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
       });
 
       setOrders(ordersData);
+
+      // ✅ DUMMY DATA FOR farisdwi@gmail.com
+      const userEmail = currentUser.email;
+      if (userEmail === 'farisdwi@gmail.com') {
+        const dummyOrders: MarketplaceOrder[] = [
+          {
+            id: 'dummy-order-1',
+            orderNumber: 'ORD-MP-20240205-001',
+            items: [
+              {
+                name: 'Air Zamzam 5L',
+                quantity: 2,
+                price: 450000,
+                imageUrl: 'https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=300&h=300&fit=crop'
+              },
+              {
+                name: 'Kurma Sukari 1kg',
+                quantity: 1,
+                price: 250000,
+                imageUrl: 'https://images.unsplash.com/photo-1628148967964-b525049b4999?w=300&h=300&fit=crop'
+              }
+            ],
+            totalAmount: 1150000,
+            status: 'shipped',
+            createdAt: { toDate: () => new Date('2024-02-05T14:00:00') },
+            deliveryAddress: 'Jl. Sudirman No. 45, Jakarta Selatan',
+            phoneNumber: '081234567890'
+          },
+          {
+            id: 'dummy-order-2',
+            orderNumber: 'ORD-MP-20240120-099',
+            items: [
+              {
+                name: 'Parfum Kasturi',
+                quantity: 1,
+                price: 150000,
+                imageUrl: 'https://images.unsplash.com/photo-1594035910387-fea4779426e9?w=300&h=300&fit=crop'
+              }
+            ],
+            totalAmount: 150000,
+            status: 'delivered',
+            createdAt: { toDate: () => new Date('2024-01-20T10:00:00') },
+            deliveryAddress: 'Jl. Sudirman No. 45, Jakarta Selatan',
+            phoneNumber: '081234567890'
+          }
+        ];
+
+        // Merge and set
+        const allOrders = [...ordersData, ...dummyOrders];
+        allOrders.sort((a, b) => {
+          const dateA = a.createdAt?.toDate?.() || new Date(a.createdAt);
+          const dateB = b.createdAt?.toDate?.() || new Date(b.createdAt);
+          return dateB.getTime() - dateA.getTime();
+        });
+        setOrders(allOrders);
+      }
+
       setLoading(false); // ✅ Set loading false after data received
 
       console.log('🔄 Marketplace orders updated (real-time):', ordersData.length);
@@ -338,8 +441,8 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
             <button
               onClick={() => setActiveTab('umroh')}
               className={`px-8 py-3.5 font-semibold transition-all relative rounded-xl ${activeTab === 'umroh'
-                  ? 'text-white bg-gradient-to-r from-[#C5A572] to-[#D4AF37] shadow-md'
-                  : 'text-gray-600 hover:bg-gray-50'
+                ? 'text-white bg-gradient-to-r from-[#C5A572] to-[#D4AF37] shadow-md'
+                : 'text-gray-600 hover:bg-gray-50'
                 }`}
             >
               <div className="flex items-center justify-center gap-2 whitespace-nowrap">
@@ -351,8 +454,8 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
             <button
               onClick={() => setActiveTab('marketplace')}
               className={`px-8 py-3.5 font-semibold transition-all relative rounded-xl ${activeTab === 'marketplace'
-                  ? 'text-white bg-gradient-to-r from-[#C5A572] to-[#D4AF37] shadow-md'
-                  : 'text-gray-600 hover:bg-gray-50'
+                ? 'text-white bg-gradient-to-r from-[#C5A572] to-[#D4AF37] shadow-md'
+                : 'text-gray-600 hover:bg-gray-50'
                 }`}
             >
               <div className="flex items-center justify-center gap-2 whitespace-nowrap">
@@ -381,8 +484,8 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
                     <button
                       onClick={() => setStatusFilter('all')}
                       className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${statusFilter === 'all'
-                          ? 'bg-gradient-to-r from-[#C5A572] to-[#D4AF37] text-white shadow-md'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-gradient-to-r from-[#C5A572] to-[#D4AF37] text-white shadow-md'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                     >
                       Semua ({payments.length})
@@ -390,8 +493,8 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
                     <button
                       onClick={() => setStatusFilter('pending')}
                       className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${statusFilter === 'pending'
-                          ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-400 shadow-md'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-400 shadow-md'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                     >
                       <Clock className="w-4 h-4 inline mr-1" />
@@ -400,8 +503,8 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
                     <button
                       onClick={() => setStatusFilter('approved')}
                       className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${statusFilter === 'approved'
-                          ? 'bg-green-100 text-green-800 border-2 border-green-400 shadow-md'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-green-100 text-green-800 border-2 border-green-400 shadow-md'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                     >
                       <CheckCircle className="w-4 h-4 inline mr-1" />
@@ -410,8 +513,8 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
                     <button
                       onClick={() => setStatusFilter('rejected')}
                       className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${statusFilter === 'rejected'
-                          ? 'bg-red-100 text-red-800 border-2 border-red-400 shadow-md'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-red-100 text-red-800 border-2 border-red-400 shadow-md'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                     >
                       <XCircle className="w-4 h-4 inline mr-1" />
@@ -659,31 +762,7 @@ const PesananPage: React.FC<PesananPageProps> = ({ onBack }) => {
               </div>
 
               {/* Proof of Payment */}
-              {selectedPayment.proofOfPayment && (
-                <div>
-                  <p className="text-sm text-gray-500 mb-2">Bukti Pembayaran</p>
-                  {selectedPayment.proofOfPayment.startsWith('data:image') ? (
-                    <img
-                      src={selectedPayment.proofOfPayment}
-                      alt="Bukti pembayaran"
-                      className="w-full rounded-lg border border-gray-200"
-                    />
-                  ) : (
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                      <p className="text-sm text-gray-600 text-center">{selectedPayment.proofFileName}</p>
-                      <a
-                        href={selectedPayment.proofOfPayment}
-                        download={selectedPayment.proofFileName}
-                        className="text-blue-600 hover:underline text-sm mt-2 flex items-center justify-center gap-1"
-                      >
-                        <Download className="w-4 h-4" />
-                        Download
-                      </a>
-                    </div>
-                  )}
-                </div>
-              )}
+
 
               {/* Rejection Reason */}
               {selectedPayment.status === 'rejected' && selectedPayment.rejectionReason && (

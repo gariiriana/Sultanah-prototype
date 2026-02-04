@@ -121,6 +121,7 @@ const PaymentManagement: React.FC = () => {
     setFilteredPayments(filtered);
   };
 
+
   const handleApprove = async (payment: Payment) => {
     setProcessing(true);
     try {
@@ -651,31 +652,7 @@ const PaymentManagement: React.FC = () => {
                 </div>
               </div>
 
-              {/* Proof of Payment */}
-              {selectedPayment.proofOfPayment && (
-                <div className="border-t border-gray-100 pt-6">
-                  <h3 className="font-semibold text-gray-900 mb-4">Proof of Payment</h3>
-                  {selectedPayment.proofOfPayment.startsWith('data:image') ? (
-                    <img
-                      src={selectedPayment.proofOfPayment}
-                      alt="Payment proof"
-                      className="max-w-full h-auto rounded-lg border border-gray-200"
-                    />
-                  ) : (
-                    <div className="border border-gray-200 rounded-lg p-4">
-                      <p className="text-gray-600">PDF: {selectedPayment.proofFileName}</p>
-                      <a
-                        href={selectedPayment.proofOfPayment}
-                        download={selectedPayment.proofFileName}
-                        className="text-green-600 hover:underline text-sm mt-2 inline-block"
-                      >
-                        <Download className="w-4 h-4 inline mr-1" />
-                        Download PDF
-                      </a>
-                    </div>
-                  )}
-                </div>
-              )}
+
 
               {/* Rejection Reason (if rejected) */}
               {selectedPayment.status === 'rejected' && selectedPayment.rejectionReason && (

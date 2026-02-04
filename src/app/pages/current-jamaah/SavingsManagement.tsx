@@ -579,15 +579,6 @@ const SavingsManagement: React.FC<SavingsManagementProps> = ({ onBack }) => {
                                         </div>
                                         <div className="flex items-center gap-3">
                                             <div className="flex items-center gap-2">
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={handleAddDummyData}
-                                                    className="hidden md:flex text-xs text-gray-400 border-dashed hover:text-indigo-600 hover:border-indigo-300"
-                                                >
-                                                    + Data Dummy
-                                                </Button>
 
                                                 {/* Status Filter */}
                                                 <div className="relative">

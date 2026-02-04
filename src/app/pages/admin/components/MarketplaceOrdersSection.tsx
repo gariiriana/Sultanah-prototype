@@ -8,96 +8,16 @@ import {
   Eye,
   Image as ImageIcon,
   Calendar,
-  User,
-  CheckCircle2,
-  XCircle as XCircleIcon
+  User
 } from 'lucide-react';
-import { Button } from '../../../components/ui/button';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '../../../components/ui/alert-dialog';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../../../config/firebase';
-import { toast } from 'sonner';
-import { useAuth } from '../../../../contexts/AuthContext';
 
 interface MarketplaceOrdersSectionProps {
   orders: any[];
   onRefresh: () => void;
 }
 
-const MarketplaceOrdersSection: React.FC<MarketplaceOrdersSectionProps> = ({ orders, onRefresh }) => {
-  const { userProfile } = useAuth();
+const MarketplaceOrdersSection: React.FC<MarketplaceOrdersSectionProps> = ({ orders }) => {
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
-  const [processingId, setProcessingId] = useState<string | null>(null);
-  const [adminNotes, setAdminNotes] = useState('');
-  const [confirmApprove, setConfirmApprove] = useState<string | null>(null);
-  const [confirmReject, setConfirmReject] = useState<string | null>(null);
-
-  const handleApprove = async (orderId: string) => {
-    if (!userProfile) return;
-
-    setProcessingId(orderId);
-    try {
-      const orderRef = doc(db, 'marketplaceOrders', orderId);
-      await updateDoc(orderRef, {
-        status: 'confirmed', // ✅ FIXED: Changed from 'approved' to 'confirmed' to match user-side status
-        reviewedBy: userProfile.id,
-        reviewedByName: userProfile.displayName || userProfile.email || 'Admin',
-        reviewedAt: new Date().toISOString(),
-        adminNotes: adminNotes || 'Pesanan disetujui',
-        updatedAt: new Date().toISOString()
-      });
-
-      toast.success('✅ Pesanan berhasil disetujui!');
-      setAdminNotes('');
-      setSelectedOrder(null);
-      onRefresh();
-    } catch (error) {
-      console.error('Error approving order:', error);
-      toast.error('❌ Gagal menyetujui pesanan');
-    } finally {
-      setProcessingId(null);
-    }
-  };
-
-  const handleReject = async (orderId: string) => {
-    if (!userProfile) return;
-    if (!adminNotes.trim()) {
-      toast.error('Silakan isi alasan penolakan');
-      return;
-    }
-
-    setProcessingId(orderId);
-    try {
-      const orderRef = doc(db, 'marketplaceOrders', orderId);
-      await updateDoc(orderRef, {
-        status: 'rejected',
-        reviewedBy: userProfile.id,
-        reviewedByName: userProfile.displayName || userProfile.email || 'Admin',
-        reviewedAt: new Date().toISOString(),
-        adminNotes,
-        updatedAt: new Date().toISOString()
-      });
-
-      toast.success('Pesanan ditolak');
-      setAdminNotes('');
-      setSelectedOrder(null);
-      onRefresh();
-    } catch (error) {
-      console.error('Error rejecting order:', error);
-      toast.error('❌ Gagal menolak pesanan');
-    } finally {
-      setProcessingId(null);
-    }
-  };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -105,25 +25,34 @@ const MarketplaceOrdersSection: React.FC<MarketplaceOrdersSectionProps> = ({ ord
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold">
             <Clock className="w-3 h-3" />
-            Pending
+            Menunggu Pembayaran
           </span>
         );
       case 'confirmed':
+      case 'success':
+      case 'paid':
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-green-100 text-green-800 text-xs font-semibold">
             <CheckCircle className="w-3 h-3" />
-            Dikonfirmasi
+            Dibayar
           </span>
         );
       case 'rejected':
+      case 'failed':
+      case 'expired':
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-red-100 text-red-800 text-xs font-semibold">
             <XCircle className="w-3 h-3" />
-            Ditolak
+            Gagal / Dibatalkan
           </span>
         );
       default:
-        return null;
+        return (
+          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-xs font-semibold">
+            <Clock className="w-3 h-3" />
+            {status}
+          </span>
+        );
     }
   };
 
@@ -158,6 +87,9 @@ const MarketplaceOrdersSection: React.FC<MarketplaceOrdersSectionProps> = ({ ord
   return (
     <>
       <div className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden">
+        {/* Header Actions */}
+        {/* Header Actions Removed as per request (Read Only) */}
+
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b-2 border-gray-200">
@@ -201,44 +133,13 @@ const MarketplaceOrdersSection: React.FC<MarketplaceOrdersSectionProps> = ({ ord
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex items-center justify-center gap-2">
-                      {/* View Detail Button */}
                       <button
-                        onClick={() => {
-                          setSelectedOrder(order);
-                          setAdminNotes(order.adminNotes || '');
-                        }}
+                        onClick={() => setSelectedOrder(order)}
                         className="text-purple-600 hover:text-white hover:bg-purple-600 font-semibold p-2 rounded-lg transition-all border-2 border-purple-600"
                         title="Lihat Detail"
                       >
                         <Eye className="w-5 h-5" />
                       </button>
-                      
-                      {/* Approve/Reject Buttons - Only for Pending Orders */}
-                      {order.status === 'pending' && (
-                        <>
-                          <button
-                            onClick={() => setConfirmApprove(order.id)}
-                            disabled={processingId === order.id}
-                            className="flex items-center gap-1 px-3 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
-                            title="Setujui"
-                          >
-                            <CheckCircle className="w-4 h-4" />
-                            <span className="text-xs">Approve</span>
-                          </button>
-                          <button
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setAdminNotes('');
-                            }}
-                            disabled={processingId === order.id}
-                            className="flex items-center gap-1 px-3 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md"
-                            title="Tolak"
-                          >
-                            <XCircle className="w-4 h-4" />
-                            <span className="text-xs">Reject</span>
-                          </button>
-                        </>
-                      )}
                     </div>
                   </td>
                 </tr>
@@ -342,26 +243,7 @@ const MarketplaceOrdersSection: React.FC<MarketplaceOrdersSectionProps> = ({ ord
                 </div>
               </div>
 
-              {/* Payment Proof */}
-              <div className="mb-6">
-                <h4 className="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                  <ImageIcon className="w-5 h-5" />
-                  Bukti Pembayaran
-                </h4>
-                <div className="bg-gray-100 rounded-lg p-4 border-2 border-dashed border-gray-300">
-                  <img
-                    src={selectedOrder.paymentProofUrl}
-                    alt="Bukti Pembayaran"
-                    className="max-w-full h-auto rounded-lg shadow-md mx-auto"
-                    style={{ maxHeight: '400px' }}
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.onerror = null;
-                      target.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5HYWdhbCBtZW11YXQgZ2FtYmFyPC90ZXh0Pjwvc3ZnPg==';
-                    }}
-                  />
-                </div>
-              </div>
+
 
               {/* Notes */}
               {selectedOrder.notes && (
@@ -371,129 +253,11 @@ const MarketplaceOrdersSection: React.FC<MarketplaceOrdersSectionProps> = ({ ord
                 </div>
               )}
 
-              {/* Admin Notes for Pending */}
-              {selectedOrder.status === 'pending' && (
-                <div className="mb-6">
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Catatan Admin
-                  </label>
-                  <textarea
-                    value={adminNotes}
-                    onChange={(e) => setAdminNotes(e.target.value)}
-                    placeholder="Tambahkan catatan (wajib untuk penolakan)..."
-                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 outline-none resize-none"
-                    rows={3}
-                  />
-                </div>
-              )}
-
-              {/* Previous Admin Notes */}
-              {selectedOrder.adminNotes && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-                  <h4 className="font-bold text-blue-900 mb-2">Catatan Admin</h4>
-                  <p className="text-blue-800">{selectedOrder.adminNotes}</p>
-                  {selectedOrder.reviewedByName && (
-                    <p className="text-sm text-blue-600 mt-2">
-                      Oleh: {selectedOrder.reviewedByName} • {formatDate(selectedOrder.reviewedAt)}
-                    </p>
-                  )}
-                </div>
-              )}
             </div>
-
-            {/* Footer Actions */}
-            {selectedOrder.status === 'pending' && (
-              <div className="border-t bg-gray-50 p-6 flex gap-3">
-                <Button
-                  onClick={() => setConfirmReject(selectedOrder.id)}
-                  variant="outline"
-                  className="flex-1 border-2 border-red-500 text-red-600 hover:bg-red-50"
-                  disabled={processingId === selectedOrder.id}
-                >
-                  <XCircle className="w-4 h-4 mr-2" />
-                  Tolak
-                </Button>
-                <Button
-                  onClick={() => handleApprove(selectedOrder.id)}
-                  className="flex-1 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700"
-                  disabled={processingId === selectedOrder.id}
-                >
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  {processingId === selectedOrder.id ? 'Memproses...' : 'Setujui'}
-                </Button>
-              </div>
-            )}
+            {/* Footer Actions Removed - Read Only */}
           </motion.div>
         </div>
       )}
-
-      {/* Confirm Approve Dialog */}
-      <AlertDialog open={!!confirmApprove} onOpenChange={(open) => !open && setConfirmApprove(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <CheckCircle className="w-6 h-6 text-green-600" />
-              Setujui Pesanan
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-base">
-              Apakah Anda yakin ingin menyetujui pesanan ini? Jamaah akan mendapatkan notifikasi bahwa pesanan telah disetujui.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => setConfirmApprove(null)}
-              className="bg-gray-50 text-gray-900 hover:bg-gray-100"
-            >
-              Batal
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (confirmApprove) {
-                  handleApprove(confirmApprove);
-                  setConfirmApprove(null);
-                }
-              }}
-              className="bg-green-600 text-white hover:bg-green-700"
-            >
-              Ya, Setujui
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Confirm Reject Dialog */}
-      <AlertDialog open={!!confirmReject} onOpenChange={(open) => !open && setConfirmReject(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <XCircle className="w-6 h-6 text-red-600" />
-              Tolak Pesanan
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-base">
-              Apakah Anda yakin ingin menolak pesanan ini? Pastikan Anda telah mengisi alasan penolakan.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel
-              onClick={() => setConfirmReject(null)}
-              className="bg-gray-50 text-gray-900 hover:bg-gray-100"
-            >
-              Batal
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (confirmReject) {
-                  handleReject(confirmReject);
-                  setConfirmReject(null);
-                }
-              }}
-              className="bg-red-600 text-white hover:bg-red-700"
-            >
-              Ya, Tolak
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 };

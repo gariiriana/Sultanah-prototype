@@ -541,7 +541,8 @@ service cloud.firestore {
       // ✅ Users can create their own payments (both initial and installment payments)
       allow create: if isSignedIn() && (
         request.resource.data.userId == request.auth.uid ||
-        request.resource.data.userEmail == request.auth.token.email
+        request.resource.data.userEmail == request.auth.token.email ||
+        hasManagementAccess()
       );
         
       // ✅ SECURITY FIX: Only management can update payments (for approve/reject)
