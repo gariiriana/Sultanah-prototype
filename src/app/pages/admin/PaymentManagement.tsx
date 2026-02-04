@@ -1,29 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  CreditCard, 
-  Search, 
-  Filter, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
+import {
+  CreditCard,
+  Search,
+  CheckCircle,
+  XCircle,
+  Clock,
   Eye,
   Download,
-  Calendar,
-  User,
-  DollarSign,
-  Building2,
   FileText,
-  AlertCircle,
   ChevronDown,
-  ChevronUp,
-  Package
+  ChevronUp
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
-import { collection, getDocs, doc, updateDoc, Timestamp, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, updateDoc, Timestamp, query, orderBy } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/dialog';
@@ -95,7 +88,7 @@ const PaymentManagement: React.FC = () => {
         id: doc.id,
         ...doc.data(),
       })) as Payment[];
-      
+
       setPayments(paymentsData);
       console.log('📊 Fetched payments:', paymentsData.length);
     } catch (error) {
@@ -117,7 +110,7 @@ const PaymentManagement: React.FC = () => {
     // Filter by search term
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(payment => 
+      filtered = filtered.filter(payment =>
         payment.paymentNumber.toLowerCase().includes(term) ||
         payment.userName.toLowerCase().includes(term) ||
         payment.userEmail.toLowerCase().includes(term) ||
@@ -138,6 +131,24 @@ const PaymentManagement: React.FC = () => {
         reviewedBy: 'Admin', // In real app, use current admin user
         rejectionReason: '',
       });
+
+      // ✅ NEW: Also update booking status if it exists
+      if (payment.booking) {
+        try {
+          const bookingRef = doc(db, 'bookings', payment.booking);
+          const bookingSnap = await getDoc(bookingRef);
+          if (bookingSnap.exists()) {
+            await updateDoc(bookingRef, {
+              status: 'confirmed',
+              updatedAt: Timestamp.now()
+            });
+            console.log('✅ Booking status updated to confirmed');
+          }
+        } catch (bookingError) {
+          console.error('Error updating booking status:', bookingError);
+          // Don't fail the whole process if booking update fails
+        }
+      }
 
       toast.success('Payment approved successfully!');
       fetchPayments();
@@ -453,7 +464,7 @@ const PaymentManagement: React.FC = () => {
                           >
                             {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                           </Button>
-                          
+
                           {/* Quick Action Buttons for Pending Payments */}
                           {payment.status === 'pending' && (
                             <>
@@ -484,7 +495,7 @@ const PaymentManagement: React.FC = () => {
                               </Button>
                             </>
                           )}
-                          
+
                           <Button
                             onClick={() => {
                               setSelectedPayment(payment);
@@ -592,7 +603,7 @@ const PaymentManagement: React.FC = () => {
                     <p className="text-sm text-gray-500 mb-1">Payment Method</p>
                     <p className="font-medium text-gray-900">{selectedPayment.paymentMethod}</p>
                   </div>
-                  
+
                   {/* Bank Transfer specific fields */}
                   {selectedPayment.paymentMethod === 'Bank Transfer' && (
                     <>
@@ -628,7 +639,7 @@ const PaymentManagement: React.FC = () => {
                       </div>
                     </>
                   )}
-                  
+
                   <div>
                     <p className="text-sm text-gray-500 mb-1">Transfer Date & Time</p>
                     <p className="font-medium text-gray-900">{formatDate(selectedPayment.transferDateTime)}</p>

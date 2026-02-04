@@ -19,9 +19,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Button } from '../../components/ui/button';
-import { collection, addDoc, getDocs, query, where, Timestamp } from 'firebase/firestore';
-import { db } from '../../../config/firebase';
+import { collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
+import { db, storage } from '../../../config/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { toast } from 'sonner';
+import { compressBase64Image } from '../../../utils/imageCompression';
 
 interface PaymentFormProps {
   onBack: () => void;
@@ -41,10 +43,11 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
   const [packages, setPackages] = useState<Package[]>([]);
   const [uploadedProof, setUploadedProof] = useState<string>('');
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const [formData, setFormData] = useState({
     paymentNumber: `PAY${Date.now()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
-    booking: selectedPackage?.name || '',
+    booking: selectedPackage?.id || selectedPackage?.name || '',
     user: userProfile?.email || '',
     amount: selectedPackage?.price?.toString() || '',
     paymentMethod: 'Bank Transfer',
@@ -99,10 +102,29 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
     }
 
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setUploadedProof(reader.result as string);
+    reader.onloadend = async () => {
+      const base64 = reader.result as string;
       setUploadedFileName(file.name);
-      toast.success('File uploaded successfully!');
+
+      // Only compress if it's an image
+      if (file.type.startsWith('image/')) {
+        setIsCompressing(true);
+        try {
+          // One-pass compression is much faster
+          const compressedBase64 = await compressBase64Image(base64, 1024, 1024, 0.8);
+          setUploadedProof(compressedBase64);
+          toast.success('Gambar berhasil dioptimalkan!');
+        } catch (error) {
+          console.error('Compression failed:', error);
+          setUploadedProof(base64); // Fallback to original
+          toast.success('File berhasil diunggah!');
+        } finally {
+          setIsCompressing(false);
+        }
+      } else {
+        setUploadedProof(base64);
+        toast.success('File berhasil diunggah!');
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -139,9 +161,26 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
     setLoading(true);
 
     try {
+      // 1. Upload Proof to Firebase Storage (Critical Fix)
+      // Convert Base64 to Blob
+      const base64Data = uploadedProof.split(',')[1];
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+      const storageRef = ref(storage, `payment_proofs/${formData.user}/${Date.now()}_${uploadedFileName}`);
+      const uploadResult = await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(uploadResult.ref);
+
       const paymentData = {
         paymentNumber: formData.paymentNumber,
-        booking: formData.booking,
+        booking: formData.booking, // Keep for backward compatibility
+        packageId: selectedPackage?.id || (packages.find(p => p.id === formData.booking || p.name === formData.booking)?.id || formData.booking),
+        packageName: selectedPackage?.name || (packages.find(p => p.id === formData.booking || p.name === formData.booking)?.name || formData.booking),
         userId: userProfile?.id || userProfile?.email,
         userEmail: userProfile?.email,
         userName: userProfile?.displayName || 'Unknown',
@@ -156,7 +195,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
         ewalletProvider: formData.ewalletProvider,
         phoneNumber: formData.phoneNumber,
         transferDateTime: Timestamp.fromDate(new Date(formData.transferDateTime)),
-        proofOfPayment: uploadedProof,
+        proofOfPayment: downloadURL,
         proofFileName: uploadedFileName,
         status: 'pending', // pending, approved, rejected
         rejectionReason: '',
@@ -345,8 +384,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
                     type="button"
                     onClick={() => setFormData({ ...formData, paymentType: 'full', totalInstallments: 1, currentInstallment: 1 })}
                     className={`p-4 rounded-xl border-2 transition-all ${formData.paymentType === 'full'
-                        ? 'border-[#D4AF37] bg-[#D4AF37]/5'
-                        : 'border-gray-200 hover:border-[#D4AF37]/50'
+                      ? 'border-[#D4AF37] bg-[#D4AF37]/5'
+                      : 'border-gray-200 hover:border-[#D4AF37]/50'
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -370,8 +409,8 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
                     type="button"
                     onClick={() => setFormData({ ...formData, paymentType: 'installment', totalInstallments: 3, currentInstallment: 1 })}
                     className={`p-4 rounded-xl border-2 transition-all ${formData.paymentType === 'installment'
-                        ? 'border-[#D4AF37] bg-[#D4AF37]/5'
-                        : 'border-gray-200 hover:border-[#D4AF37]/50'
+                      ? 'border-[#D4AF37] bg-[#D4AF37]/5'
+                      : 'border-gray-200 hover:border-[#D4AF37]/50'
                       }`}
                   >
                     <div className="flex items-center gap-3">
@@ -704,7 +743,14 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">{uploadedFileName}</p>
-                        <p className="text-sm text-gray-500">File uploaded successfully</p>
+                        <p className="text-sm text-gray-500">
+                          {isCompressing ? (
+                            <span className="flex items-center gap-2 text-[#D4AF37]">
+                              <span className="w-3 h-3 border-2 border-[#D4AF37]/30 border-t-[#D4AF37] rounded-full animate-spin"></span>
+                              Optimizing photo for fast upload...
+                            </span>
+                          ) : 'File ready for submission (Optimized)'}
+                        </p>
                       </div>
                     </div>
                     <Button
@@ -744,10 +790,20 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus, selecte
               </div>
               <Button
                 type="submit"
-                disabled={loading}
-                className="bg-gradient-to-r from-[#C5A572] to-[#D4AF37] text-white px-8 py-3 rounded-lg shadow-md hover:shadow-lg disabled:opacity-50"
+                disabled={loading || isCompressing || !uploadedProof}
+                className="bg-gradient-to-r from-[#C5A572] to-[#D4AF37] text-white px-8 py-3 rounded-lg shadow-md hover:shadow-lg disabled:opacity-50 min-w-[160px]"
               >
-                {loading ? 'Submitting...' : 'Submit Payment'}
+                {loading ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    Submitting...
+                  </span>
+                ) : isCompressing ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                    Optimizing...
+                  </span>
+                ) : 'Submit Payment'}
               </Button>
             </div>
           </div>

@@ -20,8 +20,10 @@ import {
 import { useAuth } from '../../../contexts/AuthContext';
 import { Button } from '../../components/ui/button';
 import { collection, addDoc, getDocs, Timestamp } from 'firebase/firestore';
-import { db } from '../../../config/firebase';
+import { db, storage } from '../../../config/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { toast } from 'sonner';
+import { compressBase64Image } from '../../../utils/imageCompression';
 
 interface PaymentFormProps {
   onBack: () => void;
@@ -40,6 +42,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus }) => {
   const [packages, setPackages] = useState<Package[]>([]);
   const [uploadedProof, setUploadedProof] = useState<string>('');
   const [uploadedFileName, setUploadedFileName] = useState<string>('');
+  const [isCompressing, setIsCompressing] = useState(false);
 
   const [formData, setFormData] = useState({
     paymentNumber: `PAY${Date.now()}${Math.random().toString(36).substring(2, 6).toUpperCase()}`,
@@ -96,10 +99,22 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus }) => {
     }
 
     const reader = new FileReader();
-    reader.onloadend = () => {
-      setUploadedProof(reader.result as string);
+    reader.onloadend = async () => {
+      const base64 = reader.result as string;
       setUploadedFileName(file.name);
-      toast.success('File uploaded successfully!');
+
+      setIsCompressing(true);
+      try {
+        // Balanced compression: 1024x1024, 0.8 quality
+        const compressedBase64 = await compressBase64Image(base64, 1024, 1024, 0.8);
+        setUploadedProof(compressedBase64);
+        toast.success('File optimized for fast upload!');
+      } catch (error) {
+        console.error('Compression failed:', error);
+        setUploadedProof(base64);
+      } finally {
+        setIsCompressing(false);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -139,9 +154,25 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus }) => {
     setLoading(true);
 
     try {
+      // 1. Upload Proof to Firebase Storage
+      const base64Data = uploadedProof.split(',')[1];
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'image/jpeg' });
+
+      const storageRef = ref(storage, `payment_proofs/${formData.user}/${Date.now()}_${uploadedFileName}`);
+      const uploadResult = await uploadBytes(storageRef, blob);
+      const downloadURL = await getDownloadURL(uploadResult.ref);
+
       const paymentData = {
         paymentNumber: formData.paymentNumber,
-        booking: formData.booking,
+        booking: formData.booking, // Keep for backward compatibility
+        packageId: formData.booking,
+        packageName: packages.find(p => p.id === formData.booking)?.name || 'Unknown Package',
         userId: userProfile?.id || userProfile?.email,
         userEmail: userProfile?.email,
         userName: userProfile?.displayName || 'Unknown',
@@ -163,7 +194,7 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus }) => {
         ewalletProvider: formData.ewalletProvider,
         phoneNumber: formData.phoneNumber,
         transferDateTime: Timestamp.fromDate(new Date(formData.transferDateTime)),
-        proofOfPayment: uploadedProof,
+        proofOfPayment: downloadURL,
         proofFileName: uploadedFileName,
         status: 'pending', // pending, approved, rejected
         rejectionReason: '',
@@ -670,7 +701,9 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus }) => {
                       </div>
                       <div>
                         <p className="font-medium text-gray-900">{uploadedFileName}</p>
-                        <p className="text-sm text-gray-500">File uploaded successfully</p>
+                        <p className="text-sm text-gray-500">
+                          {isCompressing ? 'Optimizing...' : 'File ready'}
+                        </p>
                       </div>
                     </div>
                     <Button
@@ -710,10 +743,10 @@ const PaymentForm: React.FC<PaymentFormProps> = ({ onBack, onViewStatus }) => {
               </div>
               <Button
                 type="submit"
-                disabled={loading}
+                disabled={loading || isCompressing}
                 className="bg-gradient-to-r from-[#C5A572] to-[#D4AF37] text-white px-8 py-3 rounded-lg shadow-md hover:shadow-lg disabled:opacity-50"
               >
-                {loading ? 'Submitting...' : 'Submit Payment'}
+                {loading ? 'Submitting...' : isCompressing ? 'Optimizing...' : 'Submit Payment'}
               </Button>
             </div>
           </div>

@@ -474,7 +474,7 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
       iconBg: 'from-gray-100 to-gray-200'
     },
     {
-      title: 'Total Itineraries',
+      title: 'Total Jadwal',
       value: statsData.totalItineraries,
       icon: Calendar,
       gradient: 'from-indigo-500 to-indigo-600',

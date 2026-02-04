@@ -53,14 +53,14 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChange }) =
         { id: 'packages', label: 'Paket', icon: Package },
         { id: 'promos', label: 'Promo', icon: Tag },
         { id: 'payments', label: 'Pembayaran', icon: CreditCard },
-        { id: 'itineraries', label: 'Itinerari', icon: Calendar },
+        { id: 'itineraries', label: 'Jadwal Pemberangkatan', icon: Calendar },
       ]
     },
     {
       title: 'Permintaan',
       items: [
         { id: 'item-requests', label: 'Pesanan Marketplace', icon: ShoppingCart }, // ✅ Menu untuk approval pesanan marketplace
-        { id: 'savings-approval', label: 'Approval Tabungan', icon: Wallet }, // ✅ NEW
+        { id: 'savings-approval', label: 'Tabungan', icon: Wallet }, // Updated label
       ]
     },
     {

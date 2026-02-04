@@ -4,10 +4,8 @@ import {
   X,
   Calendar,
   Users,
-  MapPin,
   Clock,
   DollarSign,
-  User,
   Phone,
   Mail,
   CheckCircle,
@@ -96,7 +94,7 @@ const MuthawifPackageDetailModal: React.FC<MuthawifPackageDetailModalProps> = ({
         const bookingsQuery = query(
           collection(db, 'bookings'),
           where('packageId', '==', packageData.id),
-          where('status', 'in', ['active', 'confirmed', 'completed'])
+          where('status', 'in', ['active', 'confirmed', 'completed', 'paid', 'approved', 'pending_verification'])
         );
 
         const bookingsSnapshot = await getDocs(bookingsQuery);
@@ -126,7 +124,7 @@ const MuthawifPackageDetailModal: React.FC<MuthawifPackageDetailModalProps> = ({
           const paymentsQuery = query(
             collection(db, 'payments'),
             where('packageId', '==', packageData.id),
-            where('status', '==', 'approved')
+            where('status', 'in', ['approved', 'pending_verification', 'pending'])
           );
 
           const paymentsSnapshot = await getDocs(paymentsQuery);
@@ -175,7 +173,9 @@ const MuthawifPackageDetailModal: React.FC<MuthawifPackageDetailModalProps> = ({
                 status === 'confirmed' ||
                 status === 'completed' ||
                 status === 'approved' ||
-                status === 'paid';
+                status === 'paid' ||
+                status === 'pending_verification' ||
+                status === 'pending';
             });
 
             jamaahData = validDocs.map(doc => {

@@ -355,8 +355,8 @@ const ItineraryManagement: React.FC = () => {
             <Calendar className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Manajemen Jadwal Keberangkatan</h2>
-            <p className="text-sm text-gray-500">Kelola jadwal keberangkatan & aktivitas harian</p>
+            <h2 className="text-2xl font-bold text-gray-900">Manajemen Jadwal Pemberangkatan</h2>
+            <p className="text-sm text-gray-500">Kelola jadwal pemberangkatan & aktivitas harian</p>
           </div>
         </div>
         <Button

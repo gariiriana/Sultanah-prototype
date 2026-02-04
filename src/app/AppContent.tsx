@@ -16,7 +16,7 @@ import JamaahMarketplacePage from './pages/jamaah/JamaahMarketplacePage'; // ✅
 import MarketplaceCheckout from './pages/jamaah/MarketplaceCheckout'; // ✅ NEW - Marketplace Checkout
 import GuestGallery from './pages/guest/GuestGallery'; // ✅ NEW - Guest Gallery
 import FamilyTrackingPage from './pages/guest/FamilyTrackingPage'; // ✅ NEW - Family Tracking Page
-import SavingsPage from './pages/jamaah/SavingsPage'; // ✅ NEW - Savings Page
+import SavingsManagement from './pages/current-jamaah/SavingsManagement'; // ✅ UPDATED
 // ❌ REMOVED: MarketplaceOrderTracking - Now using unified PesananPage instead
 import PesananPage from './pages/current-jamaah/PesananPage'; // ✅ NEW - Unified Pesanan Page (Payments + Marketplace)
 import AffiliatorDashboard from './pages/affiliator/AffiliatorDashboardNew'; // ✅ NEW - Premium Affiliator Dashboard
@@ -259,7 +259,7 @@ const AppContent = () => {
             <Route path="/itinerary" element={<JamaahItineraryPage />} />
             <Route path="/marketplace" element={<JamaahMarketplacePage />} />
             <Route path="/marketplace/checkout" element={<MarketplaceCheckout />} />
-            <Route path="/tabungan" element={<SavingsPage />} /> {/* ✅ NEW - Savings Page */}
+            <Route path="/tabungan" element={<SavingsManagement onBack={() => window.history.back()} />} />
             <Route path="/pesanan" element={<PesananPage onBack={() => window.history.back()} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

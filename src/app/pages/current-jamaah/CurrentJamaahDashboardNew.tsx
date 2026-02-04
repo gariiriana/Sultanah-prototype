@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import { useNavigate } from 'react-router-dom'; // ✅ ADDED FOR ITINERARY
 import EducationDetail from './EducationDetail';
-import PromoDetail from '../prospective-jamaah/PromoDetail';
 import PaymentForm from './PaymentForm';
 // ❌ REMOVED: PaymentStatusTracking - Direct redirect to Pesanan Saya after payment
 import ArticleSubmissionForm from './ArticleSubmissionForm';
@@ -10,15 +9,13 @@ import ArticleSubmissionForm from './ArticleSubmissionForm';
 import ProfileForm from '../prospective-jamaah/ProfileForm';
 import ArticlesPage from '../user/ArticlesPage';
 import ArticleDetailPage from '../user/ArticleDetailPage';
-import PackageDetailPage from './PackageDetailPage';
 import ItineraryViewer from './ItineraryViewer';  // ✅ Itinerary viewer
 // ❌ REMOVED: RequestItemsForm and MyItemRequests - Permintaan Item Paket feature deleted
 // ❌ REMOVED: MarketplaceOrderTracking - Now using unified PesananPage instead
 import PesananPage from './PesananPage'; // ✅ Combined pesanan page (payments + marketplace orders)
-import AllPackagesPage from '../prospective-jamaah/AllPackagesPage';
-import AllPromosPage from '../prospective-jamaah/AllPromosPage';
 import AllEducationPage from '../prospective-jamaah/AllEducationPage';
 import AllTestimonialsPage from '../user/AllTestimonialsPage'; // ✅ NEW
+import SavingsManagement from './SavingsManagement'; // ✅ NEW: Savings management
 import FloatingAnnouncementWidget from '../../components/FloatingAnnouncementWidget';
 // ✅ NEW: Shared components for unified UI
 import TestimonialSection from '../../components/shared/TestimonialSection';
@@ -28,7 +25,6 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { db } from '../../../config/firebase';
 import { collection, query, where, getDocs, orderBy, limit, doc, updateDoc, Timestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { Promo } from '../../../types';
 
 // ✅ BEAUTIFUL IMAGE: Mecca Pilgrims
 const jamaahHeroImage = '/images/jamaah-dashboard-bg.jpg';
@@ -60,7 +56,8 @@ import {
   Facebook,
   Instagram,
   Twitter,
-  Menu // ✅ ADDED: Menu icon for mobile sidebar
+  Menu, // ✅ ADDED: Menu icon for mobile sidebar
+  Wallet
 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { Card, CardContent } from '../../components/ui/card';
@@ -96,23 +93,13 @@ const CurrentJamaahDashboard = () => {
   const [showArticlesPage, setShowArticlesPage] = useState(false);
   const [showArticleDetail, setShowArticleDetail] = useState(false);
   const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
-  const [showPackageDetail, setShowPackageDetail] = useState(false);
-  const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
-  const [selectedPackageForPayment, setSelectedPackageForPayment] = useState<any | null>(null);
-
-  // Package states
-  const [packages, setPackages] = useState<any[]>([]);
+  const [showSavings, setShowSavings] = useState(false); // ✅ NEW: Savings state
 
   // Testimonials states
   const [testimonials, setTestimonials] = useState<any[]>([]);
 
   // Education states
   const [educations, setEducations] = useState<any[]>([]);
-
-  // Promo states
-  const [promos, setPromos] = useState<Promo[]>([]);
-  const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
-  const [showPromoDetail, setShowPromoDetail] = useState(false);
 
   // Article states
   const [articles, setArticles] = useState<any[]>([]);
@@ -130,9 +117,6 @@ const CurrentJamaahDashboard = () => {
   const [showEducationDetail, setShowEducationDetail] = useState(false);
   const [selectedEducationId, setSelectedEducationId] = useState<string | null>(null);
 
-  // ✅ NEW: "View All" page states
-  const [showAllPackagesPage, setShowAllPackagesPage] = useState(false);
-  const [showAllPromosPage, setShowAllPromosPage] = useState(false);
   const [showAllEducationPage, setShowAllEducationPage] = useState(false);
   const [showAllTestimonialsPage, setShowAllTestimonialsPage] = useState(false);
 
@@ -142,8 +126,6 @@ const CurrentJamaahDashboard = () => {
 
   // Refs for scroll
   const dashboardRef = useRef<HTMLDivElement>(null);
-  const packagesRef = useRef<HTMLDivElement>(null);
-  const promosRef = useRef<HTMLDivElement>(null);
   const educationRef = useRef<HTMLDivElement>(null);
   const newsRef = useRef<HTMLDivElement>(null);
   const testimonialsRef = useRef<HTMLDivElement>(null);
@@ -170,8 +152,6 @@ const CurrentJamaahDashboard = () => {
   }, []);
 
   useEffect(() => {
-    fetchPackages();
-    fetchPromos();
     fetchTestimonials();
     fetchEducations();
     fetchArticles();
@@ -280,38 +260,6 @@ const CurrentJamaahDashboard = () => {
     ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const fetchPackages = async () => {
-    try {
-      const q = query(
-        collection(db, 'packages'),
-        where('status', '==', 'active')
-      );
-      const querySnapshot = await getDocs(q);
-
-      if (!querySnapshot.empty) {
-        const data = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        setPackages(data);
-      }
-    } catch (error) {
-      console.error('Error fetching packages:', error);
-    }
-  };
-
-  const fetchPromos = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'promos'));
-      const promosData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Promo[];
-      setPromos(promosData);
-    } catch (error) {
-      console.error('Error fetching promos:', error);
-    }
-  };
 
   const fetchTestimonials = async () => {
     try {
@@ -402,16 +350,6 @@ const CurrentJamaahDashboard = () => {
     }
   };
 
-  // Format currency untuk Rupiah
-  const formatCurrency = (amount: number | string): string => {
-    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(numAmount);
-  };
 
   // Unused functions removed: getInitials, getColorClass, handleSignOut, handleCreateTestimonial
   const formatDate = (dateField: any): string => {
@@ -494,35 +432,6 @@ const CurrentJamaahDashboard = () => {
   }
 
   // ✅ NEW: Show All Packages Page
-  if (showAllPackagesPage) {
-    return (
-      <AllPackagesPage
-        packages={packages}
-        onBack={() => setShowAllPackagesPage(false)}
-        onSelectPackage={(pkg) => {
-          setSelectedPackageId(pkg.id);
-          setShowPackageDetail(true);
-          setShowAllPackagesPage(false);
-        }}
-        formatCurrency={formatCurrency}
-      />
-    );
-  }
-
-  // ✅ NEW: Show All Promos Page
-  if (showAllPromosPage) {
-    return (
-      <AllPromosPage
-        promos={promos}
-        onBack={() => setShowAllPromosPage(false)}
-        onSelectPromo={(promo) => {
-          setSelectedPromo(promo);
-          setShowPromoDetail(true);
-          setShowAllPromosPage(false);
-        }}
-      />
-    );
-  }
 
   // ✅ NEW: Show All Education Page
   if (showAllEducationPage) {
@@ -548,23 +457,6 @@ const CurrentJamaahDashboard = () => {
     );
   }
 
-  // If showing package detail page
-  if (showPackageDetail && selectedPackageId) {
-    return (
-      <PackageDetailPage
-        packageId={selectedPackageId}
-        onBack={() => {
-          setShowPackageDetail(false);
-          setSelectedPackageId(null);
-        }}
-        onBookNow={(packageData) => {
-          setSelectedPackageForPayment(packageData);
-          setShowPackageDetail(false);
-          setShowPaymentForm(true);
-        }}
-      />
-    );
-  }
 
   // If showing payment form page
   if (showPaymentForm) {
@@ -587,18 +479,6 @@ const CurrentJamaahDashboard = () => {
 
   // ❌ REMOVED: PaymentStatusTracking page - Users now directly redirected to Pesanan Saya
 
-  // If showing promo detail page
-  if (showPromoDetail && selectedPromo) {
-    return (
-      <PromoDetail
-        promoData={selectedPromo}
-        onBack={() => {
-          setShowPromoDetail(false);
-          setSelectedPromo(null);
-        }}
-      />
-    );
-  }
 
   // ❌ REMOVED: Alumni upgrade form - Upgrade is now automatic when tour leader completes trip
 
@@ -676,21 +556,32 @@ const CurrentJamaahDashboard = () => {
     );
   }
 
+  // ✅ NEW: If showing savings page
+  if (showSavings) {
+    return (
+      <SavingsManagement
+        onBack={() => setShowSavings(false)}
+      />
+    );
+  }
+
   // Main Dashboard with Scroll Sections
   return (
     <div className="min-h-screen bg-white">
       {/* Professional Navbar - Sticky */}
       <nav className="bg-white/80 backdrop-blur-xl border-b border-gray-200/50 shadow-sm sticky top-0 z-50">
-        <div className="max-w-[1400px] mx-auto px-6">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-6">
           <div className="flex items-center justify-between h-16">
             {/* Logo/Title */}
-            <div className="flex items-center gap-2 md:gap-3 flex-shrink-0">
-              <div className="w-9 h-9 md:w-10 md:h-10 rounded-lg overflow-hidden flex-shrink-0 shadow-md">
+            <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg overflow-hidden flex-shrink-0 shadow-md">
                 <img src={sultanahLogo} alt="Sultanah Travel" className="w-full h-full object-contain" />
               </div>
-              <div className="block ml-2">
-                <h1 className="font-bold text-gray-900 text-xs md:text-sm leading-tight">Jamaah Umroh Sultanah</h1>
-                <p className="text-[10px] md:text-xs text-gray-600 leading-tight">Selamat datang, {userProfile?.displayName ? userProfile.displayName.split(' ')[0] : 'Tamu'}</p>
+              <div className="ml-2 flex flex-col">
+                <h1 className="font-bold text-gray-900 text-[11px] sm:text-sm leading-tight">Jamaah Umroh Sultanah</h1>
+                <p className="text-[10px] sm:text-xs text-gray-600 leading-tight">
+                  {userProfile?.displayName ? userProfile.displayName.split(' ')[0] : 'Tamu'}
+                </p>
               </div>
             </div>
 
@@ -734,48 +625,59 @@ const CurrentJamaahDashboard = () => {
             </div>
 
             {/* Right Action Buttons */}
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               {/* Pesanan Saya Button - Combined Page (Payments + Marketplace) */}
               <Button
                 onClick={() => setShowPesananPage(true)}
                 size="sm"
-                className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-sm hover:shadow-md transition-all px-3 py-2 h-9 text-xs font-semibold rounded-lg whitespace-nowrap"
+                className="hidden md:flex bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white border-0 shadow-sm hover:shadow-md transition-all px-3 py-2 h-9 text-xs font-semibold rounded-lg whitespace-nowrap"
               >
-                <ShoppingBag className="w-4 h-4 md:mr-1.5" />
-                <span className="hidden md:inline">Pesanan</span>
+                <ShoppingBag className="w-3.5 h-3.5 mr-1.5" />
+                <span>Pesanan</span>
               </Button>
 
               {/* Marketplace Button ✅ NEW */}
               <Button
                 onClick={() => navigate('/marketplace')}
                 size="sm"
-                className="bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white border-0 shadow-sm hover:shadow-md transition-all px-3 py-2 h-9 text-xs font-semibold rounded-lg whitespace-nowrap"
+                className="hidden md:flex bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white border-0 shadow-sm hover:shadow-md transition-all px-3 py-2 h-9 text-xs font-semibold rounded-lg whitespace-nowrap"
               >
-                <ShoppingCart className="w-4 h-4 md:mr-1.5" />
-                <span className="hidden md:inline">Marketplace</span>
+                <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
+                <span>Marketplace</span>
+              </Button>
+
+              {/* Tabungan Button ✅ NEW */}
+              <Button
+                onClick={() => setShowSavings(true)}
+                size="sm"
+                className="hidden md:flex bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white border-0 shadow-sm hover:shadow-md transition-all px-3 py-2 h-9 text-xs font-semibold rounded-lg whitespace-nowrap"
+              >
+                <Wallet className="w-3.5 h-3.5 mr-1.5" />
+                <span>Tabungan</span>
               </Button>
 
               {/* Jadwal (Itinerary) Button */}
               <Button
                 onClick={() => setShowItinerary(true)}
                 size="sm"
-                className="bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white border-0 shadow-sm hover:shadow-md transition-all px-3 py-2 h-9 text-xs font-semibold rounded-lg whitespace-nowrap"
+                className="hidden md:flex bg-gradient-to-r from-teal-500 to-teal-600 hover:from-teal-600 hover:to-teal-700 text-white border-0 shadow-sm hover:shadow-md transition-all px-3 py-2 h-9 text-xs font-semibold rounded-lg whitespace-nowrap"
               >
-                <Calendar className="w-4 h-4 md:mr-1.5" />
-                <span className="hidden md:inline">Jadwal</span>
+                <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                <span>Jadwal</span>
               </Button>
 
               {/* ❌ REMOVED: Upgrade button - Upgrade is now automatic when tour leader completes trip */}
 
               {/* Profile Button - Separated with divider */}
-              <div className="ml-2 pl-2 border-l-2 border-gray-200">
+              <div className="md:ml-2 md:pl-2 md:border-l-2 border-gray-200 flex items-center gap-2">
                 <Button
                   onClick={() => setShowProfilePage(true)}
                   size="sm"
-                  className="bg-gradient-to-r from-[#D4AF37] to-[#C5A572] hover:from-[#C5A572] hover:to-[#B8944E] text-white border-0 shadow-sm hover:shadow-md transition-all px-3 py-2 h-9 text-xs font-semibold rounded-lg whitespace-nowrap"
+                  variant="ghost"
+                  className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5 rounded-lg h-9"
                 >
-                  <User className="w-4 h-4 md:mr-1.5" />
-                  <span className="hidden md:inline">Profil</span>
+                  <User className="w-5 h-5" />
+                  <span className="font-medium">Profil</span>
                 </Button>
               </div>
 
@@ -828,12 +730,6 @@ const CurrentJamaahDashboard = () => {
                         <Button onClick={() => scrollToSection(dashboardRef)} variant="ghost" className="w-full justify-start text-lg h-12 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5">
                           <Home className="w-5 h-5 mr-3" /> Beranda
                         </Button>
-                        <Button onClick={() => scrollToSection(packagesRef)} variant="ghost" className="w-full justify-start text-lg h-12 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5">
-                          <Package className="w-5 h-5 mr-3" /> Paket
-                        </Button>
-                        <Button onClick={() => scrollToSection(promosRef)} variant="ghost" className="w-full justify-start text-lg h-12 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5">
-                          <Tag className="w-5 h-5 mr-3" /> Promo
-                        </Button>
                         <Button onClick={() => scrollToSection(educationRef)} variant="ghost" className="w-full justify-start text-lg h-12 hover:text-[#D4AF37] hover:bg-[#D4AF37]/5">
                           <GraduationCap className="w-5 h-5 mr-3" /> Edukasi
                         </Button>
@@ -864,6 +760,13 @@ const CurrentJamaahDashboard = () => {
                           className="w-full bg-purple-50 text-purple-600 hover:bg-purple-100 justify-start h-12"
                         >
                           <ShoppingCart className="w-5 h-5 mr-3" /> Marketplace
+                        </Button>
+
+                        <Button
+                          onClick={() => setShowSavings(true)}
+                          className="w-full bg-emerald-50 text-emerald-600 hover:bg-emerald-100 justify-start h-12"
+                        >
+                          <Wallet className="w-5 h-5 mr-3" /> Tabungan
                         </Button>
 
                         <Button

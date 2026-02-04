@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 // import { Card, CardContent } from '../../components/ui/card'; // ❌ REMOVED: Unused imports
-import { LayoutDashboard } from 'lucide-react';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
 import PackageManagement from './components/PackageManagement';
@@ -178,12 +177,12 @@ const AdminDashboard = () => {
                   activeTab === 'users' ? 'Manajemen Pengguna' :
                     activeTab === 'education' ? 'Manajemen Edukasi' :
                       activeTab === 'articles' ? 'Manajemen Artikel' :
-                        activeTab === 'itineraries' ? 'Manajemen Itinerari' :
+                        activeTab === 'itineraries' ? 'Manajemen Jadwal Pemberangkatan' :
                           activeTab === 'item-requests' ? 'Pesanan Marketplace' : // ✅ RENAMED: Only Marketplace Orders
                             activeTab === 'marketplace' ? 'Manajemen Marketplace' :
                               activeTab === 'referrals' ? 'Referral Management' :
                                 activeTab === 'commission-withdrawals' ? 'Pencairan Profit' :
-                                  activeTab === 'savings-approval' ? 'Approval Tabungan' : // ✅ NEW
+                                  activeTab === 'savings-approval' ? 'Tabungan' : // Updated title
                                     'Dashboard'}
           pageSubtitle="Kelola bisnis perjalanan Anda dengan mudah"
           stats={stats}
