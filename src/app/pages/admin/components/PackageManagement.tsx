@@ -28,6 +28,7 @@ const PackageManagement = () => {
     name: '',
     type: 'umrah' as 'umrah' | 'hajj', // ✅ REMOVED 'ziarah'
     packageClass: 'reguler' as 'reguler' | 'vip' | 'vvip' | 'super-vvip',
+    packageCategory: 'reguler' as 'reguler' | 'promo' | 'limited-edition', // ✅ Corrected type
     price: '',
     duration: '',
     departureDate: '',
@@ -323,6 +324,7 @@ const PackageManagement = () => {
         name: formData.name,
         type: formData.type,
         packageClass: formData.packageClass,
+        packageCategory: formData.packageCategory, // ✅ NEW: Package category
         price: Number(formData.price),
         duration: Number(formData.duration),
         departureDate: formData.departureDate,
@@ -420,6 +422,7 @@ const PackageManagement = () => {
       name: pkg.name,
       type: (pkg.type === 'umrah' || pkg.type === 'hajj') ? pkg.type : 'umrah',
       packageClass: pkg.packageClass || 'reguler',
+      packageCategory: pkg.packageCategory || 'reguler', // ✅ NEW: Package category
       price: pkg.price.toString(),
       duration: pkg.duration.toString(),
       departureDate: pkg.departureDate,
@@ -527,6 +530,7 @@ const PackageManagement = () => {
       name: '',
       type: 'umrah',
       packageClass: 'reguler',
+      packageCategory: 'reguler', // ✅ NEW: Package category
       price: '',
       duration: '',
       departureDate: '',
@@ -665,6 +669,22 @@ const PackageManagement = () => {
                         <SelectItem value="vip">⭐⭐ VIP</SelectItem>
                         <SelectItem value="vvip">⭐⭐⭐ VVIP</SelectItem>
                         <SelectItem value="super-vvip">⭐⭐⭐⭐ Super VVIP</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <ShoppingBag className="w-4 h-4 text-[#D4AF37]" />
+                      Kategori Paket
+                    </Label>
+                    <Select value={formData.packageCategory} onValueChange={(value: any) => setFormData({ ...formData, packageCategory: value })}>
+                      <SelectTrigger className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="reguler">📦 Reguler</SelectItem>
+                        <SelectItem value="promo">🏷️ Promo</SelectItem>
+                        <SelectItem value="limited-edition">⏳ Limited Edition</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1256,6 +1276,7 @@ const PackageManagement = () => {
               <TableHead>Name</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Class</TableHead>
+              <TableHead>Category</TableHead>
               <TableHead>Price</TableHead>
               <TableHead>Duration</TableHead>
               <TableHead>Slots</TableHead>
@@ -1287,6 +1308,22 @@ const PackageManagement = () => {
                       pkg.packageClass === 'vvip' ? '⭐⭐⭐ VVIP' :
                         pkg.packageClass === 'vip' ? '⭐⭐ VIP' :
                           '⭐ Reguler'}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge
+                    variant="outline"
+                    className={
+                      pkg.packageCategory === 'limited-edition'
+                        ? 'bg-red-100 text-red-700 border-red-200'
+                        : pkg.packageCategory === 'promo'
+                          ? 'bg-amber-100 text-amber-700 border-amber-200'
+                          : 'bg-blue-100 text-blue-700 border-blue-200'
+                    }
+                  >
+                    {pkg.packageCategory === 'limited-edition' ? '⏳ Limited Edition' :
+                      pkg.packageCategory === 'promo' ? '🏷️ Promo' :
+                        '📦 Reguler'}
                   </Badge>
                 </TableCell>
                 <TableCell>Rp {pkg.price.toLocaleString('id-ID')}</TableCell>

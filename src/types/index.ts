@@ -5,6 +5,7 @@ export interface Package {
   name: string;
   type: 'umrah' | 'hajj' | 'ziarah';
   packageClass?: 'reguler' | 'vip' | 'vvip' | 'super-vvip';
+  packageCategory?: 'reguler' | 'promo' | 'limited-edition'; // NEW: Package category for browse tabs
   price: number;
   duration: number; // in days
   departureDate: string;

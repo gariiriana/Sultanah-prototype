@@ -5,7 +5,7 @@ import PackageDetail from './PackageDetail';
 import EducationDetail from './EducationDetail';
 import ArticlesPage from '../user/ArticlesPage';
 import ArticleDetailPage from '../user/ArticleDetailPage';
-import AllPackagesPage from './AllPackagesPage';
+import PackageBrowsePage from './PackageBrowsePage';
 import AllEducationPage from './AllEducationPage';
 import AllTestimonialsPage from './AllTestimonialsPage';
 import TestimonialDetailDialog from '../../components/TestimonialDetailDialog';
@@ -1155,10 +1155,10 @@ const ProspectiveJamaahDashboard = () => {
     );
   }
 
-  // ✅ NEW: Show All Packages Page
+  // ✅ NEW: Show Package Browse Page with Categories
   if (showAllPackagesPage) {
     return (
-      <AllPackagesPage
+      <PackageBrowsePage
         packages={packages}
         onBack={() => setShowAllPackagesPage(false)}
         onSelectPackage={(pkg) => {
@@ -1390,7 +1390,105 @@ const ProspectiveJamaahDashboard = () => {
         <AdsBanner role="prospective-jamaah" />
       </div>
 
-      {/* Packages Section with Umrah Background */}
+      {/* Packages Overview Section - NEW DESIGN */}
+      <section
+        ref={packagesRef}
+        className="relative min-h-screen bg-cover bg-center bg-no-repeat flex items-center"
+        style={{ backgroundImage: `url(https://images.unsplash.com/photo-1676200928665-8b97df7ab979?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1bXJhaCUyMHBpbGdyaW1hZ2UlMjBtb3NxdWV8ZW58MXx8fHwxNzY3MTE2MzU0fDA&ixlib=rb-4.1.0&q=80&w=1080)` }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black/80"></div>
+
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+          >
+            {/* Icon */}
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#C5A572] mb-8 shadow-2xl">
+              <Package className="w-10 h-10 text-white" />
+            </div>
+
+            {/* Title */}
+            <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 drop-shadow-2xl">
+              Paket Umroh Sultanah
+            </h2>
+
+            {/* Subtitle */}
+            <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto drop-shadow-lg">
+              Kami menyediakan paket umroh terbaik dengan berbagai pilihan untuk memenuhi kebutuhan dan budget Anda
+            </p>
+
+            {/* Highlights - Kelebihan Sultanah */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.1, duration: 0.5 }}
+                className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20"
+              >
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center mx-auto mb-4">
+                  <Check className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Bimbingan Profesional</h3>
+                <p className="text-sm text-white/80">Tour leader & mutawwif berpengalaman mendampingi perjalanan Anda</p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+                className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20"
+              >
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mx-auto mb-4">
+                  <Star className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Akomodasi Premium</h3>
+                <p className="text-sm text-white/80">Hotel bintang 4-5 dekat Masjidil Haram & Masjid Nabawi</p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+                className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20"
+              >
+                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center mx-auto mb-4">
+                  <Sparkles className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-lg font-bold text-white mb-2">Pilihan Variatif</h3>
+                <p className="text-sm text-white/80">Paket reguler, promo spesial, hingga limited edition eksklusif</p>
+              </motion.div>
+            </div>
+
+            {/* CTA Button */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4, duration: 0.5 }}
+            >
+              <Button
+                onClick={() => setShowAllPackagesPage(true)}
+                className="bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] hover:opacity-90 text-white font-bold text-lg px-12 py-7 rounded-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
+              >
+                <Package className="w-6 h-6 mr-3" />
+                Lihat Detail Paket
+              </Button>
+              <p className="text-sm text-white/70 mt-4">
+                {packages.length} paket tersedia untuk Anda
+              </p>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* OLD PACKAGES GRID - REMOVED */}
+      {/* Packages Section with Umrah Background - OLD CODE BELOW (KEEP FOR REFERENCE) */}
       <section
         ref={packagesRef}
         className="relative min-h-screen bg-cover bg-center bg-no-repeat"
@@ -1412,7 +1510,6 @@ const ProspectiveJamaahDashboard = () => {
           {packages.length > 0 ? (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {/* ✅ UPDATED: Show only first 3 packages */}
                 {packages.slice(0, 3).map((pkg, index) => (
                   <motion.div
                     key={pkg.id}
@@ -1513,30 +1610,32 @@ const ProspectiveJamaahDashboard = () => {
                         </motion.div>
                       </div>
                     </div>
-                  </motion.div>
+                  </motion.div >
                 ))}
-              </div>
+              </div >
 
               {/* ✅ NEW: "Lihat Semua Paket" Button - Only show if more than 3 packages */}
-              {packages.length > 3 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="text-center mt-12"
-                >
-                  <button
-                    onClick={() => setShowAllPackagesPage(true)}
-                    className="group inline-flex items-center gap-3 px-8 py-4 bg-white hover:bg-emerald-50 border-2 border-emerald-600 rounded-xl text-emerald-700 font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+              {
+                packages.length > 3 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true }}
+                    className="text-center mt-12"
                   >
-                    <span>Lihat Semua Paket</span>
-                    <span className="text-2xl group-hover:translate-x-2 transition-transform duration-300">→</span>
-                  </button>
-                  <p className="text-sm text-white/80 mt-3">
-                    Menampilkan 3 dari {packages.length} paket tersedia
-                  </p>
-                </motion.div>
-              )}
+                    <button
+                      onClick={() => setShowAllPackagesPage(true)}
+                      className="group inline-flex items-center gap-3 px-8 py-4 bg-white hover:bg-emerald-50 border-2 border-emerald-600 rounded-xl text-emerald-700 font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+                    >
+                      <span>Lihat Semua Paket</span>
+                      <span className="text-2xl group-hover:translate-x-2 transition-transform duration-300">→</span>
+                    </button>
+                    <p className="text-sm text-white/80 mt-3">
+                      Menampilkan 3 dari {packages.length} paket tersedia
+                    </p>
+                  </motion.div>
+                )
+              }
             </>
           ) : (
             <Card className="bg-white/95 backdrop-blur-sm">
@@ -1560,7 +1659,6 @@ const ProspectiveJamaahDashboard = () => {
         className="relative min-h-screen bg-cover bg-center bg-no-repeat py-20"
         style={{ backgroundImage: `url(https://images.unsplash.com/photo-1647221467105-a851179dccda?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtb3NxdWUlMjBpbnRlcmlvciUyMGFyY2hpdGVjdHVyZXxlbnwxfHx8fDE3NjcwNzUxODV8MA&ixlib=rb-4.1.0&q=80&w=1080)` }}
       >
-        {/* Dark Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/70"></div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1943,10 +2041,10 @@ const ProspectiveJamaahDashboard = () => {
             </Card>
           )}
         </div>
-      </section>
+      </section >
 
       {/* Contact Section */}
-      <section
+      < section
         ref={contactRef}
         className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-[#FFF9F0] py-20"
       >
@@ -2173,7 +2271,7 @@ const ProspectiveJamaahDashboard = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-b from-gray-900 to-black text-white py-12">
+      <footer className="bg-gradient-to-b from-gray-900 to-black text-white py-12" >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-8">
 
@@ -2270,7 +2368,7 @@ const ProspectiveJamaahDashboard = () => {
       </footer>
 
       {/* Profile Edit Dialog */}
-      <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog}>
+      <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog} >
         <DialogContent className="sm:max-w-2xl bg-gradient-to-br from-white to-[#FFF9F0] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl">
@@ -2417,7 +2515,7 @@ const ProspectiveJamaahDashboard = () => {
       </Dialog>
 
       {/* Profile Incomplete Warning Dialog */}
-      <Dialog open={showProfileIncompleteDialog} onOpenChange={setShowProfileIncompleteDialog}>
+      <Dialog open={showProfileIncompleteDialog} onOpenChange={setShowProfileIncompleteDialog} >
         <DialogContent className="sm:max-w-md bg-gradient-to-br from-white to-[#FFF9F0]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-2xl">
