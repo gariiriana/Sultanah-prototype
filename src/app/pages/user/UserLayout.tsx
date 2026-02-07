@@ -4,7 +4,6 @@ import { doc, setDoc } from 'firebase/firestore'; // ✅ CLEANED
 import { db } from '../../../config/firebase';
 import { toast } from 'sonner'; // ✅ NEW
 import HeroSection from './sections/HeroSection';
-import PromoBannerSection from './sections/PromoBannerSection';
 import JourneyProcessSection from './sections/JourneyProcessSection';
 import ServicesSection from './sections/ServicesSection';
 import PackagesSection from './sections/PackagesSection';
@@ -14,10 +13,8 @@ import ContactSection from './sections/ContactSection';
 import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import PackageDetailPage from './PackageDetailPage';
-import PromoDetailPage from './PromoDetailPage';
 import EducationDetailPage from './EducationDetailPage';
 import AllPackagesPage from './AllPackagesPage'; // ✅ NEW: Import All Pages
-import AllPromosPage from './AllPromosPage';
 import AllEducationPage from './AllEducationPage';
 import AllTestimonialsPage from './AllTestimonialsPage';
 import FloatingAnnouncementWidget from '../../components/FloatingAnnouncementWidget';
@@ -34,20 +31,16 @@ const UserLayout: React.FC<UserLayoutProps> = ({ onShowProfile, onShowAuth, chil
   const [currentView, setCurrentView] = useState<
     'home' |
     'packageDetail' |
-    'promoDetail' |
     'educationDetail' |
     'allPackages' |
-    'allPromos' |
     'allEducation' |
     'allArticles' |
     'allTestimonials'
   >('home');
   const [selectedPackageId, setSelectedPackageId] = useState<string>('');
-  const [selectedPromoId, setSelectedPromoId] = useState<string>('');
   const [selectedEducationId, setSelectedEducationId] = useState<string>('');
 
   const homeRef = useRef<HTMLDivElement>(null);
-  const promoRef = useRef<HTMLDivElement>(null);
   const servicesRef = useRef<HTMLDivElement>(null);
   const packagesRef = useRef<HTMLDivElement>(null);
   const educationRef = useRef<HTMLDivElement>(null);
@@ -112,7 +105,6 @@ const UserLayout: React.FC<UserLayoutProps> = ({ onShowProfile, onShowAuth, chil
 
     const refs = {
       home: homeRef,
-      promo: promoRef,
       services: servicesRef,
       packages: packagesRef,
       education: educationRef,
@@ -132,12 +124,6 @@ const UserLayout: React.FC<UserLayoutProps> = ({ onShowProfile, onShowAuth, chil
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleViewPromoDetail = (promoId: string) => {
-    setSelectedPromoId(promoId);
-    setCurrentView('promoDetail');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   const handleViewEducationDetail = (educationId: string) => {
     setSelectedEducationId(educationId);
     setCurrentView('educationDetail');
@@ -152,11 +138,6 @@ const UserLayout: React.FC<UserLayoutProps> = ({ onShowProfile, onShowAuth, chil
   // ✅ NEW: Handlers for "Lihat Semua" navigation
   const handleViewAllPackages = () => {
     setCurrentView('allPackages');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
-  const handleViewAllPromos = () => {
-    setCurrentView('allPromos');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -180,14 +161,7 @@ const UserLayout: React.FC<UserLayoutProps> = ({ onShowProfile, onShowAuth, chil
     );
   }
 
-  if (currentView === 'allPromos') {
-    return (
-      <AllPromosPage
-        onBack={handleBackToHome}
-        onViewPromoDetail={handleViewPromoDetail}
-      />
-    );
-  }
+
 
   if (currentView === 'allEducation') {
     return (
@@ -207,9 +181,7 @@ const UserLayout: React.FC<UserLayoutProps> = ({ onShowProfile, onShowAuth, chil
     return <PackageDetailPage packageId={selectedPackageId} onBack={handleBackToHome} />;
   }
 
-  if (currentView === 'promoDetail' && selectedPromoId) {
-    return <PromoDetailPage promoId={selectedPromoId} onBack={handleBackToHome} />;
-  }
+
 
   if (currentView === 'educationDetail' && selectedEducationId) {
     return <EducationDetailPage educationId={selectedEducationId} onBack={handleBackToHome} />;
@@ -234,13 +206,7 @@ const UserLayout: React.FC<UserLayoutProps> = ({ onShowProfile, onShowAuth, chil
             <HeroSection />
           </div>
 
-          {/* NEW: Promo Banner - Easy access to promotions */}
-          <div ref={promoRef}>
-            <PromoBannerSection
-              onViewPromoDetail={handleViewPromoDetail}
-              onViewAllPromos={handleViewAllPromos}
-            />
-          </div>
+
 
           {/* Services Section - Why Choose Us + Journey Process */}
           <div ref={servicesRef}>

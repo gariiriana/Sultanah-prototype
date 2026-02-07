@@ -5,7 +5,7 @@ import { db } from '../../../config/firebase';
 import PackageManagement from './components/PackageManagement';
 import UserManagementNew from './components/UserManagementNew';
 import EducationManagement from './components/EducationManagement';
-import PromoManagement from './components/PromoManagement';
+
 import PaymentManagement from './PaymentManagement';
 import ArticleManagement from './ArticleManagement';
 import UpgradeRequestsManagement from './UpgradeRequestsManagement';
@@ -28,7 +28,7 @@ const AdminDashboard = () => {
     activePackages: 0,
     netFlow: 0,
     totalEducation: 0,
-    totalPromos: 0,
+
     totalArticles: 0,
     totalItineraries: 0,
     totalMarketplaceItems: 0,
@@ -90,14 +90,7 @@ const AdminDashboard = () => {
           console.warn('Could not fetch education:', educationError?.code);
         }
 
-        // Fetch promos count
-        let totalPromos = 0;
-        try {
-          const promosSnapshot = await getDocs(collection(db, 'promos'));
-          totalPromos = promosSnapshot.size;
-        } catch (promoError: any) {
-          console.warn('Could not fetch promos:', promoError?.code);
-        }
+
 
         // Fetch articles count
         let totalArticles = 0;
@@ -140,7 +133,7 @@ const AdminDashboard = () => {
           activePackages,
           netFlow,
           totalEducation,
-          totalPromos,
+
           totalArticles,
           totalItineraries,
           totalMarketplaceItems,
@@ -171,19 +164,18 @@ const AdminDashboard = () => {
         {/* Top Navbar with Stats */}
         <AdminTopbar
           pageTitle={activeTab === 'packages' ? 'Manajemen Paket' :
-            activeTab === 'promos' ? 'Manajemen Promo' :
-              activeTab === 'payments' ? 'Manajemen Pembayaran' :
-                activeTab === 'upgrade-requests' ? 'Permintaan Upgrade' :
-                  activeTab === 'users' ? 'Manajemen Pengguna' :
-                    activeTab === 'education' ? 'Manajemen Edukasi' :
-                      activeTab === 'articles' ? 'Manajemen Artikel' :
-                        activeTab === 'itineraries' ? 'Manajemen Jadwal Pemberangkatan' :
-                          activeTab === 'item-requests' ? 'Pesanan Marketplace' : // ✅ RENAMED: Only Marketplace Orders
-                            activeTab === 'marketplace' ? 'Manajemen Marketplace' :
-                              activeTab === 'referrals' ? 'Referral & Voucher Program' :
-                                activeTab === 'commission-withdrawals' ? 'Pencairan Profit' :
-                                  activeTab === 'savings-approval' ? 'Tabungan' : // Updated title
-                                    'Dashboard'}
+            activeTab === 'payments' ? 'Manajemen Pembayaran' :
+              activeTab === 'upgrade-requests' ? 'Permintaan Upgrade' :
+                activeTab === 'users' ? 'Manajemen Pengguna' :
+                  activeTab === 'education' ? 'Manajemen Edukasi' :
+                    activeTab === 'articles' ? 'Manajemen Artikel' :
+                      activeTab === 'itineraries' ? 'Manajemen Jadwal Pemberangkatan' :
+                        activeTab === 'item-requests' ? 'Pesanan Marketplace' : // ✅ RENAMED: Only Marketplace Orders
+                          activeTab === 'marketplace' ? 'Manajemen Marketplace' :
+                            activeTab === 'referrals' ? 'Referral & Voucher Program' :
+                              activeTab === 'commission-withdrawals' ? 'Pencairan Profit' :
+                                activeTab === 'savings-approval' ? 'Tabungan' : // Updated title
+                                  'Dashboard'}
           pageSubtitle="Kelola bisnis perjalanan Anda dengan mudah"
           stats={stats}
           onNotificationClick={(type, _itemId) => {
@@ -203,7 +195,7 @@ const AdminDashboard = () => {
           <div className="relative overflow-hidden rounded-2xl bg-white shadow-lg border border-gray-200">
             <div className="p-6">
               {activeTab === 'packages' && <PackageManagement />}
-              {activeTab === 'promos' && <PromoManagement />}
+
               {activeTab === 'payments' && <PaymentManagement />}
               {activeTab === 'upgrade-requests' && <UpgradeRequestsManagement />}
               {/* ❌ REMOVED: Alumni upgrade is now automatic when tour leader completes trip */}

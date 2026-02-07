@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Button } from '../ui/button';
 import {
   Package,
-  Tag,
   CreditCard,
   Users,
   BookOpen,
@@ -51,7 +50,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChange }) =
       title: 'Manajemen',
       items: [
         { id: 'packages', label: 'Paket', icon: Package },
-        { id: 'promos', label: 'Promo', icon: Tag },
         { id: 'payments', label: 'Pembayaran', icon: CreditCard },
         { id: 'itineraries', label: 'Jadwal Pemberangkatan', icon: Calendar },
       ]

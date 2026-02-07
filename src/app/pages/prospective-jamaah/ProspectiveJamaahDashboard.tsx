@@ -2,12 +2,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 import ProfileForm from './ProfileForm';
 import PackageDetail from './PackageDetail';
-import PromoDetail from './PromoDetail';
 import EducationDetail from './EducationDetail';
 import ArticlesPage from '../user/ArticlesPage';
 import ArticleDetailPage from '../user/ArticleDetailPage';
 import AllPackagesPage from './AllPackagesPage';
-import AllPromosPage from './AllPromosPage';
 import AllEducationPage from './AllEducationPage';
 import AllTestimonialsPage from './AllTestimonialsPage';
 import TestimonialDetailDialog from '../../components/TestimonialDetailDialog';
@@ -17,7 +15,7 @@ import { useAuth } from '../../../contexts/AuthContext';
 import { db } from '../../../config/firebase';
 import { doc, updateDoc, collection, addDoc, query, where, getDocs, getDoc, serverTimestamp, orderBy } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { Promo } from '../../../types';
+
 import {
   CheckCircle,
   Clock,
@@ -41,8 +39,7 @@ import {
   ThumbsUp,
   Users,
   Check,
-  Gift,
-  Tag,
+
   Sparkles,
   Send,
   Clock3,
@@ -120,10 +117,7 @@ const ProspectiveJamaahDashboard = () => {
   // Education states
   const [educations, setEducations] = useState<any[]>([]);
 
-  // Promo states
-  const [promos, setPromos] = useState<Promo[]>([]);
-  const [selectedPromo, setSelectedPromo] = useState<Promo | null>(null);
-  const [showPromoDetail, setShowPromoDetail] = useState(false);
+
 
   // Article states
   const [articles, setArticles] = useState<any[]>([]);
@@ -133,7 +127,7 @@ const ProspectiveJamaahDashboard = () => {
 
   // ✅ NEW: "View All" page states
   const [showAllPackagesPage, setShowAllPackagesPage] = useState(false);
-  const [showAllPromosPage, setShowAllPromosPage] = useState(false);
+
   const [showAllEducationPage, setShowAllEducationPage] = useState(false);
   const [showAllTestimonialsPage, setShowAllTestimonialsPage] = useState(false);
   const [showTestimonialDetail, setShowTestimonialDetail] = useState(false);
@@ -151,7 +145,7 @@ const ProspectiveJamaahDashboard = () => {
   // Refs for scroll
   const dashboardRef = useRef<HTMLDivElement>(null);
   const packagesRef = useRef<HTMLDivElement>(null);
-  const promosRef = useRef<HTMLDivElement>(null);
+
   const educationRef = useRef<HTMLDivElement>(null);
   const newsRef = useRef<HTMLDivElement>(null);
   const testimonialsRef = useRef<HTMLDivElement>(null);
@@ -172,7 +166,7 @@ const ProspectiveJamaahDashboard = () => {
   useEffect(() => {
     fetchUpgradeRequest();
     fetchPackages();
-    fetchPromos();
+
     fetchTestimonials();
     fetchEducations();
     fetchArticles();
@@ -461,32 +455,7 @@ const ProspectiveJamaahDashboard = () => {
     }
   };
 
-  // Handle view promo click
-  const handleViewPromo = (promo: Promo) => {
-    console.log('🎁 View Promo clicked!');
-    console.log('🎫 Promo data:', promo);
 
-    if (!promo) {
-      console.error('❌ No promo data!');
-      toast.error('Promo data not available');
-      return;
-    }
-
-    const isComplete = checkProfileComplete();
-
-    console.log('📊 Profile complete status:', isComplete);
-
-    if (!isComplete) {
-      console.log('⚠️ Profile incomplete, showing dialog...');
-      setSelectedPromo(promo);
-      setShowProfileIncompleteDialog(true);
-    } else {
-      // Profile is complete, proceed to promo detail
-      console.log('✅ Profile complete, showing promo detail...');
-      setSelectedPromo(promo);
-      setShowPromoDetail(true);
-    }
-  };
 
   // Handle view education click
   const handleViewEducation = (educationId: string) => {
@@ -567,18 +536,7 @@ const ProspectiveJamaahDashboard = () => {
     }
   };
 
-  const fetchPromos = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'promos'));
-      const promosData = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Promo[];
-      setPromos(promosData);
-    } catch (error) {
-      console.error('Error fetching promos:', error);
-    }
-  };
+
 
   // Format currency untuk Rupiah
   const formatCurrency = (amount: number | string): string => {
@@ -1213,20 +1171,7 @@ const ProspectiveJamaahDashboard = () => {
     );
   }
 
-  // ✅ NEW: Show All Promos Page
-  if (showAllPromosPage) {
-    return (
-      <AllPromosPage
-        promos={promos}
-        onBack={() => setShowAllPromosPage(false)}
-        onSelectPromo={(promo) => {
-          setSelectedPromo(promo);
-          setShowPromoDetail(true);
-          setShowAllPromosPage(false);
-        }}
-      />
-    );
-  }
+
 
   // ✅ NEW: Show All Education Page
   if (showAllEducationPage) {
@@ -1277,18 +1222,7 @@ const ProspectiveJamaahDashboard = () => {
     );
   }
 
-  // If showing promo detail page
-  if (showPromoDetail && selectedPromo) {
-    return (
-      <PromoDetail
-        promoData={selectedPromo}
-        onBack={() => {
-          setShowPromoDetail(false);
-          setSelectedPromo(null);
-        }}
-      />
-    );
-  }
+
 
   // If showing education detail page
   if (showEducationDetail && selectedEducationId) {
@@ -1337,13 +1271,7 @@ const ProspectiveJamaahDashboard = () => {
                 <span className="relative z-10">Paket</span>
                 <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
               </button>
-              <button
-                onClick={() => scrollToSection(promosRef)}
-                className="text-gray-700 hover:text-[#D4AF37] transition-all text-sm font-medium relative group whitespace-nowrap px-2.5"
-              >
-                <span className="relative z-10">Promo</span>
-                <span className="absolute inset-x-0 -bottom-1 h-0.5 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left"></span>
-              </button>
+
               <button
                 onClick={() => scrollToSection(educationRef)}
                 className="text-gray-700 hover:text-[#D4AF37] transition-all text-sm font-medium relative group whitespace-nowrap px-2.5"
@@ -1624,172 +1552,7 @@ const ProspectiveJamaahDashboard = () => {
         </div>
       </section>
 
-      {/* Promo Section */}
-      <section
-        ref={promosRef}
-        className="relative min-h-screen bg-cover bg-center bg-no-repeat py-20"
-        style={{ backgroundImage: `url(https://images.unsplash.com/photo-1720482229376-d5574ffeb0c8?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWNjYSUyMGthYWJhJTIwYWVyaWFsJTIwdmlld3xlbnwxfHx8fDE3NjcxMjY1MjJ8MA&ixlib=rb-4.1.0&q=80&w=1080)` }}
-      >
-        {/* Dark Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/65 to-black/75"></div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#C5A572] mb-6 shadow-lg">
-              <Gift className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg">
-              Penawaran Terbaik Untuk Anda
-            </h2>
-            <p className="text-xl text-white/90 max-w-3xl mx-auto drop-shadow-md">
-              Dapatkan harga spesial dengan berbagai promo menarik kami
-            </p>
-          </div>
-
-          {promos.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {/* ✅ UPDATED: Show only first 3 promos */}
-                {promos.slice(0, 3).map((promo, index) => {
-                  // Dynamic color mapping
-                  const colorMap: Record<string, { bg: string; border: string; text: string; badge: string }> = {
-                    blue: {
-                      bg: 'from-blue-500 to-blue-600',
-                      border: 'border-blue-300',
-                      text: 'text-blue-800',
-                      badge: 'bg-blue-600'
-                    },
-                    gold: {
-                      bg: 'from-[#D4AF37] to-[#C5A572]',
-                      border: 'border-[#D4AF37]/30',
-                      text: 'text-[#C5A572]',
-                      badge: 'bg-[#D4AF37]'
-                    },
-                    green: {
-                      bg: 'from-green-500 to-green-600',
-                      border: 'border-green-300',
-                      text: 'text-green-800',
-                      badge: 'bg-green-600'
-                    }
-                  };
-
-                  const colors = colorMap[promo.color || 'gold'];
-
-                  return (
-                    <motion.div
-                      key={promo.id}
-                      initial={{ opacity: 0, y: 30 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: index * 0.1, duration: 0.5 }}
-                      whileHover={{ y: -10 }}
-                      className="group"
-                    >
-                      <div className="relative h-full flex flex-col rounded-3xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_20px_60px_rgba(212,175,55,0.25)] transition-all duration-500 overflow-hidden group-hover:scale-[1.02]">
-                        {/* Top accent bar */}
-                        <div className={`h-2 bg-gradient-to-r ${colors.bg}`} />
-
-                        {/* Badge */}
-                        {promo.badge && (
-                          <div className="absolute top-6 right-6 z-10">
-                            <span className={`px-4 py-1.5 rounded-full ${colors.badge} text-white text-xs font-bold shadow-lg uppercase tracking-wide`}>
-                              {promo.badge}
-                            </span>
-                          </div>
-                        )}
-
-                        {/* Promo Image */}
-                        {promo.image && (
-                          <div className="relative h-48 overflow-hidden">
-                            <motion.img
-                              whileHover={{ scale: 1.1 }}
-                              transition={{ duration: 0.6 }}
-                              src={promo.image}
-                              alt={promo.title}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className={`absolute inset-0 bg-gradient-to-t ${colors.bg} opacity-10`} />
-                          </div>
-                        )}
-
-                        {/* Content */}
-                        <div className="relative flex-grow flex flex-col p-6">
-                          <div className="flex-grow">
-                            <h3 className="text-2xl font-bold mb-3 text-gray-900 group-hover:text-[#D4AF37] transition-colors">
-                              {promo.title}
-                            </h3>
-
-                            {/* Discount Badge */}
-                            <div className="mb-4">
-                              <div className={`inline-flex items-center px-4 py-2 rounded-xl bg-gradient-to-r ${colors.bg} text-white font-bold text-3xl shadow-lg`}>
-                                <Tag className="w-6 h-6 mr-2" />
-                                {promo.discount}
-                              </div>
-                            </div>
-
-                            {/* Description */}
-                            <p className="text-gray-600 mb-4 line-clamp-2">
-                              {promo.description}
-                            </p>
-
-                            {/* Valid Until */}
-                            <div className="flex items-center text-sm text-gray-500 mb-4">
-                              <Clock className="w-4 h-4 mr-2" />
-                              <span>Berlaku hingga {promo.validUntil}</span>
-                            </div>
-                          </div>
-
-                          {/* View Promo Button */}
-                          <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="mt-4">
-                            <Button
-                              onClick={() => handleViewPromo(promo)}
-                              className={`w-full h-12 bg-gradient-to-r ${colors.bg} hover:opacity-90 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl font-semibold`}
-                            >
-                              <Sparkles className="w-4 h-4 mr-2" />
-                              Lihat Promo
-                            </Button>
-                          </motion.div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </div>
-
-              {/* ✅ NEW: "Lihat Semua Promo" Button - Only show if more than 3 promos */}
-              {promos.length > 3 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  className="text-center mt-12"
-                >
-                  <button
-                    onClick={() => setShowAllPromosPage(true)}
-                    className="group inline-flex items-center gap-3 px-8 py-4 bg-white hover:bg-emerald-50 border-2 border-emerald-600 rounded-xl text-emerald-700 font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
-                  >
-                    <span>Lihat Semua Promo</span>
-                    <span className="text-2xl group-hover:translate-x-2 transition-transform duration-300">→</span>
-                  </button>
-                  <p className="text-sm text-white/80 mt-3">
-                    Menampilkan 3 dari {promos.length} promo tersedia
-                  </p>
-                </motion.div>
-              )}
-            </>
-          ) : (
-            <Card className="bg-white/95 backdrop-blur-sm">
-              <CardContent className="text-center py-12">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center mx-auto mb-4">
-                  <Gift className="w-10 h-10 text-[#D4AF37]" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Belum Ada Promo</h3>
-                <p className="text-gray-600">Promo menarik akan segera hadir untuk Anda. Nantikan!</p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      </section>
 
       {/* Education Section */}
       <section
@@ -2449,11 +2212,7 @@ const ProspectiveJamaahDashboard = () => {
                     Paket
                   </button>
                 </li>
-                <li>
-                  <button onClick={() => scrollToSection(promosRef)} className="text-gray-400 hover:text-[#D4AF37] transition-colors">
-                    Promo
-                  </button>
-                </li>
+
                 <li>
                   <button onClick={() => scrollToSection(educationRef)} className="text-gray-400 hover:text-[#D4AF37] transition-colors">
                     Edukasi
@@ -2666,7 +2425,7 @@ const ProspectiveJamaahDashboard = () => {
               Profile Incomplete
             </DialogTitle>
             <DialogDescription>
-              Please complete your profile to {selectedPromo ? 'view promo details' : 'book a package'}
+              Please complete your profile to book a package
             </DialogDescription>
           </DialogHeader>
 
@@ -2675,7 +2434,7 @@ const ProspectiveJamaahDashboard = () => {
               <AlertCircle className="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" />
               <div>
                 <p className="text-sm text-gray-700 mb-2">
-                  To {selectedPromo ? 'access' : 'book'} the <span className="font-semibold text-[#D4AF37]">{selectedPromo?.title || selectedPackage?.name}</span> {selectedPromo ? 'promo' : 'package'}, you need to complete:
+                  To book the <span className="font-semibold text-[#D4AF37]">{selectedPackage?.name}</span> package, you need to complete:
                 </p>
                 <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
                   <li>Personal Information (Name, Phone, Address, etc.)</li>

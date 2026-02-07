@@ -28,7 +28,6 @@ const Navbar: React.FC<NavbarProps> = ({ onNavigate, onShowProfile, onShowAuth }
 
   const navItems = [
     { label: 'Beranda', section: 'home' },
-    { label: 'Promo', section: 'promo' },
     { label: 'Layanan', section: 'services' },
     { label: 'Paket', section: 'packages' },
     { label: 'Edukasi', section: 'education' },

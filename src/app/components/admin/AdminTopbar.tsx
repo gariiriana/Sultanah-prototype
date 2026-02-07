@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // ✅ NEW: For navigation
-import { Bell, Search, Users, Package, BookOpen, Tag, CreditCard, Newspaper, Calendar, X, AlertCircle, Clock, FileText, CheckCircle, Store, Gift, ShoppingCart } from 'lucide-react';
+import { Bell, Search, Users, Package, BookOpen, CreditCard, Newspaper, Calendar, X, AlertCircle, Clock, FileText, CheckCircle, Store, Gift, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
@@ -32,7 +32,7 @@ interface AdminTopbarProps {
     activePackages: number;
     netFlow: number;
     totalEducation: number;
-    totalPromos: number;
+
     totalArticles: number;
     totalItineraries: number;
     totalMarketplaceItems: number;
@@ -422,7 +422,7 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
     activePackages: 0,
     netFlow: 0,
     totalEducation: 0,
-    totalPromos: 0,
+
     totalArticles: 0,
     totalItineraries: 0,
     totalMarketplaceItems: 0,
@@ -459,13 +459,7 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
       gradient: 'from-orange-500 to-orange-600',
       iconBg: 'from-orange-100 to-orange-200'
     },
-    {
-      title: 'Total Promos',
-      value: statsData.totalPromos,
-      icon: Tag,
-      gradient: 'from-pink-500 to-pink-600',
-      iconBg: 'from-pink-100 to-pink-200'
-    },
+
     {
       title: 'Total Articles',
       value: statsData.totalArticles,
