@@ -76,12 +76,12 @@ const PackageDetailPage: React.FC<PackageDetailPageProps> = ({ packageId, onBack
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-12">
       {/* Header with Back Button */}
       <div className="bg-white border-b sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-4">
+        <div className="max-w-6xl mx-auto px-4 py-3 md:py-4">
           <button
             onClick={onBack}
-            className="flex items-center gap-2 text-gray-600 hover:text-[#D4AF37] transition-colors"
+            className="flex items-center gap-2 text-xs md:text-sm text-gray-600 hover:text-[#D4AF37] transition-colors"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" />
             <span>Kembali ke Paket</span>
           </button>
         </div>
@@ -89,44 +89,44 @@ const PackageDetailPage: React.FC<PackageDetailPageProps> = ({ packageId, onBack
 
       <div className="max-w-6xl mx-auto px-4 py-8">
         {/* Hero Image & Title */}
-        <div className="relative rounded-2xl overflow-hidden mb-8 shadow-2xl">
+        <div className="relative rounded-xl md:rounded-2xl overflow-hidden mb-6 md:mb-8 shadow-2xl">
           <img
             src={packageData.image || packageData.photo || 'https://via.placeholder.com/1200x400?text=Package+Image'}
             alt={packageData.name}
-            className="w-full h-[400px] object-cover"
+            className="w-full h-[300px] md:h-[400px] object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
 
           {/* Badge & Info Overlay */}
-          <div className="absolute top-4 right-4 flex gap-2">
-            <Badge className="bg-[#D4AF37] text-white px-4 py-1 text-sm uppercase">
+          <div className="absolute top-3 right-3 md:top-4 md:right-4 flex gap-1.5 md:gap-2">
+            <Badge className="bg-[#D4AF37] text-white px-2.5 md:px-4 py-0.5 md:py-1 text-[10px] md:text-sm uppercase font-bold">
               {packageData.type}
             </Badge>
             {packageData.packageClass && (
-              <Badge className="bg-white/90 text-gray-800 px-4 py-1 text-sm uppercase">
+              <Badge variant="secondary" className="bg-white/90 text-gray-800 px-2.5 md:px-4 py-0.5 md:py-1 text-[10px] md:text-sm uppercase font-bold">
                 {packageData.packageClass}
               </Badge>
             )}
           </div>
 
-          <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-            <h1 className="text-4xl font-bold mb-2">{packageData.name}</h1>
-            <div className="flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4" />
+          <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-white">
+            <h1 className="text-2xl md:text-4xl font-black mb-2 md:mb-3 drop-shadow-lg leading-tight">{packageData.name}</h1>
+            <div className="flex flex-wrap items-center gap-3 md:gap-4 text-[11px] md:text-sm font-medium">
+              <div className="flex items-center gap-1.5 md:gap-2 bg-black/30 backdrop-blur-sm px-2 md:px-0 py-1 md:py-0 rounded-lg md:bg-transparent">
+                <Clock className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span>{packageData.duration} Hari</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
+              <div className="flex items-center gap-1.5 md:gap-2 bg-black/30 backdrop-blur-sm px-2 md:px-0 py-1 md:py-0 rounded-lg md:bg-transparent">
+                <Calendar className="w-3.5 h-3.5 md:w-4 md:h-4" />
                 <span>{new Date(packageData.departureDate).toLocaleDateString('id-ID', {
                   day: 'numeric',
-                  month: 'long',
+                  month: 'short',
                   year: 'numeric'
                 })}</span>
               </div>
-              <div className="flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                <span>{packageData.availableSlots}/{packageData.maxParticipants} Slot</span>
+              <div className="flex items-center gap-1.5 md:gap-2 bg-black/30 backdrop-blur-sm px-2 md:px-0 py-1 md:py-0 rounded-lg md:bg-transparent">
+                <Users className="w-3.5 h-3.5 md:w-4 md:h-4" />
+                <span>{packageData.availableSlots}/{packageData.maxParticipants} <span className="hidden xs:inline">Slot</span></span>
               </div>
             </div>
           </div>
@@ -136,10 +136,10 @@ const PackageDetailPage: React.FC<PackageDetailPageProps> = ({ packageId, onBack
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Description */}
-            <Card>
-              <CardContent className="p-6">
-                <h2 className="text-2xl font-bold mb-4 text-gray-800">Deskripsi Paket</h2>
-                <p className="text-gray-600 leading-relaxed whitespace-pre-wrap">
+            <Card className="border-none md:border md:border-gray-200 shadow-sm md:shadow-md">
+              <CardContent className="p-4 md:p-6">
+                <h2 className="text-lg md:text-2xl font-bold mb-3 md:mb-4 text-gray-800">Deskripsi Paket</h2>
+                <p className="text-gray-600 text-sm md:text-base leading-relaxed whitespace-pre-wrap">
                   {(packageData as any).detailDescription || packageData.description || 'Deskripsi paket tidak tersedia.'}
                 </p>
               </CardContent>
@@ -147,17 +147,17 @@ const PackageDetailPage: React.FC<PackageDetailPageProps> = ({ packageId, onBack
 
             {/* Package Features */}
             {packageData.features && packageData.features.length > 0 && (
-              <Card className="border-2 border-[#D4AF37]/30">
-                <CardContent className="p-6">
-                  <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-                    <CheckCircle2 className="w-6 h-6 text-[#D4AF37]" />
+              <Card className="border-2 border-[#D4AF37]/30 shadow-md">
+                <CardContent className="p-4 md:p-6">
+                  <h2 className="text-lg md:text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
+                    <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6 text-[#D4AF37]" />
                     Fasilitas Paket
                   </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                     {packageData.features.map((feature: string, index: number) => (
-                      <div key={index} className="flex items-start gap-3 p-3 bg-gradient-to-r from-green-50 to-transparent rounded-lg border border-green-200">
-                        <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-                        <span className="text-gray-700 text-sm">{feature}</span>
+                      <div key={index} className="flex items-center gap-2.5 p-2.5 md:p-3 bg-gradient-to-r from-green-50 to-transparent rounded-lg border border-green-200/50">
+                        <CheckCircle2 className="w-4 h-4 md:w-5 md:h-5 text-green-600 flex-shrink-0" />
+                        <span className="text-gray-700 text-[11px] md:text-sm font-medium">{feature}</span>
                       </div>
                     ))}
                   </div>
@@ -207,26 +207,26 @@ const PackageDetailPage: React.FC<PackageDetailPageProps> = ({ packageId, onBack
 
             {/* Itinerary */}
             {packageData.itinerary && packageData.itinerary.length > 0 && (
-              <Card>
-                <CardContent className="p-6">
-                  <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-                    <MapPin className="w-6 h-6 text-[#D4AF37]" />
+              <Card className="shadow-sm">
+                <CardContent className="p-4 md:p-6">
+                  <h2 className="text-lg md:text-2xl font-bold mb-4 md:mb-6 text-gray-800 flex items-center gap-2">
+                    <MapPin className="w-5 h-5 md:w-6 md:h-6 text-[#D4AF37]" />
                     Itinerary Perjalanan
                   </h2>
-                  <div className="space-y-4">
+                  <div className="space-y-4 md:space-y-6">
                     {packageData.itinerary.map((day: string, index: number) => (
-                      <div key={index} className="flex gap-4">
+                      <div key={index} className="flex gap-3 md:gap-4 group">
                         <div className="flex flex-col items-center">
-                          <div className="w-10 h-10 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded-full flex items-center justify-center text-white font-bold">
+                          <div className="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-br from-[#D4AF37] to-[#FFD700] rounded-full flex items-center justify-center text-white text-xs md:text-base font-bold flex-shrink-0 shadow-md">
                             {index + 1}
                           </div>
                           {index < packageData.itinerary!.length - 1 && (
-                            <div className="w-0.5 h-full bg-gradient-to-b from-[#D4AF37] to-transparent mt-2"></div>
+                            <div className="w-0.5 h-full bg-gradient-to-b from-[#D4AF37] via-[#D4AF37]/30 to-transparent my-1"></div>
                           )}
                         </div>
-                        <div className="flex-1 pb-6">
-                          <h3 className="font-semibold text-gray-800 mb-1">Hari {index + 1}</h3>
-                          <p className="text-gray-600 text-sm">{day}</p>
+                        <div className="flex-1 pb-4 md:pb-6 border-b border-gray-100 md:border-none">
+                          <h3 className="font-bold text-gray-800 text-sm md:text-base mb-1">Hari {index + 1}</h3>
+                          <p className="text-gray-600 text-[11px] md:text-sm leading-relaxed">{day}</p>
                         </div>
                       </div>
                     ))}
@@ -255,82 +255,82 @@ const PackageDetailPage: React.FC<PackageDetailPageProps> = ({ packageId, onBack
             )}
 
             {/* Tour Leader & Muthawif Information */}
-            {(((packageData as any).tourLeaderName && (packageData as any).tourLeaderName.trim() !== '') ||
-              ((packageData as any).muthawifName && (packageData as any).muthawifName.trim() !== '')) && (
-                <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white">
-                  <CardContent className="p-6">
-                    <h2 className="text-2xl font-bold mb-4 text-gray-800 flex items-center gap-2">
-                      <UserCheck className="w-6 h-6 text-purple-600" />
-                      Tim Pembimbing Perjalanan
-                    </h2>
-                    <div className="space-y-4">
-                      {(packageData as any).tourLeaderName && (packageData as any).tourLeaderName.trim() !== '' && (
-                        <div className="flex items-center gap-4 p-4 bg-white rounded-lg border-2 border-purple-200 hover:border-purple-400 transition-all">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center flex-shrink-0">
-                            <UserCheck className="w-6 h-6 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm text-purple-600 font-medium">Tour Leader</p>
-                            <p className="font-bold text-gray-800 text-lg">{(packageData as any).tourLeaderName}</p>
-                            <p className="text-xs text-gray-500 mt-1">Pembimbing perjalanan berpengalaman</p>
-                          </div>
-                          <Award className="w-6 h-6 text-purple-400" />
-                        </div>
-                      )}
-                      {(packageData as any).muthawifName && (packageData as any).muthawifName.trim() !== '' && (
-                        <div className="flex items-center gap-4 p-4 bg-white rounded-lg border-2 border-emerald-200 hover:border-emerald-400 transition-all">
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center flex-shrink-0">
-                            <Award className="w-6 h-6 text-white" />
-                          </div>
-                          <div className="flex-1">
-                            <p className="text-sm text-emerald-600 font-medium">Muthawif</p>
-                            <p className="font-bold text-gray-800 text-lg">{(packageData as any).muthawifName}</p>
-                            <p className="text-xs text-gray-500 mt-1">Pembimbing ibadah di Tanah Suci</p>
-                          </div>
-                          <Award className="w-6 h-6 text-emerald-400" />
-                        </div>
-                      )}
+            <Card className="border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-white overflow-hidden shadow-lg">
+              <div className="bg-purple-600 px-4 md:px-6 py-2.5 md:py-3 flex items-center gap-2">
+                <UserCheck className="w-4 h-4 md:w-5 md:h-5 text-white" />
+                <h2 className="text-sm md:text-lg font-bold text-white uppercase tracking-tight">Tim Pembimbing Perjalanan</h2>
+              </div>
+              <CardContent className="p-4 md:p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                  {/* Tour Leader Card */}
+                  <div className="flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-white rounded-xl border-2 border-purple-100 shadow-sm hover:border-purple-300 transition-all">
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-inner">
+                      <UserCheck className="w-6 h-6 md:w-7 md:h-7 text-white" />
                     </div>
-                    <div className="mt-4 p-3 bg-gradient-to-r from-purple-50 to-emerald-50 border border-purple-200 rounded-lg">
-                      <p className="text-xs text-gray-700">
-                        🌟 <strong>Dipandu oleh profesional:</strong> Perjalanan Anda akan dibimbing oleh tim berpengalaman yang siap membantu Anda di setiap langkah perjalanan ibadah.
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">Tour Leader</p>
+                      <p className="font-bold text-gray-900 text-sm md:text-lg truncate">
+                        {(packageData as any).tourLeaderName && (packageData as any).tourLeaderName.trim() !== ''
+                          ? (packageData as any).tourLeaderName
+                          : 'Akan Segera Diumumkan'}
                       </p>
+                      <p className="text-[9px] md:text-[10px] text-gray-500">Pembimbing Teknis</p>
                     </div>
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
+
+                  {/* Muthawif Card */}
+                  <div className="flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-white rounded-xl border-2 border-emerald-100 shadow-sm hover:border-emerald-300 transition-all">
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center flex-shrink-0 shadow-inner">
+                      <Award className="w-6 h-6 md:w-7 md:h-7 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Muthawif</p>
+                      <p className="font-bold text-gray-900 text-sm md:text-lg truncate">
+                        {(packageData as any).muthawifName && (packageData as any).muthawifName.trim() !== ''
+                          ? (packageData as any).muthawifName
+                          : 'Akan Segera Diumumkan'}
+                      </p>
+                      <p className="text-[9px] md:text-[10px] text-gray-500">Pembimbing Ibadah</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 md:mt-6 p-3 md:p-4 bg-gradient-to-r from-purple-50 to-emerald-50 border border-purple-200 rounded-xl flex items-start gap-2.5 md:gap-3">
+                  <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-sm">
+                    <Star className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#D4AF37]" />
+                  </div>
+                  <p className="text-[11px] md:text-xs text-gray-700 leading-relaxed italic md:not-italic">
+                    🌟 <strong>Partner Ibadah:</strong> Tim kami memastikan perjalanan ibadah Anda berjalan lancar, nyaman, dan sesuai sunnah.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Package Items (Perlengkapan dalam Paket) */}
             {(packageData as any).packageItems && (packageData as any).packageItems.length > 0 && (
-              <Card className="border-2 border-[#D4AF37]/30 bg-gradient-to-br from-[#FFF9F0] to-white">
-                <CardContent className="p-6">
+              <Card className="border-2 border-[#D4AF37]/30 bg-gradient-to-br from-[#FFF9F0] to-white shadow-md">
+                <CardContent className="p-4 md:p-6">
                   <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#FFD700] flex items-center justify-center">
-                      <Star className="w-5 h-5 text-white" />
+                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#FFD700] flex items-center justify-center flex-shrink-0">
+                      <Star className="w-4 h-4 md:w-5 md:h-5 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-800">Perlengkapan yang Sudah Termasuk</h2>
-                      <p className="text-sm text-gray-600">Item-item ini sudah termasuk dalam harga paket</p>
+                      <h2 className="text-lg md:text-2xl font-bold text-gray-800">Perlengkapan Paket</h2>
+                      <p className="text-[11px] md:text-sm text-gray-600 mt-0.5">Sudah termasuk dalam harga paket</p>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 md:gap-3">
                     {(packageData as any).packageItems.map((item: any, index: number) => (
-                      <div key={index} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-[#D4AF37]/20 hover:border-[#D4AF37] transition-all">
-                        <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                          <Star className="w-4 h-4 text-green-600" />
+                      <div key={index} className="flex items-center gap-3 p-2.5 md:p-3 bg-white rounded-lg border border-[#D4AF37]/20 hover:border-[#D4AF37] transition-all">
+                        <div className="w-7 h-7 md:w-8 md:h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                          <CheckCircle2 className="w-3.5 h-3.5 md:w-4 md:h-4 text-green-600" />
                         </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-gray-800">{item.itemName}</p>
-                          <p className="text-xs text-gray-500">Jumlah: {item.quantity}x</p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-bold text-gray-800 text-[11px] md:text-sm truncate">{item.itemName}</p>
+                          <p className="text-[10px] md:text-xs text-gray-500">Jumlah: {item.quantity}x</p>
                         </div>
                       </div>
                     ))}
-                  </div>
-                  <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-start gap-2">
-                    <Star className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                    <p className="text-xs text-blue-700">
-                      💡 <strong>All-in pricing:</strong> Semua perlengkapan di atas sudah termasuk dalam harga paket. Anda tidak perlu membayar tambahan!
-                    </p>
                   </div>
                 </CardContent>
               </Card>

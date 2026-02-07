@@ -37,7 +37,6 @@ import {
   Home,
   Quote,
   ThumbsUp,
-  Users,
   Check,
 
   Sparkles,
@@ -51,6 +50,7 @@ import {
 
 import { Button } from '../../components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card';
+import kaabaFamily from '@/assets/images/kaaba-family.jpg';
 import { Label } from '../../components/ui/label';
 import { Textarea } from '../../components/ui/textarea';
 import { Input } from '../../components/ui/input';
@@ -370,90 +370,6 @@ const ProspectiveJamaahDashboard = () => {
   };
 
 
-
-  // Check if profile is complete for booking
-  const checkProfileComplete = () => {
-    if (!userProfile) {
-      console.log('❌ Profile check: No userProfile');
-      return false;
-    }
-
-    const requiredFields = [
-      userProfile?.displayName,
-      userProfile?.phoneNumber,
-      userProfile?.identityInfo?.fullName,
-      userProfile?.identityInfo?.idNumber,
-      userProfile?.identityInfo?.birthDate,
-      userProfile?.identityInfo?.country,
-      userProfile?.identityInfo?.state,
-      userProfile?.identityInfo?.city,
-      userProfile?.identityInfo?.postalCode,
-      userProfile?.identityInfo?.streetAddress,
-    ];
-
-    const requiredDocuments = [
-      userProfile?.travelDocuments?.passportNumber,
-      userProfile?.travelDocuments?.passportExpiry,
-      userProfile?.travelDocuments?.passportPhoto,
-      userProfile?.travelDocuments?.ktpPhoto,
-      userProfile?.travelDocuments?.kkPhoto,
-      userProfile?.travelDocuments?.birthCertificate,
-      userProfile?.travelDocuments?.visaDocument,
-      userProfile?.travelDocuments?.flightTicket,
-      userProfile?.travelDocuments?.vaccinationCertificate,
-    ];
-
-    const requiredEmergencyContact = [
-      userProfile?.emergencyContact?.name,
-      userProfile?.emergencyContact?.phone,
-      userProfile?.emergencyContact?.relationship,
-    ];
-
-    const allFieldsFilled = requiredFields.every(field => field && field !== '');
-    const allDocumentsUploaded = requiredDocuments.every(doc => doc && doc !== '');
-    const emergencyContactFilled = requiredEmergencyContact.every(field => field && field !== '');
-
-    console.log('✅ Profile check results:', {
-      allFieldsFilled,
-      allDocumentsUploaded,
-      emergencyContactFilled,
-      totalComplete: allFieldsFilled && allDocumentsUploaded && emergencyContactFilled
-    });
-
-    return allFieldsFilled && allDocumentsUploaded && emergencyContactFilled;
-  };
-
-  // Handle book now click
-  const handleBookNow = (pkg: any) => {
-    console.log('🎯 Book Now clicked!');
-    console.log('📦 Package data:', pkg);
-
-    if (!pkg) {
-      console.error('❌ No package data!');
-      toast.error('Package data not available');
-      return;
-    }
-
-    const isComplete = checkProfileComplete();
-
-    console.log('📊 Profile complete status:', isComplete);
-
-    if (!isComplete) {
-      console.log('⚠️ Profile incomplete, showing dialog...');
-      setSelectedPackage(pkg);
-      setShowProfileIncompleteDialog(true);
-
-      // Force trigger dialog after short delay to ensure state update
-      setTimeout(() => {
-        console.log('Dialog state after 100ms:', showProfileIncompleteDialog);
-      }, 100);
-    } else {
-      // Profile is complete, proceed to package detail page
-      console.log('✅ Profile complete, showing package detail...');
-      setSelectedPackage(pkg);
-      setShowPackageDetail(true);
-    }
-  };
 
 
 
@@ -1390,268 +1306,150 @@ const ProspectiveJamaahDashboard = () => {
         <AdsBanner role="prospective-jamaah" />
       </div>
 
-      {/* Packages Overview Section - NEW DESIGN */}
+
+      {/* Packages Section - Promotional Layout with White Premium Background */}
       <section
         ref={packagesRef}
-        className="relative min-h-screen bg-cover bg-center bg-no-repeat flex items-center"
-        style={{ backgroundImage: `url(https://images.unsplash.com/photo-1676200928665-8b97df7ab979?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1bXJhaCUyMHBpbGdyaW1hZ2UlMjBtb3NxdWV8ZW58MXx8fHwxNzY3MTE2MzU0fDA&ixlib=rb-4.1.0&q=80&w=1080)` }}
+        className="relative py-24 overflow-hidden"
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/70 to-black/80"></div>
+        {/* Background Image */}
+        <div className="absolute inset-0 z-0">
+          <img
+            src="https://images.unsplash.com/photo-1765892272462-bad4a8ba0fb9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWRpbmElMjBtb3NxdWUlMjBncmVlbiUyMGRvbWV8ZW58MXx8fHwxNzY4MTg1ODc3fDA&ixlib=rb-4.1.0&q=80&w=1080"
+            alt="Medina Mosque with Green Dome"
+            className="w-full h-full object-cover"
+          />
+          {/* Gradient Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-900/75 via-pink-900/65 to-rose-900/75" />
+          <div className="absolute inset-0 bg-gradient-to-t from-white/95 via-white/90 to-white/95" />
+        </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            {/* Icon */}
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#C5A572] mb-8 shadow-2xl">
-              <Package className="w-10 h-10 text-white" />
-            </div>
+        {/* Background Pattern */}
+        <div className="absolute inset-0 z-0 opacity-10">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23D4AF37' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
+          />
+        </div>
 
-            {/* Title */}
-            <h2 className="text-5xl md:text-6xl font-bold text-white mb-6 drop-shadow-2xl">
-              Paket Umroh Sultanah
-            </h2>
+        {/* Floating Orbs */}
+        <motion.div
+          animate={{ y: [0, -20, 0], rotate: [0, 180, 360] }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute bottom-20 right-20 w-64 h-64 bg-gradient-to-br from-pink-300/20 to-rose-300/20 rounded-full blur-3xl z-0"
+        />
+        <motion.div
+          animate={{ y: [0, 25, 0], x: [0, -20, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute top-32 left-16 w-72 h-72 bg-gradient-to-tl from-purple-300/20 to-pink-300/20 rounded-full blur-3xl z-0"
+        />
 
-            {/* Subtitle */}
-            <p className="text-xl md:text-2xl text-white/90 mb-12 max-w-3xl mx-auto drop-shadow-lg">
-              Kami menyediakan paket umroh terbaik dengan berbagai pilihan untuk memenuhi kebutuhan dan budget Anda
-            </p>
+        {/* Background Decorative Elements */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+          <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#D4AF37]/10 rounded-full blur-[120px]" />
+          <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#D4AF37]/10 rounded-full blur-[120px]" />
+        </div>
 
-            {/* Highlights - Kelebihan Sultanah */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1, duration: 0.5 }}
-                className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20"
-              >
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center mx-auto mb-4">
-                  <Check className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-lg font-bold text-white mb-2">Bimbingan Profesional</h3>
-                <p className="text-sm text-white/80">Tour leader & mutawwif berpengalaman mendampingi perjalanan Anda</p>
-              </motion.div>
+        <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
 
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2, duration: 0.5 }}
-                className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20"
-              >
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center mx-auto mb-4">
-                  <Star className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-lg font-bold text-white mb-2">Akomodasi Premium</h3>
-                <p className="text-sm text-white/80">Hotel bintang 4-5 dekat Masjidil Haram & Masjid Nabawi</p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3, duration: 0.5 }}
-                className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 border border-white/20"
-              >
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center mx-auto mb-4">
-                  <Sparkles className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-lg font-bold text-white mb-2">Pilihan Variatif</h3>
-                <p className="text-sm text-white/80">Paket reguler, promo spesial, hingga limited edition eksklusif</p>
-              </motion.div>
-            </div>
-
-            {/* CTA Button */}
+            {/* Left Column: Image with Frame */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0.4, duration: 0.5 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="relative"
             >
-              <Button
-                onClick={() => setShowAllPackagesPage(true)}
-                className="bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] hover:opacity-90 text-white font-bold text-lg px-12 py-7 rounded-xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
-              >
-                <Package className="w-6 h-6 mr-3" />
-                Lihat Detail Paket
-              </Button>
-              <p className="text-sm text-white/70 mt-4">
-                {packages.length} paket tersedia untuk Anda
-              </p>
+              <div className="relative z-10 rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-[#D4AF37]/20">
+                <img
+                  src={kaabaFamily}
+                  alt="Family at Kaaba"
+                  className="w-full aspect-[4/5] lg:aspect-square object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+              </div>
+
+              {/* Decorative Frame Elements */}
+              <div className="absolute -top-6 -left-6 w-24 h-24 border-t-4 border-l-4 border-[#D4AF37]/40 rounded-tl-3xl z-0" />
+              <div className="absolute -bottom-6 -right-6 w-24 h-24 border-b-4 border-r-4 border-[#D4AF37]/40 rounded-br-3xl z-0" />
             </motion.div>
-          </motion.div>
-        </div>
-      </section>
 
-      {/* OLD PACKAGES GRID - REMOVED */}
-      {/* Packages Section with Umrah Background - OLD CODE BELOW (KEEP FOR REFERENCE) */}
-      <section
-        ref={packagesRef}
-        className="relative min-h-screen bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(https://images.unsplash.com/photo-1676200928665-8b97df7ab979?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHx1bXJhaCUyMHBpbGdyaW1hZ2UlMjBtb3NxdWV8ZW58MXx8fHwxNzY3MTE2MzU0fDA&ixlib=rb-4.1.0&q=80&w=1080)` }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/70"></div>
+            {/* Right Column: Content */}
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+              className="flex flex-col space-y-8"
+            >
+              <div>
+                <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-gray-900 leading-tight mb-6">
+                  Khidmat Ibadah <br />
+                  <span className="bg-gradient-to-r from-[#D4AF37] via-[#FFD700] to-[#D4AF37] bg-clip-text text-transparent">Terbaik & Amanah</span>
+                </h2>
+                <p className="text-lg md:text-xl text-gray-700 leading-relaxed">
+                  Menemani perjalanan spiritual Anda dengan pelayanan penuh kekhusyukan dan kenyamanan dari hati.
+                </p>
+              </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Paket Umroh Terbaik untuk Anda
-            </h2>
-            <p className="text-xl text-white/90 max-w-3xl mx-auto">
-              Wujudkan impian ibadah umroh Anda bersama kami. Nikmati pelayanan terbaik,
-              akomodasi nyaman, dan bimbingan spiritual yang mendalam.
-            </p>
-          </div>
-
-          {packages.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {packages.slice(0, 3).map((pkg, index) => (
-                  <motion.div
-                    key={pkg.id}
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
+              {/* Benefit List */}
+              <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6">
+                {[
+                  "Hotel Premium Ring 1",
+                  "Transportasi Eksekutif",
+                  "Muthawif Sesuai Sunnah",
+                  "Menu Nusantara Higienis",
+                  "Asuransi Menyeluruh",
+                  "Handling Bandara-Bandara"
+                ].map((benefit, idx) => (
+                  <motion.li
+                    key={idx}
+                    initial={{ opacity: 0, x: 20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
                     viewport={{ once: true }}
-                    transition={{ delay: index * 0.1, duration: 0.5 }}
-                    whileHover={{ y: -10 }}
-                    className="group h-full"
+                    transition={{ delay: 0.4 + (idx * 0.1) }}
+                    className="flex items-start gap-3 p-4 rounded-xl bg-white/60 backdrop-blur-sm border border-[#D4AF37]/10 hover:border-[#D4AF37]/30 hover:shadow-md transition-all"
                   >
-                    <div className="relative h-full flex flex-col rounded-3xl bg-white shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_20px_60px_rgba(212,175,55,0.25)] transition-all duration-500 overflow-hidden group-hover:scale-[1.02]">
-                      {/* Subtle top gradient accent */}
-                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                      {/* Package Image */}
-                      {(pkg.image || pkg.photo) && (
-                        <div className="relative h-56 overflow-hidden">
-                          <motion.img
-                            whileHover={{ scale: 1.1 }}
-                            transition={{ duration: 0.6 }}
-                            src={pkg.image || pkg.photo}
-                            alt={pkg.name}
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-
-                          {/* Badge */}
-                          {pkg.type && (
-                            <div className="absolute top-4 right-4">
-                              <span className="px-4 py-1.5 rounded-full bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] text-white text-sm font-semibold shadow-2xl backdrop-blur-sm border border-white/20">
-                                {pkg.type.toUpperCase()}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Content */}
-                      <div className="relative flex-grow flex flex-col p-6 bg-gradient-to-b from-white to-gray-50/30">
-                        <div className="flex-grow">
-                          <h3 className="text-2xl font-semibold mb-2 text-gray-900 group-hover:text-[#D4AF37] transition-colors">
-                            {pkg.name}
-                          </h3>
-
-                          {/* Price */}
-                          <div className="mb-6">
-                            <div className="text-sm text-gray-500 mb-1">Starting from</div>
-                            <div className="text-3xl font-bold bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] bg-clip-text text-transparent">
-                              {formatCurrency(pkg.price)}
-                            </div>
-                            <div className="text-sm text-gray-500">per person</div>
-                          </div>
-
-                          {/* Info Cards */}
-                          <div className="grid grid-cols-3 gap-3 mb-6">
-                            <div className="flex flex-col items-center p-3 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200">
-                              <Clock className="w-5 h-5 text-blue-600 mb-1" />
-                              <span className="text-xs font-semibold text-blue-900">{pkg.duration}D</span>
-                            </div>
-                            <div className="flex flex-col items-center p-3 rounded-xl bg-gradient-to-br from-green-50 to-green-100 border border-green-200">
-                              <Calendar className="w-5 h-5 text-green-600 mb-1" />
-                              <span className="text-xs font-semibold text-green-900">{pkg.departureDate ? new Date(pkg.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'TBD'}</span>
-                            </div>
-                            <div className="flex flex-col items-center p-3 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200">
-                              <Users className="w-5 h-5 text-purple-600 mb-1" />
-                              <span className="text-xs font-semibold text-purple-900">{pkg.availableSlots || 0}</span>
-                            </div>
-                          </div>
-
-                          {/* Features */}
-                          {pkg.features && pkg.features.length > 0 && (
-                            <div className="border-t border-gray-200 pt-4 mt-4">
-                              <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                                <Check className="w-4 h-4 mr-1 text-[#D4AF37]" />
-                                Fasilitas Paket:
-                              </p>
-                              <ul className="space-y-2">
-                                {pkg.features.slice(0, 3).map((feature: string, i: number) => (
-                                  <li key={i} className="flex items-start text-sm text-gray-600">
-                                    <Check className="w-4 h-4 mr-2 text-[#D4AF37] flex-shrink-0 mt-0.5" />
-                                    <span className="line-clamp-1">{feature}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Book Button */}
-                        <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="mt-6">
-                          <Button
-                            onClick={() => handleBookNow(pkg)}
-                            disabled={pkg.availableSlots === 0}
-                            className="w-full h-12 bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] hover:from-[#B89560] hover:via-[#C5A045] hover:to-[#E3C034] text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            {pkg.availableSlots === 0 ? '✕ Kuota Penuh' : '🕌 Pesan Sekarang'}
-                          </Button>
-                        </motion.div>
-                      </div>
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#FFD700] flex items-center justify-center shadow-sm mt-0.5">
+                      <Check className="w-4 h-4 text-white" />
                     </div>
-                  </motion.div >
+                    <span className="text-sm md:text-base text-gray-800 font-medium leading-relaxed">{benefit}</span>
+                  </motion.li>
                 ))}
-              </div >
+              </ul>
 
-              {/* ✅ NEW: "Lihat Semua Paket" Button - Only show if more than 3 packages */}
-              {
-                packages.length > 3 && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="text-center mt-12"
-                  >
-                    <button
-                      onClick={() => setShowAllPackagesPage(true)}
-                      className="group inline-flex items-center gap-3 px-8 py-4 bg-white hover:bg-emerald-50 border-2 border-emerald-600 rounded-xl text-emerald-700 font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
+              {/* CTA Button */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 1.1 }}
+                className="pt-6"
+              >
+                <Button
+                  onClick={() => setShowAllPackagesPage(true)}
+                  className="group relative px-10 py-7 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] hover:from-[#C5A572] hover:to-[#D4AF37] text-white rounded-2xl text-xl font-bold transition-all duration-300 shadow-[0_10px_40px_rgba(212,175,55,0.3)] hover:shadow-[0_15px_50px_rgba(212,175,55,0.4)] overflow-hidden"
+                >
+                  <span className="relative z-10 flex items-center gap-3">
+                    Lihat Detail Paket
+                    <motion.span
+                      animate={{ x: [0, 5, 0] }}
+                      transition={{ repeat: Infinity, duration: 1.5 }}
                     >
-                      <span>Lihat Semua Paket</span>
-                      <span className="text-2xl group-hover:translate-x-2 transition-transform duration-300">→</span>
-                    </button>
-                    <p className="text-sm text-white/80 mt-3">
-                      Menampilkan 3 dari {packages.length} paket tersedia
-                    </p>
-                  </motion.div>
-                )
-              }
-            </>
-          ) : (
-            <Card className="bg-white/95 backdrop-blur-sm">
-              <CardContent className="text-center py-12">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center mx-auto mb-4">
-                  <Package className="w-10 h-10 text-[#D4AF37]" />
-                </div>
-                <h3 className="text-xl font-semibold mb-2">Paket Sedang Disiapkan</h3>
-                <p className="text-gray-600">Kami sedang menyiapkan paket umroh terbaik untuk Anda. Nantikan segera!</p>
-              </CardContent>
-            </Card>
-          )}
+                      →
+                    </motion.span>
+                  </span>
+                  <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+                </Button>
+              </motion.div>
+            </motion.div>
+
+          </div>
         </div>
       </section>
-
-
 
       {/* Education Section */}
       <section
@@ -2041,10 +1839,10 @@ const ProspectiveJamaahDashboard = () => {
             </Card>
           )}
         </div>
-      </section >
+      </section>
 
       {/* Contact Section */}
-      < section
+      <section
         ref={contactRef}
         className="relative min-h-screen bg-gradient-to-br from-gray-50 via-white to-[#FFF9F0] py-20"
       >
@@ -2271,7 +2069,7 @@ const ProspectiveJamaahDashboard = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-b from-gray-900 to-black text-white py-12" >
+      < footer className="bg-gradient-to-b from-gray-900 to-black text-white py-12" >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-8">
 
@@ -2365,7 +2163,7 @@ const ProspectiveJamaahDashboard = () => {
             </p>
           </div>
         </div>
-      </footer>
+      </footer >
 
       {/* Profile Edit Dialog */}
       <Dialog open={showProfileDialog} onOpenChange={setShowProfileDialog} >

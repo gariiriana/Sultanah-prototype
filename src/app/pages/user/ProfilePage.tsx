@@ -4,13 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/ca
 import { Input } from '../../components/ui/input';
 import { Label } from '../../components/ui/label';
 import { Progress } from '../../components/ui/progress';
-import { ArrowLeft, User, FileText, Phone, Upload, CheckCircle2, File, FileSpreadsheet, Trash2, AlertTriangle, X, LogOut, Star, Heart, Pill, AlertCircle, Activity } from 'lucide-react';
+import { ArrowLeft, User, FileText, Phone, Upload, CheckCircle2, File, Trash2, LogOut, Heart } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { toast } from 'sonner';
 import { processFile, formatFileSize } from '../../../utils/fileCompression';
 import { AddressInput, type AddressData } from '../../components/AddressInput';
 import ConfirmDialog from '../../components/ConfirmDialog';
-import { useNavigate } from 'react-router-dom';
+
 
 interface ProfilePageProps {
   onBack: () => void;
@@ -18,7 +18,7 @@ interface ProfilePageProps {
 
 const ProfilePage: React.FC<ProfilePageProps> = ({ onBack }) => {
   const { userProfile, updateUserProfile, signOut } = useAuth();
-  const navigate = useNavigate();
+
   const [loading, setLoading] = useState(false);
   const [deleteConfirmation, setDeleteConfirmation] = useState<{
     isOpen: boolean;

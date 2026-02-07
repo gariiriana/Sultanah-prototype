@@ -8,11 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
 import { Badge } from '../../../components/ui/badge';
 import { Plus, Edit, Trash, Package as PackageIcon, DollarSign, Calendar, Users, Clock, Image as ImageIcon, FileText, List, CheckCircle, Plane, Hotel, Sparkles, AlertTriangle, UserCheck, ShoppingBag, X, File } from 'lucide-react'; // ✅ and Upload/Download removed
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, writeBatch } from 'firebase/firestore'; // ✅ added writeBatch
 import { db } from '../../../../config/firebase';
 import { toast } from 'sonner';
-import { Package } from '../../../../types';
-import { compressImage, validateImageFile } from '../../../../utils/imageCompression';
+import { Checkbox } from '../../../components/ui/checkbox';
+import regulerPackageImg from '@/assets/images/reguler-package.png';
+import limitedEditionImg from '@/assets/images/limited-edition.png';
 
 const PackageManagement = () => {
   const [packages, setPackages] = useState<Package[]>([]);
@@ -24,6 +25,11 @@ const PackageManagement = () => {
   const [tourLeaders, setTourLeaders] = useState<any[]>([]);
   // ✅ NEW: Muthawifs state
   const [muthawifs, setMuthawifs] = useState<any[]>([]);
+  // ✅ NEW: Bulk Delete state
+  const [selectedPackages, setSelectedPackages] = useState<string[]>([]);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [filterTab, setFilterTab] = useState<'all' | 'reguler' | 'promo' | 'limited-edition'>('all');
   const [formData, setFormData] = useState({
     name: '',
     type: 'umrah' as 'umrah' | 'hajj', // ✅ REMOVED 'ziarah'
@@ -524,13 +530,63 @@ const PackageManagement = () => {
     }
   };
 
+  // ✅ NEW: Generate Dummy Data function
+  const handleBulkDelete = () => {
+    if (selectedPackages.length === 0) return;
+    setBulkDeleteDialogOpen(true);
+  };
+
+  const confirmBulkDelete = async () => {
+    setBulkDeleteDialogOpen(false);
+
+    setIsBulkDeleting(true);
+    toast.loading(`Menghapus ${selectedPackages.length} paket...`);
+
+    try {
+      const batch = writeBatch(db);
+      selectedPackages.forEach((id) => {
+        batch.delete(doc(db, 'packages', id));
+      });
+
+      await batch.commit();
+
+      setPackages(prev => prev.filter(p => !selectedPackages.includes(p.id)));
+      setSelectedPackages([]);
+      toast.dismiss();
+      toast.success('Peket yang dipilih berhasil dihapus');
+    } catch (error) {
+      console.error('Error bulk deleting packages:', error);
+      toast.dismiss();
+      toast.error('Gagal menghapus beberapa paket');
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
+  const toggleSelectAll = () => {
+    const filtered = packages.filter(p => filterTab === 'all' || p.packageCategory === filterTab);
+    if (selectedPackages.length === filtered.length) {
+      setSelectedPackages([]);
+    } else {
+      setSelectedPackages(filtered.map(p => p.id));
+    }
+  };
+
+  const toggleSelectPackage = (id: string) => {
+    setSelectedPackages(prev =>
+      prev.includes(id)
+        ? prev.filter(pId => pId !== id)
+        : [...prev, id]
+    );
+  };
+
   const resetForm = () => {
     setEditingPackage(null);
     setFormData({
       name: '',
       type: 'umrah',
       packageClass: 'reguler',
-      packageCategory: 'reguler', // ✅ NEW: Package category
+      packageCategory: 'reguler',
       price: '',
       duration: '',
       departureDate: '',
@@ -539,7 +595,6 @@ const PackageManagement = () => {
       features: '',
       description: '',
       photo: '',
-      // Detail page fields
       hotel: '',
       airline: '',
       includes: '',
@@ -549,14 +604,10 @@ const PackageManagement = () => {
       terms: '',
       meetingPoint: '',
       whatsappNumber: '',
-      // ✅ NEW: Tour Leader assignment
       assignedTourLeaderId: '',
-      // ✅ NEW: Muthawif assignment
       assignedMuthawifId: '',
     });
-    // ✅ Clear package items
     setPackageItems([]);
-    // ✅ Clear file uploads (Base64)
     setPackageFile(null);
     setScheduleFile(null);
     setPackageFileBase64('');
@@ -565,7 +616,6 @@ const PackageManagement = () => {
     setScheduleFileName('');
   };
 
-  // ✅ NEW: Form validation function
   const isFormValid = () => {
     return (
       formData.name.trim() !== '' &&
@@ -573,7 +623,7 @@ const PackageManagement = () => {
       formData.duration.trim() !== '' &&
       formData.departureDate.trim() !== '' &&
       formData.maxParticipants.trim() !== '' &&
-      formData.features.trim() !== '' && // ✅ Features now required
+      formData.features.trim() !== '' &&
       formData.hotel.trim() !== '' &&
       formData.airline.trim() !== '' &&
       formData.includes.trim() !== '' &&
@@ -594,12 +644,14 @@ const PackageManagement = () => {
           setDialogOpen(open);
           if (!open) resetForm();
         }}>
-          <DialogTrigger asChild>
-            <Button className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700]">
-              <Plus className="w-4 h-4 mr-2" />
-              Add Package
-            </Button>
-          </DialogTrigger>
+          <div className="flex gap-2">
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700]">
+                <Plus className="w-4 h-4 mr-2" />
+                Add Package
+              </Button>
+            </DialogTrigger>
+          </div >
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white/95 via-[#FFF9F0]/95 to-[#F5ECD7]/95 backdrop-blur-xl border-2 border-[#D4AF37]/30 shadow-2xl">
             <DialogHeader className="border-b border-[#D4AF37]/20 pb-4 mb-6">
               <div className="flex items-center gap-3">
@@ -1266,97 +1318,215 @@ const PackageManagement = () => {
               </div>
             </form>
           </DialogContent>
+        </Dialog >
+      </div >
+
+      <div className="flex justify-between items-center mb-4 bg-gray-50 p-2 rounded-xl border border-gray-200">
+        <div className="flex gap-1 items-center">
+          {[
+            { id: 'all', label: 'Semua', icon: <List className="w-4 h-4" /> },
+            { id: 'reguler', label: 'Reguler', icon: <PackageIcon className="w-4 h-4" /> },
+            { id: 'promo', label: 'Promo', icon: <Sparkles className="w-4 h-4" /> },
+            { id: 'limited-edition', label: 'Limited', icon: <Clock className="w-4 h-4" /> },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setFilterTab(tab.id as any);
+                setSelectedPackages([]); // Clear selection when changing tab
+              }}
+              className={`
+                flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition-all
+                ${filterTab === tab.id
+                  ? 'bg-white text-[#D4AF37] shadow-sm ring-1 ring-[#D4AF37]/20'
+                  : 'text-gray-500 hover:bg-gray-100'
+                }
+              `}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+
+          {selectedPackages.length > 0 && (
+            <div className="ml-4 flex items-center gap-2 animate-in fade-in slide-in-from-left-2">
+              <span className="text-sm font-medium text-gray-500">
+                {selectedPackages.length} terpilih
+              </span>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleBulkDelete}
+                disabled={isBulkDeleting}
+                className="h-8 shadow-sm"
+              >
+                <Trash className="w-3.5 h-3.5 mr-1.5" />
+                Hapus Terpilih
+              </Button>
+            </div>
+          )}
+        </div>
+        <div className="text-xs text-gray-500 px-4">
+          Total: {packages.filter(p => filterTab === 'all' || p.packageCategory === filterTab).length} Paket
+        </div>
+      </div>
+
+      <div className="border rounded-lg overflow-x-auto bg-white shadow-sm scrollbar-thin">
+        <div className="min-w-[1000px]">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={
+                      packages.filter(p => filterTab === 'all' || p.packageCategory === filterTab).length > 0 &&
+                      selectedPackages.length === packages.filter(p => filterTab === 'all' || p.packageCategory === filterTab).length
+                    }
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Select all"
+                  />
+                </TableHead>
+                <TableHead>Name</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Class</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Slots</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {packages
+                .filter(pkg => filterTab === 'all' || pkg.packageCategory === filterTab)
+                .map((pkg) => (
+                  <TableRow key={pkg.id} className={selectedPackages.includes(pkg.id) ? 'bg-[#D4AF37]/5' : ''}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedPackages.includes(pkg.id)}
+                        onCheckedChange={() => toggleSelectPackage(pkg.id)}
+                        aria-label={`Select ${pkg.name}`}
+                      />
+                    </TableCell>
+                    <TableCell>{pkg.name}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{pkg.type.toUpperCase()}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={
+                          pkg.packageClass === 'super-vvip'
+                            ? 'bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-white border-[#FFD700]'
+                            : pkg.packageClass === 'vvip'
+                              ? 'bg-gradient-to-r from-[#D4AF37] to-[#C5A572] text-white border-[#D4AF37]'
+                              : pkg.packageClass === 'vip'
+                                ? 'bg-gradient-to-r from-[#C0C0C0] to-[#A8A8A8] text-white border-[#C0C0C0]'
+                                : 'bg-gray-100 text-gray-700 border-gray-300'
+                        }
+                      >
+                        {pkg.packageClass === 'super-vvip' ? '⭐⭐⭐⭐ Super VVIP' :
+                          pkg.packageClass === 'vvip' ? '⭐⭐⭐ VVIP' :
+                            pkg.packageClass === 'vip' ? '⭐⭐ VIP' :
+                              '⭐ Reguler'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={
+                          pkg.packageCategory === 'limited-edition'
+                            ? 'bg-red-100 text-red-700 border-red-200'
+                            : pkg.packageCategory === 'promo'
+                              ? 'bg-amber-100 text-amber-700 border-amber-200'
+                              : 'bg-blue-100 text-blue-700 border-blue-200'
+                        }
+                      >
+                        {pkg.packageCategory === 'limited-edition' ? '⏳ Limited Edition' :
+                          pkg.packageCategory === 'promo' ? '🏷️ Promo' :
+                            '📦 Reguler'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>Rp {pkg.price.toLocaleString('id-ID')}</TableCell>
+                    <TableCell>{pkg.duration} days</TableCell>
+                    <TableCell>{pkg.availableSlots} / {pkg.maxParticipants}</TableCell>
+                    <TableCell>
+                      <Badge variant={pkg.status === 'active' ? 'default' : 'secondary'}>
+                        {pkg.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button size="sm" variant="outline" onClick={() => handleEdit(pkg)}>
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button size="sm" variant="outline" onClick={() => handleDelete(pkg.id)}>
+                          <Trash className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent className="max-w-md bg-gradient-to-br from-white via-[#FFF9F0] to-white backdrop-blur-xl border-2 border-red-200/50 shadow-2xl rounded-2xl">
+            <DialogHeader className="sr-only">
+              <DialogTitle>Hapus Package</DialogTitle>
+              <DialogDescription>
+                Konfirmasi penghapusan package dari database
+              </DialogDescription>
+            </DialogHeader>
+            <div className="text-center py-6 px-4">
+              {/* Warning Icon */}
+              <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-br from-red-50 to-red-100 flex items-center justify-center mb-4 animate-pulse">
+                <AlertTriangle className="w-8 h-8 text-red-500" />
+              </div>
+
+              {/* Title */}
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                Hapus Package?
+              </h3>
+
+              {/* Description */}
+              <p className="text-gray-600 mb-6">
+                Apakah Anda yakin ingin menghapus package ini?
+                <br />
+                <span className="text-sm text-red-500">Tindakan ini tidak dapat dibatalkan.</span>
+              </p>
+
+              {/* Buttons */}
+              <div className="flex gap-3 justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => setDeleteDialogOpen(false)}
+                  className="px-6 py-2 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 rounded-xl font-semibold transition-all"
+                >
+                  Batal
+                </Button>
+                <Button
+                  onClick={confirmDelete}
+                  className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                >
+                  Ya, Hapus
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
         </Dialog>
       </div>
 
-      <div className="border rounded-lg overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Class</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Duration</TableHead>
-              <TableHead>Slots</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {packages.map((pkg) => (
-              <TableRow key={pkg.id}>
-                <TableCell>{pkg.name}</TableCell>
-                <TableCell>
-                  <Badge variant="outline">{pkg.type.toUpperCase()}</Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant="outline"
-                    className={
-                      pkg.packageClass === 'super-vvip'
-                        ? 'bg-gradient-to-r from-[#FFD700] to-[#FFA500] text-white border-[#FFD700]'
-                        : pkg.packageClass === 'vvip'
-                          ? 'bg-gradient-to-r from-[#D4AF37] to-[#C5A572] text-white border-[#D4AF37]'
-                          : pkg.packageClass === 'vip'
-                            ? 'bg-gradient-to-r from-[#C0C0C0] to-[#A8A8A8] text-white border-[#C0C0C0]'
-                            : 'bg-gray-100 text-gray-700 border-gray-300'
-                    }
-                  >
-                    {pkg.packageClass === 'super-vvip' ? '⭐⭐⭐⭐ Super VVIP' :
-                      pkg.packageClass === 'vvip' ? '⭐⭐⭐ VVIP' :
-                        pkg.packageClass === 'vip' ? '⭐⭐ VIP' :
-                          '⭐ Reguler'}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant="outline"
-                    className={
-                      pkg.packageCategory === 'limited-edition'
-                        ? 'bg-red-100 text-red-700 border-red-200'
-                        : pkg.packageCategory === 'promo'
-                          ? 'bg-amber-100 text-amber-700 border-amber-200'
-                          : 'bg-blue-100 text-blue-700 border-blue-200'
-                    }
-                  >
-                    {pkg.packageCategory === 'limited-edition' ? '⏳ Limited Edition' :
-                      pkg.packageCategory === 'promo' ? '🏷️ Promo' :
-                        '📦 Reguler'}
-                  </Badge>
-                </TableCell>
-                <TableCell>Rp {pkg.price.toLocaleString('id-ID')}</TableCell>
-                <TableCell>{pkg.duration} days</TableCell>
-                <TableCell>{pkg.availableSlots} / {pkg.maxParticipants}</TableCell>
-                <TableCell>
-                  <Badge variant={pkg.status === 'active' ? 'default' : 'secondary'}>
-                    {pkg.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Button size="sm" variant="outline" onClick={() => handleEdit(pkg)}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => handleDelete(pkg.id)}>
-                      <Trash className="w-4 h-4 text-red-500" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Delete Confirmation Dialog */}
-      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      {/* Bulk Delete Confirmation Dialog */}
+      <Dialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
         <DialogContent className="max-w-md bg-gradient-to-br from-white via-[#FFF9F0] to-white backdrop-blur-xl border-2 border-red-200/50 shadow-2xl rounded-2xl">
           <DialogHeader className="sr-only">
-            <DialogTitle>Hapus Package</DialogTitle>
+            <DialogTitle>Hapus Beberapa Paket</DialogTitle>
             <DialogDescription>
-              Konfirmasi penghapusan package dari database
+              Konfirmasi penghapusan beberapa paket sekaligus
             </DialogDescription>
           </DialogHeader>
           <div className="text-center py-6 px-4">
@@ -1367,36 +1537,37 @@ const PackageManagement = () => {
 
             {/* Title */}
             <h3 className="text-2xl font-bold text-gray-900 mb-2">
-              Hapus Package?
+              Hapus {selectedPackages.length} Paket?
             </h3>
 
             {/* Description */}
             <p className="text-gray-600 mb-6">
-              Apakah Anda yakin ingin menghapus package ini?
+              Apakah Anda yakin ingin menghapus {selectedPackages.length} paket yang dipilih?
               <br />
-              <span className="text-sm text-red-500">Tindakan ini tidak dapat dibatalkan.</span>
+              <span className="text-sm text-red-500">Tindakan ini tidak dapat dibatalkan dan akan menghapus semua data terkait paket tersebut.</span>
             </p>
 
             {/* Buttons */}
             <div className="flex gap-3 justify-center">
               <Button
                 variant="outline"
-                onClick={() => setDeleteDialogOpen(false)}
+                onClick={() => setBulkDeleteDialogOpen(false)}
                 className="px-6 py-2 border-2 border-gray-300 hover:border-gray-400 hover:bg-gray-50 rounded-xl font-semibold transition-all"
               >
                 Batal
               </Button>
               <Button
-                onClick={confirmDelete}
-                className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all"
+                onClick={confirmBulkDelete}
+                disabled={isBulkDeleting}
+                className="px-6 py-2 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
               >
-                Ya, Hapus
+                {isBulkDeleting ? 'Menghapus...' : 'Ya, Hapus Semua'}
               </Button>
             </div>
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   );
 };
 

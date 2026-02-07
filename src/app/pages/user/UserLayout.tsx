@@ -14,7 +14,7 @@ import Navbar from '../../components/Navbar';
 import Footer from '../../components/Footer';
 import PackageDetailPage from './PackageDetailPage';
 import EducationDetailPage from './EducationDetailPage';
-import AllPackagesPage from './AllPackagesPage'; // ✅ NEW: Import All Pages
+import PackageBrowsePage from '../prospective-jamaah/PackageBrowsePage'; // ✅ NEW: Use unified browse page
 import AllEducationPage from './AllEducationPage';
 import AllTestimonialsPage from './AllTestimonialsPage';
 import FloatingAnnouncementWidget from '../../components/FloatingAnnouncementWidget';
@@ -154,9 +154,11 @@ const UserLayout: React.FC<UserLayoutProps> = ({ onShowProfile, onShowAuth, chil
   // ✅ NEW: Show "All" pages
   if (currentView === 'allPackages') {
     return (
-      <AllPackagesPage
+      <PackageBrowsePage
+        packages={[]} // We'll fetch inside or pass if we had them
         onBack={handleBackToHome}
-        onViewPackageDetail={handleViewPackageDetail}
+        onSelectPackage={(pkg) => handleViewPackageDetail(pkg.id)}
+        formatCurrency={(amount) => new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(Number(amount))}
       />
     );
   }

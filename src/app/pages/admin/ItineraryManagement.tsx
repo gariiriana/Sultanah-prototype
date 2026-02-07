@@ -104,6 +104,10 @@ const ItineraryManagement: React.FC = () => {
     days: [],
   });
 
+  const [selectedItineraries, setSelectedItineraries] = useState<string[]>([]);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -312,6 +316,9 @@ const ItineraryManagement: React.FC = () => {
   };
 
   const handleDelete = async (id: string) => {
+    // Custom confirm via simple window.confirm is replaced by custom dialog in other components,
+    // but for single delete we can keep it simple or upgrade.
+    // For consistency with request, we will focus on Bulk Delete feature first.
     if (!confirm('Are you sure you want to delete this itinerary?')) return;
 
     try {
@@ -321,6 +328,42 @@ const ItineraryManagement: React.FC = () => {
     } catch (error) {
       console.error('Error deleting itinerary:', error);
       toast.error('Gagal menghapus jadwal');
+    }
+  };
+
+  // ✅ BULK DELETE LOGIC
+  const toggleSelectAll = () => {
+    if (selectedItineraries.length === itineraries.length) {
+      setSelectedItineraries([]);
+    } else {
+      setSelectedItineraries(itineraries.map(i => i.id));
+    }
+  };
+
+  const toggleSelectItinerary = (id: string) => {
+    if (selectedItineraries.includes(id)) {
+      setSelectedItineraries(selectedItineraries.filter(item => item !== id));
+    } else {
+      setSelectedItineraries([...selectedItineraries, id]);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setIsBulkDeleting(true);
+    try {
+      // Execute all deletes in parallel
+      await Promise.all(
+        selectedItineraries.map(id => deleteDoc(doc(db, 'itineraries', id)))
+      );
+      toast.success(`✅ Berhasil menghapus ${selectedItineraries.length} jadwal!`);
+      setSelectedItineraries([]);
+      setBulkDeleteDialogOpen(false);
+      fetchData();
+    } catch (error) {
+      console.error('Error bulk deleting itineraries:', error);
+      toast.error('Gagal menghapus beberapa jadwal');
+    } finally {
+      setIsBulkDeleting(false);
     }
   };
 
@@ -359,18 +402,71 @@ const ItineraryManagement: React.FC = () => {
             <p className="text-sm text-gray-500">Kelola jadwal pemberangkatan & aktivitas harian</p>
           </div>
         </div>
-        <Button
-          onClick={() => {
-            setShowForm(true);
-            setEditingId(null);
-            resetForm();
-          }}
-          className="bg-gradient-to-r from-[#C5A572] to-[#D4AF37] text-white hover:opacity-90"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Tambah Jadwal
-        </Button>
+        <div className="flex gap-2">
+          {selectedItineraries.length > 0 && (
+            <Button
+              variant="destructive"
+              onClick={() => setBulkDeleteDialogOpen(true)}
+              className="bg-red-500 hover:bg-red-600 text-white animate-in fade-in slide-in-from-right-5"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Hapus ({selectedItineraries.length})
+            </Button>
+          )}
+          <Button
+            onClick={() => {
+              setShowForm(true);
+              setEditingId(null);
+              resetForm();
+            }}
+            className="bg-gradient-to-r from-[#C5A572] to-[#D4AF37] text-white hover:opacity-90"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Tambah Jadwal
+          </Button>
+        </div>
       </div>
+
+      {/* Bulk Delete Confirm Dialog */}
+      <AnimatePresence>
+        {bulkDeleteDialogOpen && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-red-100"
+            >
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-4">
+                  <Trash2 className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">Hapus {selectedItineraries.length} Jadwal?</h3>
+                <p className="text-gray-500 mb-6">
+                  Tindakan ini tidak dapat dibatalkan. Semua data jadwal yang dipilih akan dihapus permanen dari database.
+                </p>
+                <div className="flex gap-3 w-full">
+                  <Button
+                    variant="outline"
+                    onClick={() => setBulkDeleteDialogOpen(false)}
+                    className="flex-1"
+                    disabled={isBulkDeleting}
+                  >
+                    Batal
+                  </Button>
+                  <Button
+                    onClick={handleBulkDelete}
+                    className="flex-1 bg-red-500 hover:bg-red-600 text-white"
+                    disabled={isBulkDeleting}
+                  >
+                    {isBulkDeleting ? 'Menghapus...' : 'Ya, Hapus'}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Form Modal */}
       <AnimatePresence>
@@ -589,7 +685,12 @@ const ItineraryManagement: React.FC = () => {
                                   type="time"
                                   value={activity.time}
                                   onChange={(e) =>
-                                    updateActivity(dayIndex, activityIndex, 'time', e.target.value)
+                                    updateActivity(
+                                      dayIndex,
+                                      activityIndex,
+                                      'time',
+                                      e.target.value
+                                    )
                                   }
                                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
                                 />
@@ -605,7 +706,7 @@ const ItineraryManagement: React.FC = () => {
                                     )
                                   }
                                   className="px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                                  placeholder="Nama aktivitas"
+                                  placeholder="Nama Aktivitas"
                                 />
                                 <input
                                   type="text"
@@ -682,15 +783,28 @@ const ItineraryManagement: React.FC = () => {
         )}
       </AnimatePresence>
 
-      {/* Itinerary List */}
-      <div className="space-y-4">
+      <div className="flex items-center gap-2 mb-4 bg-white p-3 rounded-xl border border-gray-200">
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={itineraries.length > 0 && selectedItineraries.length === itineraries.length}
+            onChange={toggleSelectAll}
+            className="w-5 h-5 rounded border-gray-300 text-[#D4AF37] focus:ring-[#D4AF37]"
+          />
+          <span className="text-sm font-medium text-gray-700">Pilih Semua Jadwal</span>
+        </label>
+        {selectedItineraries.length > 0 && (
+          <span className="text-sm text-gray-500 ml-2">
+            • {selectedItineraries.length} terpilih
+          </span>
+        )}
+      </div>
+
+      <div className="grid gap-4">
         {itineraries.length === 0 ? (
-          <div className="text-center py-16 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300">
-            <Calendar className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 font-medium">Belum ada jadwal</p>
-            <p className="text-sm text-gray-500 mt-1">
-              Buat jadwal keberangkatan pertama Anda
-            </p>
+          <div className="text-center py-12 bg-white rounded-xl shadow-sm border border-gray-100">
+            <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+            <p className="text-gray-500">Belum ada jadwal pemberangkatan</p>
           </div>
         ) : (
           itineraries.map((itinerary) => (
@@ -698,43 +812,56 @@ const ItineraryManagement: React.FC = () => {
               key={itinerary.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow"
+              className={`bg-white rounded-xl shadow-sm border p-4 transition-all ${selectedItineraries.includes(itinerary.id)
+                ? 'border-[#D4AF37] ring-1 ring-[#D4AF37]/50 bg-[#FFF9F0]/30'
+                : 'border-gray-100 hover:shadow-md'
+                }`}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex-1">
-                  <h3 className="font-bold text-gray-900 text-lg mb-2">
-                    {itinerary.packageName}
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Calendar className="w-4 h-4 text-[#D4AF37]" />
-                      {new Date(itinerary.departureDate).toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })}{' '}
-                      -{' '}
-                      {new Date(itinerary.returnDate).toLocaleDateString('id-ID', {
-                        day: 'numeric',
-                        month: 'short',
-                        year: 'numeric',
-                      })}
-                    </div>
-                    {itinerary.tourLeaderName && (
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-4">
+                  <div className="pt-1">
+                    <input
+                      type="checkbox"
+                      checked={selectedItineraries.includes(itinerary.id)}
+                      onChange={() => toggleSelectItinerary(itinerary.id)}
+                      className="w-5 h-5 rounded border-gray-300 text-[#D4AF37] focus:ring-[#D4AF37]"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900 text-lg">
+                      {itinerary.packageName}
+                    </h3>
+                    <div className="flex flex-wrap gap-4 mt-2 text-sm">
                       <div className="flex items-center gap-2 text-gray-600">
-                        <Users className="w-4 h-4 text-blue-500" />
-                        {itinerary.tourLeaderName}
+                        <Calendar className="w-4 h-4 text-[#D4AF37]" />
+                        {new Date(itinerary.departureDate).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}{' '}
+                        -{' '}
+                        {new Date(itinerary.returnDate).toLocaleDateString('id-ID', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
                       </div>
-                    )}
-                    {itinerary.muthawifName && (
+                      {itinerary.tourLeaderName && (
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Users className="w-4 h-4 text-blue-500" />
+                          {itinerary.tourLeaderName}
+                        </div>
+                      )}
+                      {itinerary.muthawifName && (
+                        <div className="flex items-center gap-2 text-gray-600">
+                          <Users className="w-4 h-4 text-blue-500" />
+                          {itinerary.muthawifName}
+                        </div>
+                      )}
                       <div className="flex items-center gap-2 text-gray-600">
-                        <Users className="w-4 h-4 text-blue-500" />
-                        {itinerary.muthawifName}
+                        <Clock className="w-4 h-4 text-green-500" />
+                        {itinerary.days.length} hari
                       </div>
-                    )}
-                    <div className="flex items-center gap-2 text-gray-600">
-                      <Clock className="w-4 h-4 text-green-500" />
-                      {itinerary.days.length} hari
                     </div>
                   </div>
                 </div>

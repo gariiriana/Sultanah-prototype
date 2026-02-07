@@ -1,88 +1,34 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { motion } from 'motion/react';
-import { Calendar, Users, Clock, Check, Star, MapPin } from 'lucide-react';
+import { Check, Package as PackageIcon } from 'lucide-react';
 import { Button } from '../../../components/ui/button';
-
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../../../../config/firebase';
-
-import { toast } from 'sonner';
-import { Package } from '../../../../types';
+import kaabaFamily from '@/assets/images/kaaba-family.jpg';
 
 interface PackagesSectionProps {
   onViewPackageDetail: (packageId: string) => void;
-  onViewAllPackages?: () => void; // ✅ NEW: Optional handler for "Lihat Semua"
+  onViewAllPackages?: () => void;
 }
 
-const PackagesSection: React.FC<PackagesSectionProps> = ({ onViewPackageDetail, onViewAllPackages }) => {
-  const [packages, setPackages] = useState<Package[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchPackages = async () => {
-      try {
-        const q = query(collection(db, 'packages'), where('status', '==', 'active'));
-        const querySnapshot = await getDocs(q);
-        const packagesData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Package[];
-        setPackages(packagesData);
-      } catch (error) {
-        console.error('Error fetching packages:', error);
-        toast.error('Failed to load packages');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPackages();
-  }, []);
-
-  const handleBookNow = (packageId: string) => {
-    // Navigasi langsung ke halaman detail paket (Alur Tamu)
-    onViewPackageDetail(packageId);
-  };
-
-
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
-  if (loading) {
-    return (
-      <section id="packages" className="relative py-24 bg-gradient-to-b from-gray-50 to-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-[#D4AF37] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600">Memuat paket...</p>
-          </div>
-        </div>
-      </section>
-    );
-  }
-
+const PackagesSection: React.FC<PackagesSectionProps> = ({ onViewAllPackages }) => {
   return (
-    <section id="packages" className="relative py-24 overflow-hidden">
+    <section
+      id="packages"
+      className="relative py-24 overflow-hidden"
+    >
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
-          src="https://images.unsplash.com/photo-1571909552531-1601eaec8f79?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWNjYSUyMGdyYW5kJTIwbW9zcXVlfGVufDF8fHx8MTc2ODE4NDU1MHww&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
-          alt="Mecca Grand Mosque - Beautiful View"
+          src="https://images.unsplash.com/photo-1765892272462-bad4a8ba0fb9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxtZWRpbmElMjBtb3NxdWUlMjBncmVlbiUyMGRvbWV8ZW58MXx8fHwxNzY4MTg1ODc3fDA&ixlib=rb-4.1.0&q=80&w=1080"
+          alt="Medina Mosque with Green Dome"
           className="w-full h-full object-cover"
         />
         {/* Gradient Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900/70 via-slate-900/60 to-blue-900/70" />
-        <div className="absolute inset-0 bg-gradient-to-b from-white/95 via-white/90 to-white/95" />
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/75 via-pink-900/65 to-rose-900/75" />
+        <div className="absolute inset-0 bg-gradient-to-t from-white/95 via-white/90 to-white/95" />
       </div>
 
-      {/* Background Elements */}
-      <div className="absolute inset-0 z-0 opacity-15">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 z-0 opacity-10">
         <div
           className="absolute inset-0"
           style={{
@@ -91,211 +37,116 @@ const PackagesSection: React.FC<PackagesSectionProps> = ({ onViewPackageDetail, 
         />
       </div>
 
-      {/* Floating orbs - More visible */}
+      {/* Floating Orbs */}
       <motion.div
-        animate={{ y: [0, -20, 0], x: [0, 15, 0] }}
-        transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute top-32 right-20 w-64 h-64 bg-gradient-to-br from-[#FFD700]/20 to-[#D4AF37]/20 rounded-full blur-3xl z-0"
+        animate={{ y: [0, -20, 0], rotate: [0, 180, 360] }}
+        transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute bottom-20 right-20 w-64 h-64 bg-gradient-to-br from-pink-300/20 to-rose-300/20 rounded-full blur-3xl z-0"
       />
       <motion.div
-        animate={{ y: [0, 25, 0], x: [0, -15, 0] }}
-        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut' }}
-        className="absolute bottom-32 left-20 w-56 h-56 bg-gradient-to-tl from-[#F4D03F]/20 to-[#C5A572]/20 rounded-full blur-3xl z-0"
+        animate={{ y: [0, 25, 0], x: [0, -20, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+        className="absolute top-32 left-16 w-72 h-72 bg-gradient-to-tl from-purple-300/20 to-pink-300/20 rounded-full blur-3xl z-0"
       />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="text-center mb-16"
-        >
+      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 lg:gap-24 items-center">
+
+          {/* Left Column: Image with Frame */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            className="inline-block mb-4"
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="relative"
           >
-            <span className="px-4 py-2 rounded-full bg-gradient-to-r from-[#D4AF37]/10 to-[#FFD700]/10 border border-[#D4AF37]/20 text-[#D4AF37] font-medium text-sm">
-              Paket Pilihan
-            </span>
-          </motion.div>
-          <h2 className="text-4xl md:text-5xl font-light mb-4">
-            Paket <span className="font-semibold bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] bg-clip-text text-transparent">Umrah Kami</span>
-          </h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            Pilih paket yang sempurna untuk perjalanan spiritual Anda dengan akomodasi dan layanan premium
-          </p>
-        </motion.div>
+            <div className="relative z-10 rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-[#D4AF37]/20">
+              <img
+                src={kaabaFamily}
+                alt="Family at Kaaba"
+                className="w-full aspect-[4/5] lg:aspect-square object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+            </div>
 
-        {/* Packages Grid - Optimized for 2 columns on mobile */}
-        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-8">
-          {packages.length === 0 ? (
-            // Empty state
-            <div className="col-span-3 text-center py-20">
-              <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-gradient-to-br from-[#D4AF37]/10 to-[#FFD700]/10 border-2 border-[#D4AF37]/20 mb-6">
-                <svg className="w-12 h-12 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                </svg>
-              </div>
-              <h3 className="text-2xl font-semibold bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] bg-clip-text text-transparent mb-2">
-                Belum Ada Paket Tersedia
-              </h3>
-              <p className="text-gray-500 max-w-md mx-auto">
-                Paket Umrah eksklusif kami akan segera hadir. Silakan cek kembali nanti atau hubungi kami untuk informasi lebih lanjut.
+            {/* Decorative Frame Elements */}
+            <div className="absolute -top-6 -left-6 w-24 h-24 border-t-4 border-l-4 border-[#D4AF37]/30 rounded-tl-3xl z-0" />
+            <div className="absolute -bottom-6 -right-6 w-24 h-24 border-b-4 border-r-4 border-[#D4AF37]/30 rounded-br-3xl z-0" />
+          </motion.div>
+
+          {/* Right Column: Content */}
+          <motion.div
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+            className="flex flex-col space-y-8"
+          >
+            <div>
+              <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight mb-6">
+                Khidmat Ibadah <br />
+                <span className="bg-gradient-to-r from-[#D4AF37] via-[#FFD700] to-[#D4AF37] bg-clip-text text-transparent">Terbaik & Amanah</span>
+              </h2>
+              <p className="text-lg md:text-xl text-gray-700 leading-relaxed">
+                Menemani perjalanan spiritual Anda dengan pelayanan penuh kekhusyukan dan kenyamanan dari hati.
               </p>
             </div>
-          ) : (
-            // ✅ UPDATED: Show only first 3 packages
-            packages.slice(0, 3).map((pkg, index) => (
-              <motion.div
-                key={pkg.id}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                whileHover={{ y: -10 }}
-                className="group h-full"
-              >
-                <div className="relative h-full flex flex-col rounded-3xl bg-white border border-gray-200 hover:border-[#D4AF37]/40 shadow-xl hover:shadow-2xl transition-all duration-500 overflow-hidden">
-                  {/* Gradient overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-[#D4AF37]/0 to-[#FFD700]/0 group-hover:from-[#D4AF37]/5 group-hover:to-[#FFD700]/5 transition-all duration-500 pointer-events-none" />
 
-                  {/* Package Image */}
-                  {(pkg.image || pkg.photo) && (
-                    <div className="relative h-28 sm:h-56 overflow-hidden">
-                      <motion.img
-                        whileHover={{ scale: 1.1 }}
-                        transition={{ duration: 0.6 }}
-                        src={pkg.image || pkg.photo}
-                        alt={pkg.name}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
-
-                      {/* Badge */}
-                      <div className="absolute top-2 right-2 sm:top-4 sm:right-4">
-                        <span className="px-2 sm:px-4 py-1 rounded-full bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] text-white text-[10px] sm:text-sm font-semibold shadow-lg">
-                          {pkg.type.toUpperCase()}
-                        </span>
-                      </div>
-
-                      {/* Rating */}
-                      <div className="absolute bottom-4 left-4 flex items-center gap-1 px-3 py-1.5 rounded-full bg-white/90 backdrop-blur-sm">
-                        <Star className="w-4 h-4 text-[#FFD700] fill-[#FFD700]" />
-                        <span className="text-sm font-semibold">{(pkg as any).rating || 4.9}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Content */}
-                  <div className="relative flex-grow flex flex-col p-2.5 sm:p-6">
-                    <div className="flex-grow">
-                      <h3 className="text-sm sm:text-2xl font-semibold mb-1 sm:mb-2 text-gray-900 group-hover:text-[#D4AF37] transition-colors line-clamp-1 sm:line-clamp-none">
-                        {pkg.name}
-                      </h3>
-
-                      {/* Price */}
-                      <div className="mb-6">
-                        <div className="text-[10px] sm:text-sm text-gray-500 mb-0.5 select-none">Mulai dari</div>
-                        <div className="text-base sm:text-3xl font-bold bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] bg-clip-text text-transparent leading-none sm:leading-normal">
-                          {formatCurrency(pkg.price)}
-                        </div>
-                        <div className="text-[9px] sm:text-sm text-gray-500">per orang</div>
-                      </div>
-
-                      {/* Info Cards - Mobile Optimized */}
-                      <div className="grid grid-cols-3 gap-1 sm:gap-2 mb-2 sm:mb-6">
-                        <div className="flex flex-col items-center p-1 sm:p-3 rounded-xl bg-gradient-to-br from-blue-50 to-blue-100/50 border border-blue-200/50">
-                          <Clock className="w-3 h-3 sm:w-5 sm:h-5 text-blue-600 mb-0.5 sm:mb-1" />
-                          <span className="text-[8px] sm:text-xs font-semibold text-blue-900">{pkg.duration}D</span>
-                        </div>
-                        <div className="flex flex-col items-center p-1 sm:p-3 rounded-xl bg-gradient-to-br from-green-50 to-green-100/50 border border-green-200/50">
-                          <Calendar className="w-3 h-3 sm:w-5 sm:h-5 text-green-600 mb-0.5 sm:mb-1" />
-                          <span className="text-[8px] sm:text-xs font-semibold text-green-900">{new Date(pkg.departureDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                        </div>
-                        <div className="flex flex-col items-center p-1 sm:p-3 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/50 border border-purple-200/50">
-                          <Users className="w-3 h-3 sm:w-5 sm:h-5 text-purple-600 mb-0.5 sm:mb-1" />
-                          <span className="text-[8px] sm:text-xs font-semibold text-purple-900">{pkg.availableSlots}</span>
-                        </div>
-                      </div>
-
-                      {/* Features - Hidden or very small on mobile */}
-                      <div className="hidden sm:block border-t border-gray-200 pt-4">
-                        <p className="text-sm font-semibold text-gray-700 mb-3 flex items-center">
-                          <Check className="w-4 h-4 mr-1 text-[#D4AF37]" />
-                          Fasilitas Paket:
-                        </p>
-                        <ul className="space-y-2">
-                          {pkg.features.slice(0, 4).map((feature, i) => (
-                            <li key={i} className="flex items-start text-sm text-gray-600">
-                              <Check className="w-4 h-4 mr-2 text-[#D4AF37] flex-shrink-0 mt-0.5" />
-                              <span>{feature}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    </div>
-
-                    {/* Book Button */}
-                    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="mt-2 sm:mt-6">
-                      <Button
-                        onClick={() => handleBookNow(pkg.id)}
-                        disabled={pkg.availableSlots === 0}
-                        className="w-full h-8 sm:h-12 bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] hover:opacity-90 text-white shadow-lg hover:shadow-xl transition-all duration-300 rounded-lg text-[10px] sm:text-base font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {pkg.availableSlots === 0 ? 'Penuh' : '✓ Beli'}
-                      </Button>
-
-
-                    </motion.div>
+            {/* Benefit List - 2x3 Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                "Hotel berbintang dekat Masjidil Haram & Nabawi",
+                "Transportasi AC yang nyaman dan aman",
+                "Pembimbing ibadah berpengalaman & berilmu",
+                "Makanan halal bergizi & bervariasi",
+                "Asuransi perjalanan komprehensif",
+                "Handling keberangkatan & kepulangan"
+              ].map((benefit, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.4 + (idx * 0.1) }}
+                  className="flex items-start gap-3 p-4 rounded-xl bg-white/60 backdrop-blur-sm border border-[#D4AF37]/10 hover:border-[#D4AF37]/30 hover:shadow-md transition-all"
+                >
+                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-gradient-to-br from-[#D4AF37] to-[#FFD700] flex items-center justify-center shadow-sm mt-0.5">
+                    <Check className="w-4 h-4 text-white" />
                   </div>
-                </div>
-              </motion.div>
-            ))
-          )}
-        </div>
-
-        {/* ✅ NEW: "Lihat Semua Paket" Button - Only show if more than 3 packages */}
-        {packages.length > 3 && onViewAllPackages && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mt-12"
-          >
-            <button
-              onClick={() => {
-                onViewAllPackages(); // ✅ Navigate to All Packages page
-              }}
-              className="group inline-flex items-center gap-3 px-8 py-4 bg-white hover:bg-emerald-50 border-2 border-emerald-600 rounded-xl text-emerald-700 font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300"
-            >
-              <span>Lihat Semua Paket</span>
-              <span className="text-2xl group-hover:translate-x-2 transition-transform duration-300">→</span>
-            </button>
-            <p className="text-sm text-gray-600 mt-3">
-              Menampilkan 3 dari {packages.length} paket tersedia
-            </p>
-          </motion.div>
-        )}
-
-        {/* Empty State */}
-        {packages.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-16 px-8 rounded-2xl bg-gradient-to-br from-gray-50 to-white border border-gray-200"
-          >
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
-              <MapPin className="w-10 h-10 text-[#D4AF37]" />
+                  <span className="text-sm md:text-base text-gray-800 font-medium leading-relaxed">{benefit}</span>
+                </motion.div>
+              ))}
             </div>
-            <p className="text-xl font-semibold text-gray-700 mb-2">Belum ada paket tersedia saat ini</p>
-            <p className="text-gray-500">Silakan cek kembali nanti untuk perjalanan mendatang kami</p>
-          </motion.div>
-        )}
-      </div>
 
+            {/* CTA Button */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 1.1 }}
+              className="pt-6"
+            >
+              <Button
+                onClick={() => onViewAllPackages?.()}
+                className="group relative px-10 py-7 bg-gradient-to-r from-[#D4AF37] to-[#C5A572] hover:from-[#C5A572] hover:to-[#D4AF37] text-white rounded-2xl text-xl font-bold transition-all duration-300 shadow-[0_10px_40px_rgba(212,175,55,0.3)] hover:shadow-[0_15px_50px_rgba(212,175,55,0.4)] overflow-hidden"
+              >
+                <span className="relative z-10 flex items-center gap-3">
+                  <PackageIcon className="w-6 h-6" />
+                  Lihat Detail Paket
+                  <motion.span
+                    animate={{ x: [0, 5, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                  >
+                    →
+                  </motion.span>
+                </span>
+                <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
+              </Button>
+            </motion.div>
+          </motion.div>
+
+        </div>
+      </div>
     </section>
   );
 };
