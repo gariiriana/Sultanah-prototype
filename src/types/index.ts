@@ -12,6 +12,7 @@ export interface Package {
   maxParticipants: number;
   availableSlots: number;
   status: 'active' | 'inactive';
+  expiryDate?: string; // NEW: ISO date for limited edition packages
   features: string[];
   photo?: string; // Base64 (deprecated, use 'image' instead)
   image?: string; // Base64 (new consistent field name)
@@ -30,6 +31,8 @@ export interface Package {
   assignedTourLeaderId?: string; // Tour Leader User ID (deprecated, use tourLeaderId)
   tourLeaderId?: string; // Tour Leader User ID (new consistent field name)
   tourLeaderName?: string; // Tour Leader Display Name
+  muthawifId?: string; // Muthawif User ID
+  muthawifName?: string; // Muthawif Display Name
   // DETAIL PAGE CONTENT - Created by Admin
   detailContent?: string; // Rich HTML content for detail page
   detailDescription?: string; // Long description for detail page

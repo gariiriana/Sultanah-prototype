@@ -32,6 +32,9 @@ interface UserStats {
   verificationStatus: 'verified' | 'unverified' | 'pending';
   totalGroups?: number; // For tour-leader and mutawwif
   totalJamaahGuided?: number; // For tour-leader and mutawwif
+  totalJamaahAssisted?: number; // For admin
+  totalRevenueAssisted?: number; // For admin
+  totalBookingsAssisted?: number; // For admin
 }
 
 interface UserProfileData {
@@ -270,7 +273,38 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
           userData?.approvalStatus === 'pending' ? 'pending' : 'unverified',
         totalGroups,
         totalJamaahGuided,
+        totalJamaahAssisted: 0,
+        totalRevenueAssisted: 0,
+        totalBookingsAssisted: 0,
       });
+
+      // ✅ NEW: For Admin, count jamaah they've helped register
+      if (userRole === 'admin') {
+        try {
+          const assistedQuery = query(
+            collection(db, 'bookings'),
+            where('registeredByAdmin.adminId', '==', userId)
+          );
+          const assistedSnapshot = await getDocs(assistedQuery);
+
+          const totalBookingsAssisted = assistedSnapshot.docs.length;
+          const totalJamaahAssisted = assistedSnapshot.docs.reduce((sum, doc) => {
+            return sum + (doc.data().paxCount || 0);
+          }, 0);
+          const totalRevenueAssisted = assistedSnapshot.docs.reduce((sum, doc) => {
+            return sum + (doc.data().totalAmount || 0);
+          }, 0);
+
+          setStats(prev => prev ? {
+            ...prev,
+            totalBookingsAssisted,
+            totalJamaahAssisted,
+            totalRevenueAssisted
+          } : null);
+        } catch (error) {
+          console.warn('Could not load admin assisted data:', error);
+        }
+      }
 
     } catch (error: any) {
       console.error('Error loading user data:', error);
@@ -743,27 +777,81 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
 
               {/* Statistics Section - Conditional based on role */}
               {userRole === 'tour-leader' || userRole === 'mutawwif' ? (
-                // ✅ NEW: Guidance History for Tour Leader and Mutawwif
+                // ✅ Guidance History for Tour Leader and Mutawwif
                 <div className="bg-gradient-to-br from-teal-50 to-white rounded-xl p-6 border border-teal-200">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <Award className="w-5 h-5 text-teal-600" />
                     Riwayat Bimbingan {userRole === 'tour-leader' ? 'Tour Leader' : 'Mutawwif'}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-white rounded-lg p-6 border border-teal-200">
+                    <div className="bg-white rounded-lg p-6 border border-teal-200 shadow-sm">
                       <p className="text-sm text-gray-600 mb-2">Total Group yang Dibimbing</p>
                       <p className="text-4xl font-black text-teal-600">{stats.totalGroups || 0}</p>
                       <p className="text-xs text-gray-500 mt-2">Kelompok jamaah</p>
                     </div>
-                    <div className="bg-white rounded-lg p-6 border border-emerald-200">
+                    <div className="bg-white rounded-lg p-6 border border-emerald-200 shadow-sm">
                       <p className="text-sm text-gray-600 mb-2">Total Jamaah yang Dibimbing</p>
                       <p className="text-4xl font-black text-emerald-600">{stats.totalJamaahGuided || 0}</p>
                       <p className="text-xs text-gray-500 mt-2">Jamaah</p>
                     </div>
                   </div>
                 </div>
+              ) : userRole === 'admin' ? (
+                // ✅ NEW: Admin Performance View (Pencapaian Admin)
+                <div className="bg-gradient-to-br from-indigo-50 to-white rounded-xl p-6 border border-indigo-200 shadow-sm">
+                  <div className="flex items-center justify-between mb-6">
+                    <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+                      <Award className="w-5 h-5 text-indigo-600" />
+                      Pencapaian Admin
+                    </h3>
+                    <span className="text-xs font-bold text-indigo-600 bg-indigo-100 px-3 py-1 rounded-full uppercase tracking-wider">
+                      Internal Performance
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="bg-white rounded-2xl p-6 border border-indigo-100 shadow-sm hover:border-indigo-300 transition-colors group">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <Users className="w-5 h-5 text-indigo-600" />
+                      </div>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Jamaah yang Dibantu</p>
+                      <p className="text-3xl font-black text-gray-900">{stats.totalJamaahAssisted || 0}</p>
+                      <p className="text-[10px] text-gray-500 mt-2 font-medium">Total individu didaftarkan</p>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-6 border border-emerald-100 shadow-sm hover:border-emerald-300 transition-colors group">
+                      <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <CheckCircle className="w-5 h-5 text-emerald-600" />
+                      </div>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Registrasi Berhasil</p>
+                      <p className="text-3xl font-black text-emerald-600">{stats.totalBookingsAssisted || 0}</p>
+                      <p className="text-[10px] text-gray-500 mt-2 font-medium">Booking sukses/selesai</p>
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-6 border border-blue-100 shadow-sm hover:border-blue-300 transition-colors group">
+                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                        <CreditCard className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Revenue Assisted</p>
+                      <p className="text-xl font-black text-gray-900 leading-tight">
+                        {formatCurrency(stats.totalRevenueAssisted || 0)}
+                      </p>
+                      <p className="text-[10px] text-gray-500 mt-2 font-medium">Nilai transaksi dikelola</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-6 flex items-center gap-3 p-4 bg-indigo-900 text-white rounded-2xl shadow-lg shadow-indigo-100">
+                    <div className="p-2 bg-white/20 rounded-lg">
+                      <Shield className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold text-indigo-200 uppercase tracking-wider">Status Otoritas</p>
+                      <p className="text-sm font-bold">Admin Terverifikasi Sultanah Management Hub</p>
+                    </div>
+                  </div>
+                </div>
               ) : (
-                // Order Statistics for other roles
+                // Order Statistics for other roles (excluding Personal stats for admin)
                 <div className="bg-gradient-to-br from-green-50 to-white rounded-xl p-6 border border-green-200">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <Award className="w-5 h-5 text-green-600" />

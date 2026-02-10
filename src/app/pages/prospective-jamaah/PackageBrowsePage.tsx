@@ -16,6 +16,63 @@ interface PackageBrowsePageProps {
     formatCurrency: (amount: number | string) => string;
 }
 
+// ✅ NEW: Countdown Timer Component for Limited Edition
+const CountdownTimer: React.FC<{ expiryDate: string }> = ({ expiryDate }) => {
+    const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
+
+    useEffect(() => {
+        const calculateTimeLeft = () => {
+            const difference = new Date(expiryDate).getTime() - new Date().getTime();
+            if (difference > 0) {
+                setTimeLeft({
+                    days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+                    minutes: Math.floor((difference / 1000 / 60) % 60),
+                    seconds: Math.floor((difference / 1000) % 60),
+                });
+            } else {
+                setTimeLeft(null);
+            }
+        };
+
+        calculateTimeLeft();
+        const timer = setInterval(calculateTimeLeft, 1000);
+        return () => clearInterval(timer);
+    }, [expiryDate]);
+
+    if (!timeLeft) return null;
+
+    return (
+        <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-black/80 to-transparent backdrop-blur-[2px] flex items-center justify-between px-3 animate-in fade-in slide-in-from-bottom-2 duration-500">
+            <div className="flex items-center gap-1.5">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                <span className="text-[10px] font-bold text-white tracking-wider uppercase">Berakhir Dalam:</span>
+            </div>
+            <div className="flex gap-2 items-center">
+                <div className="flex flex-col items-center">
+                    <span className="text-[14px] font-black text-white leading-none tabular-nums">{timeLeft.days}</span>
+                    <span className="text-[6px] text-white/70 uppercase font-bold tracking-tighter">Hari</span>
+                </div>
+                <span className="text-white/50 text-xs font-bold leading-none mb-1">:</span>
+                <div className="flex flex-col items-center">
+                    <span className="text-[14px] font-black text-white leading-none tabular-nums">{timeLeft.hours.toString().padStart(2, '0')}</span>
+                    <span className="text-[6px] text-white/70 uppercase font-bold tracking-tighter">Jam</span>
+                </div>
+                <span className="text-white/50 text-xs font-bold leading-none mb-1">:</span>
+                <div className="flex flex-col items-center">
+                    <span className="text-[14px] font-black text-white leading-none tabular-nums">{timeLeft.minutes.toString().padStart(2, '0')}</span>
+                    <span className="text-[6px] text-white/70 uppercase font-bold tracking-tighter">Mnt</span>
+                </div>
+                <span className="text-white/50 text-xs font-bold leading-none mb-1">:</span>
+                <div className="flex flex-col items-center">
+                    <span className="text-[14px] font-black text-orange-400 leading-none tabular-nums animate-pulse">{timeLeft.seconds.toString().padStart(2, '0')}</span>
+                    <span className="text-[6px] text-white/70 uppercase font-bold tracking-tighter text-orange-400">Dtk</span>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 type CategoryTab = 'all' | 'reguler' | 'promo' | 'limited-edition';
 
 const PackageBrowsePage: React.FC<PackageBrowsePageProps> = ({
@@ -72,6 +129,15 @@ const PackageBrowsePage: React.FC<PackageBrowsePageProps> = ({
         if (activeTab !== 'all') {
             result = result.filter(pkg => (pkg.packageCategory || 'reguler') === activeTab);
         }
+
+        // ✅ NEW: Filter out expired Limited Edition packages
+        const now = new Date().getTime();
+        result = result.filter(pkg => {
+            if (pkg.packageCategory === 'limited-edition' && pkg.expiryDate) {
+                return new Date(pkg.expiryDate).getTime() > now;
+            }
+            return true;
+        });
 
         // 2. Filter by Price Range
         if (priceRange !== 'all') {
@@ -222,22 +288,33 @@ const PackageBrowsePage: React.FC<PackageBrowsePageProps> = ({
                         </Button>
                     </div>
 
-                    {/* Bottom: Category Tabs - Scrollable on mobile */}
-                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0 scroll-smooth">
+                    {/* Bottom: Category Tabs - Ultra compact on mobile, spacious and premium on desktop */}
+                    <div className="flex gap-1 md:gap-6 lg:gap-8 -mx-2 px-2 md:mx-0 md:px-0 justify-center">
                         {tabs.map((tab) => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 className={`
-                                    px-3 md:px-4 py-1.5 md:py-2 rounded-lg text-[11px] md:text-sm font-semibold transition-all flex items-center gap-1.5 md:gap-2 whitespace-nowrap
+                                    px-2 md:px-6 py-1.5 md:py-3 rounded-md md:rounded-xl transition-all flex items-center gap-1 md:gap-3 whitespace-nowrap
                                     ${activeTab === tab
-                                        ? 'bg-white text-gray-900 shadow-lg scale-105'
+                                        ? 'bg-[#D4AF37] text-white shadow-xl scale-110 z-10'
                                         : 'bg-white/20 backdrop-blur-sm text-white hover:bg-white/30'
                                     }
                                 `}
                             >
-                                <span className="flex-shrink-0">{getCategoryIcon(tab)}</span>
-                                {getCategoryLabel(tab)}
+                                <span className="flex-shrink-0 scale-[0.7] md:scale-110 origin-center">
+                                    {getCategoryIcon(tab)}
+                                </span>
+                                <span className="text-[8px] sm:text-[9px] md:text-sm font-bold uppercase tracking-tighter md:tracking-normal">
+                                    <span className="md:hidden">
+                                        {tab === 'all' ? 'Semua' :
+                                            tab === 'reguler' ? 'Reguler' :
+                                                tab === 'promo' ? 'Promo' : 'Limited'}
+                                    </span>
+                                    <span className="hidden md:inline">
+                                        {getCategoryLabel(tab)}
+                                    </span>
+                                </span>
                             </button>
                         ))}
                     </div>
@@ -429,11 +506,19 @@ const PackageBrowsePage: React.FC<PackageBrowsePageProps> = ({
                                             </div>
                                         )}
 
-                                        {/* Rating */}
-                                        <div className="absolute bottom-2 left-2 md:bottom-3 md:left-3 flex items-center gap-1 px-1.5 md:px-2 py-0.5 md:py-1 rounded bg-white shadow-sm">
-                                            <Star className="w-2.5 h-2.5 md:w-3 h-3 text-yellow-500 fill-yellow-500" />
-                                            <span className="text-[10px] md:text-xs font-semibold">4.9</span>
-                                            <span className="text-[10px] md:text-xs text-gray-500">(150)</span>
+                                        {/* Premium Banner Timer for Limited Edition (Bottom) */}
+                                        {pkg.packageCategory === 'limited-edition' && pkg.expiryDate && (
+                                            <CountdownTimer expiryDate={pkg.expiryDate} />
+                                        )}
+
+                                        {/* Rating - Decision-based positioning to avoid clash with timer */}
+                                        <div className={`
+                                            absolute left-2 md:left-3 flex items-center gap-1.5 px-2 md:px-2.5 py-1 md:py-1.5 rounded-full bg-white/95 backdrop-blur-sm shadow-xl z-20 border border-black/5
+                                            ${pkg.packageCategory === 'limited-edition' && pkg.expiryDate ? 'bottom-12 md:bottom-14' : 'bottom-2 md:bottom-3'}
+                                        `}>
+                                            <Star className="w-3 h-3 md:w-3.5 md:h-3.5 text-yellow-500 fill-yellow-500" />
+                                            <span className="text-[10px] md:text-xs font-bold text-gray-900">4.9</span>
+                                            <span className="text-[10px] md:text-xs text-gray-400 font-medium border-l border-gray-200 pl-1.5">(150)</span>
                                         </div>
                                     </div>
 

@@ -367,6 +367,100 @@ const ItineraryManagement: React.FC = () => {
     }
   };
 
+  // ✅ NEW: Generate Dummy Itineraries for Testing
+  const handleGenerateDummyItineraries = async () => {
+    try {
+      setIsBulkDeleting(true);
+      toast.info('🚀 Menyiapkan jadwal dummy terintegrasi...');
+
+      if (packages.length === 0) {
+        toast.error('Gagal: Belum ada paket tersedia. Buat paket dulu Pak!');
+        return;
+      }
+
+      // Templates for Umrah Activities
+      const umrahActivityTemplates = [
+        [
+          { time: '08:00', activity: 'Keberangkatan dari Jakarta', location: 'Bandara Soekarno Hatta', description: 'Kumpul di Terminal 3' },
+          { time: '14:00', activity: 'Tiba di Jeddah', location: 'Bandara King Abdulaziz', description: 'Proses Imigrasi' }
+        ],
+        [
+          { time: '04:00', activity: 'Shalat Subuh di Masjid Nabawi', location: 'Masjid Nabawi', description: 'Ibadah mandiri' },
+          { time: '08:00', activity: 'Ziarah Raudhah', location: 'Masjid Nabawi', description: 'Mengunjungi makam Rasulullah' }
+        ],
+        [
+          { time: '08:00', activity: 'City Tour Madinah', location: 'Masjid Quba, Jabal Uhud', description: 'Mengunjungi tempat bersejarah' },
+          { time: '16:00', activity: 'Manasik Umrah', location: 'Hotel Madinah', description: 'Persiapan pelaksanaan Umrah' }
+        ],
+        [
+          { time: '10:00', activity: 'Check-out Hotel & Miqat', location: 'Masjid Bir Ali', description: 'Ambil Miqat & Niat Umrah' },
+          { time: '20:00', activity: 'Pelaksanaan Umrah Pertama', location: 'Masjidil Haram', description: 'Thawaf, Sa\'i, Tahallul' }
+        ],
+        [
+          { time: '04:00', activity: 'Qiyamul Lail', location: 'Masjidil Haram', description: 'Ibadah mandiri' },
+          { time: '10:00', activity: 'Acara Bebas', location: 'Makkah', description: 'Ibadah di Masjidil Haram' }
+        ]
+      ];
+
+      const dummyCount = 3;
+      for (let i = 0; i < dummyCount; i++) {
+        // Pick random package
+        const pkg = packages[Math.floor(Math.random() * packages.length)];
+
+        // Pick random staff if package doesn't have assigned staff
+        const tl = pkg.tourLeaderId
+          ? { id: pkg.tourLeaderId, displayName: pkg.tourLeaderName }
+          : (tourLeaders.length > 0 ? tourLeaders[Math.floor(Math.random() * tourLeaders.length)] : null);
+
+        const mw = pkg.muthawifId
+          ? { id: pkg.muthawifId, displayName: pkg.muthawifName }
+          : (muthawifs.length > 0 ? muthawifs[Math.floor(Math.random() * muthawifs.length)] : null);
+
+        const departureDate = new Date();
+        departureDate.setDate(departureDate.getDate() + (i + 1) * 30); // 30, 60, 90 days from now
+
+        const returnDate = new Date(departureDate);
+        returnDate.setDate(returnDate.getDate() + pkg.duration);
+
+        const days: DaySchedule[] = Array.from({ length: pkg.duration }, (_, dayIdx) => {
+          const currentDate = new Date(departureDate);
+          currentDate.setDate(currentDate.getDate() + dayIdx);
+
+          const template = umrahActivityTemplates[dayIdx % umrahActivityTemplates.length];
+
+          return {
+            dayNumber: dayIdx + 1,
+            date: currentDate.toISOString().split('T')[0],
+            title: dayIdx === 0 ? 'Keberangkatan' : dayIdx === pkg.duration - 1 ? 'Kepulangan' : `Kegiatan Hari ke-${dayIdx + 1}`,
+            activities: template.map(a => ({ ...a }))
+          };
+        });
+
+        await addDoc(collection(db, 'itineraries'), {
+          packageId: pkg.id,
+          packageName: pkg.name,
+          departureDate: departureDate.toISOString().split('T')[0],
+          returnDate: returnDate.toISOString().split('T')[0],
+          tourLeaderId: tl?.id || '',
+          tourLeaderName: tl?.displayName || (tl as any)?.email || '',
+          muthawifId: mw?.id || '',
+          muthawifName: mw?.displayName || (mw as any)?.email || '',
+          days,
+          createdAt: Timestamp.now(),
+          updatedAt: Timestamp.now(),
+        });
+      }
+
+      toast.success(`🎉 ${dummyCount} Jadwal Dummy berhasil dibuat!`);
+      fetchData();
+    } catch (error) {
+      console.error('Error generating dummy schedules:', error);
+      toast.error('Gagal generate data dummy');
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       packageId: '',

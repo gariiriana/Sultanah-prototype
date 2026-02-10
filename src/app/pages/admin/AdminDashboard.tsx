@@ -17,6 +17,7 @@ import MarketplaceManagement from './components/MarketplaceManagement'; // ✅ M
 import AdminReferralManagement from './AdminReferralManagement'; // ✅ NEW: Referral Management
 import CommissionWithdrawalManagement from './components/CommissionWithdrawalManagement'; // ✅ NEW: Commission Withdrawal
 import SavingsApprovalPage from './SavingsApprovalPage'; // ✅ NEW: Savings Approval
+import AssistedBookingsSection from './components/AssistedBookingsSection'; // ✅ NEW: Assisted Bookings List
 import AdminSidebar from '../../components/admin/AdminSidebar';
 import AdminTopbar from '../../components/admin/AdminTopbar';
 
@@ -174,7 +175,8 @@ const AdminDashboard = () => {
                             activeTab === 'referrals' ? 'Referral & Voucher Program' :
                               activeTab === 'commission-withdrawals' ? 'Pencairan Profit' :
                                 activeTab === 'savings-approval' ? 'Tabungan' : // Updated title
-                                  'Dashboard'}
+                                  activeTab === 'assisted-jamaah' ? 'Jamaah Binaan' : // ✅ NEW: Assisted Bookings
+                                    'Dashboard'}
           pageSubtitle="Kelola bisnis perjalanan Anda dengan mudah"
           stats={stats}
           onNotificationClick={(type, _itemId) => {
@@ -208,6 +210,7 @@ const AdminDashboard = () => {
               {activeTab === 'commission-withdrawals' && <CommissionWithdrawalManagement />} {/* ✅ NEW: Commission Withdrawal */}
               {activeTab === 'savings-approval' && <SavingsApprovalPage />} {/* ✅ NEW: Savings Approval */}
               {activeTab === 'item-requests' && <AdminItemRequestsManager />} {/* ✅ RESTORED: Pesanan Marketplace */}
+              {activeTab === 'assisted-jamaah' && <AssistedBookingsSection />} {/* ✅ NEW: Assisted Bookings */}
             </div>
           </div>
         </div>

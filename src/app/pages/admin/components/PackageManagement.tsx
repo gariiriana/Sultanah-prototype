@@ -12,8 +12,8 @@ import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, writeBa
 import { db } from '../../../../config/firebase';
 import { toast } from 'sonner';
 import { Checkbox } from '../../../components/ui/checkbox';
-import regulerPackageImg from '@/assets/images/reguler-package.png';
-import limitedEditionImg from '@/assets/images/limited-edition.png';
+import { Package } from '../../../../types';
+import { compressImage, validateImageFile } from '../../../../utils/imageCompression';
 
 const PackageManagement = () => {
   const [packages, setPackages] = useState<Package[]>([]);
@@ -57,6 +57,7 @@ const PackageManagement = () => {
     assignedTourLeaderId: '',
     // ✅ NEW: Muthawif assignment
     assignedMuthawifId: '',
+    expiryDate: '', // ✅ NEW: Expiry date for limited edition
   });
 
   // ✅ NEW: Package Items State (separate from formData for easier manipulation)
@@ -380,7 +381,8 @@ const PackageManagement = () => {
 
         // ❌ REMOVE Base64 from main doc
         packageFileBase64: null,
-        scheduleFileBase64: null
+        scheduleFileBase64: null,
+        expiryDate: formData.expiryDate || null, // ✅ NEW: Save expiry date
       };
 
       // Cleanup null values so we don't save fields with null
@@ -422,6 +424,119 @@ const PackageManagement = () => {
     }
   };
 
+  // ✅ NEW: Generate Dummy Packages for Testing
+  const handleGenerateDummyPackages = async () => {
+    try {
+      setIsBulkDeleting(true);
+      toast.info('🚀 Menyiapkan paket dummy...');
+
+      const dummyPackages = [
+        {
+          name: 'Umrah Premium Ramadhan (Reguler)',
+          type: 'umrah',
+          packageClass: 'vvip',
+          packageCategory: 'reguler',
+          price: 35000000,
+          duration: 12,
+          departureDate: '2025-03-15',
+          maxParticipants: 45,
+          status: 'active',
+          photo: '/images/dummy-packages/reguler.jpg',
+          image: '/images/dummy-packages/reguler.jpg',
+          hotel: 'Movenpick Hajar Tower Makkah',
+          airline: 'Saudi Arabian Airlines',
+          features: ['✈️ Pesawat Saudi Business Class', '🏨 Hotel ⭐5 Depan Masjidil', '🍽️ Full Board Meal 3x'],
+          description: 'Nikmati kekhusyukan ibadah di bulan suci Ramadhan dengan fasilitas premium.',
+          includes: ['Visa Umrah', 'Tiket PP', 'Akomodasi', 'Makan 3x'],
+          excludes: ['Paspor', 'Kelebihan Bagasi'],
+          itinerary: ['Hari 1: Jakarta - Jeddah', 'Hari 2: Jeddah - Makkah'],
+          highlight: ['Ibadah nyaman di bulan suci'],
+          terms: 'Syarat & Ketentuan berlaku',
+          meetingPoint: 'Bandara Soekarno Hatta Terminal 3',
+          whatsappNumber: '628123456789',
+        },
+        {
+          name: 'Promo Umrah Syawal Hemat',
+          type: 'umrah',
+          packageClass: 'reguler',
+          packageCategory: 'promo',
+          price: 24500000,
+          duration: 9,
+          departureDate: '2025-04-10',
+          maxParticipants: 50,
+          status: 'active',
+          photo: '/images/dummy-packages/promo.jpg',
+          image: '/images/dummy-packages/promo.jpg',
+          hotel: 'Anjum Hotel Makkah',
+          airline: 'Lion Air Gatotkaca',
+          features: ['💰 Harga Termurah', '🏨 Hotel Berbintang', '🚌 Bus AC Terbaru'],
+          description: 'Kesempatan Umrah dengan harga terjangkau setelah lebaran.',
+          includes: ['Visa Umrah', 'Tiket PP', 'Akomodasi'],
+          excludes: ['Paspor'],
+          itinerary: ['Hari 1: Jakarta - Madinah'],
+          highlight: ['Harga Spesial Syawal'],
+          terms: 'Non-refundable',
+          meetingPoint: 'Terminal 3 Soetta',
+          whatsappNumber: '628123456789',
+        },
+        {
+          name: 'FLASH SALE: Umrah Super VVIP',
+          type: 'umrah',
+          packageClass: 'super-vvip',
+          packageCategory: 'limited-edition',
+          price: 45000000,
+          duration: 15,
+          departureDate: '2025-05-01',
+          maxParticipants: 20,
+          status: 'active',
+          photo: '/images/dummy-packages/limited.jpg',
+          image: '/images/dummy-packages/limited.jpg',
+          hotel: 'Raffles Makkah Palace',
+          airline: 'Emirates Business Class',
+          features: ['💎 Super Luxury Service', '🤴 Private Mutawwif', '🚗 Private Transport'],
+          description: 'Hanya tersedia untuk 20 jamaah beruntung. Penawaran terbatas waktu!',
+          expiryDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16), // 2 days from now
+          includes: ['Full Package All-In'],
+          excludes: ['Belanja Pribadi'],
+          itinerary: ['Rencana Perjalanan Eksklusif'],
+          highlight: ['Fasilitas Bintang 7'],
+          terms: 'First come first serve',
+          meetingPoint: 'Lounge VVIP Soetta',
+          whatsappNumber: '628123456789',
+        }
+      ];
+
+      for (const pkg of dummyPackages) {
+        // ✅ NEW: Pick random approved staff for dummy packages
+        const randomTL = tourLeaders.length > 0
+          ? tourLeaders[Math.floor(Math.random() * tourLeaders.length)]
+          : null;
+        const randomMW = muthawifs.length > 0
+          ? muthawifs[Math.floor(Math.random() * muthawifs.length)]
+          : null;
+
+        await addDoc(collection(db, 'packages'), {
+          ...pkg,
+          tourLeaderId: randomTL?.id || '',
+          tourLeaderName: randomTL?.displayName || randomTL?.email || '',
+          muthawifId: randomMW?.id || '',
+          muthawifName: randomMW?.displayName || randomMW?.email || '',
+          availableSlots: pkg.maxParticipants,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      }
+
+      toast.success('🎉 3 Paket Dummy berhasil dibuat!');
+      fetchPackages();
+    } catch (error) {
+      console.error('Error generating dummy:', error);
+      toast.error('Gagal generate data dummy');
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
   const handleEdit = (pkg: Package) => {
     setEditingPackage(pkg);
     setFormData({
@@ -451,6 +566,7 @@ const PackageManagement = () => {
       assignedTourLeaderId: (pkg as any).tourLeaderId || pkg.assignedTourLeaderId || '',
       // ✅ FIX: Read from muthawifId (what's saved in Firestore)
       assignedMuthawifId: (pkg as any).muthawifId || (pkg as any).assignedMuthawifId || '',
+      expiryDate: pkg.expiryDate || '', // ✅ NEW: Load expiry date
     });
     // ✅ Load package items
     setPackageItems(
@@ -606,6 +722,7 @@ const PackageManagement = () => {
       whatsappNumber: '',
       assignedTourLeaderId: '',
       assignedMuthawifId: '',
+      expiryDate: '', // ✅ NEW
     });
     setPackageItems([]);
     setPackageFile(null);
@@ -640,686 +757,734 @@ const PackageManagement = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h3 className="text-xl">Package Management</h3>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) resetForm();
-        }}>
-          <div className="flex gap-2">
+        <div className="flex gap-2">
+          <Dialog open={dialogOpen} onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) resetForm();
+          }}>
             <DialogTrigger asChild>
               <Button className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700]">
                 <Plus className="w-4 h-4 mr-2" />
                 Add Package
               </Button>
             </DialogTrigger>
-          </div >
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white/95 via-[#FFF9F0]/95 to-[#F5ECD7]/95 backdrop-blur-xl border-2 border-[#D4AF37]/30 shadow-2xl">
-            <DialogHeader className="border-b border-[#D4AF37]/20 pb-4 mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#FFD700] flex items-center justify-center shadow-lg">
-                  <PackageIcon className="w-6 h-6 text-white" />
-                </div>
-                <div>
-                  <DialogTitle className="text-2xl bg-gradient-to-r from-[#D4AF37] to-[#C5A572] bg-clip-text text-transparent">
-                    {editingPackage ? 'Edit Paket' : 'Tambah Paket Baru'}
-                  </DialogTitle>
-                  <DialogDescription className="text-gray-600">
-                    {editingPackage ? 'Perbarui detail dan informasi paket' : 'Buat paket perjalanan baru untuk jamaah Anda'}
-                  </DialogDescription>
-                </div>
-              </div>
-            </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Information Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
-                    <FileText className="w-4 h-4 text-[#D4AF37]" />
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-gradient-to-br from-white/95 via-[#FFF9F0]/95 to-[#F5ECD7]/95 backdrop-blur-xl border-2 border-[#D4AF37]/30 shadow-2xl">
+              <DialogHeader className="border-b border-[#D4AF37]/20 pb-4 mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#FFD700] flex items-center justify-center shadow-lg">
+                    <PackageIcon className="w-6 h-6 text-white" />
                   </div>
-                  <h4 className="font-semibold text-gray-700">Informasi Dasar</h4>
+                  <div>
+                    <DialogTitle className="text-2xl bg-gradient-to-r from-[#D4AF37] to-[#C5A572] bg-clip-text text-transparent">
+                      {editingPackage ? 'Edit Paket' : 'Tambah Paket Baru'}
+                    </DialogTitle>
+                    <DialogDescription className="text-gray-600">
+                      {editingPackage ? 'Perbarui detail dan informasi paket' : 'Buat paket perjalanan baru untuk jamaah Anda'}
+                    </DialogDescription>
+                  </div>
+                </div>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Basic Information Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
+                      <FileText className="w-4 h-4 text-[#D4AF37]" />
+                    </div>
+                    <h4 className="font-semibold text-gray-700">Informasi Dasar</h4>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <PackageIcon className="w-4 h-4 text-[#D4AF37]" />
+                        Nama Paket <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        value={formData.name}
+                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        required
+                        className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
+                        placeholder="Contoh: Umrah Premium Ramadhan ⭐5"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-[#D4AF37]" />
+                        Tipe Paket
+                      </Label>
+                      <Select value={formData.type} onValueChange={(value: any) => setFormData({ ...formData, type: value })}>
+                        <SelectTrigger className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="umrah">🕋 Umrah</SelectItem>
+                          <SelectItem value="hajj">🕌 Haji</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                        Kelas Paket
+                      </Label>
+                      <Select value={formData.packageClass} onValueChange={(value: any) => setFormData({ ...formData, packageClass: value })}>
+                        <SelectTrigger className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="reguler">⭐ Reguler</SelectItem>
+                          <SelectItem value="vip">⭐⭐ VIP</SelectItem>
+                          <SelectItem value="vvip">⭐⭐⭐ VVIP</SelectItem>
+                          <SelectItem value="super-vvip">⭐⭐⭐⭐ Super VVIP</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <ShoppingBag className="w-4 h-4 text-[#D4AF37]" />
+                        Kategori Paket
+                      </Label>
+                      <Select value={formData.packageCategory} onValueChange={(value: any) => setFormData({ ...formData, packageCategory: value })}>
+                        <SelectTrigger className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="reguler">📦 Reguler</SelectItem>
+                          <SelectItem value="promo">🏷️ Promo</SelectItem>
+                          <SelectItem value="limited-edition">⏳ Limited Edition</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* ✅ NEW: Expiration Timer for Limited Edition */}
+                    {formData.packageCategory === 'limited-edition' && (
+                      <div
+                        className="space-y-4 col-span-2 p-5 bg-gradient-to-br from-[#FFF9F0] to-[#F5ECD7] border-2 border-[#D4AF37]/30 rounded-2xl shadow-inner animate-in fade-in slide-in-from-top-4 duration-300"
+                      >
+                        <div className="flex items-center justify-between">
+                          <Label className="text-base font-bold text-[#D4AF37] flex items-center gap-2">
+                            <Clock className="w-5 h-5" />
+                            Kontrol Batas Waktu (Flash Sale)
+                          </Label>
+                          <Badge variant="outline" className="bg-white text-orange-600 border-orange-200 animate-pulse">
+                            🔥 Limited Time
+                          </Badge>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+                          <div className="space-y-3">
+                            <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-[#D4AF37]" />
+                              Tentukan Batas Waktu
+                            </Label>
+                            <Input
+                              type="datetime-local"
+                              value={formData.expiryDate}
+                              onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
+                              required={formData.packageCategory === 'limited-edition'}
+                              className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white h-12 rounded-xl px-4 shadow-sm"
+                            />
+                            <p className="text-[10px] text-gray-500 italic px-1">
+                              * Paket akan otomatis diarsipkan setelah melewati waktu ini.
+                            </p>
+                          </div>
+                          <div className="h-full">
+                            <div className="p-4 bg-white/80 rounded-2xl border border-[#D4AF37]/20 shadow-sm flex flex-col justify-center h-full min-h-[100px]">
+                              <div className="flex items-start gap-3">
+                                <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+                                  <AlertTriangle className="w-4 h-4 text-orange-600" />
+                                </div>
+                                <p className="text-xs text-gray-600 leading-relaxed">
+                                  Sistem akan <strong>menyembunyikan paket</strong> secara otomatis dari aplikasi jamaah tepat pada waktu yang Bapak tentukan.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <PackageIcon className="w-4 h-4 text-[#D4AF37]" />
-                      Nama Paket <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      required
-                      className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                      placeholder="e.g., Umrah Premium 2024"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-[#D4AF37]" />
-                      Tipe Paket
-                    </Label>
-                    <Select value={formData.type} onValueChange={(value: any) => setFormData({ ...formData, type: value })}>
-                      <SelectTrigger className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="umrah">🕋 Umrah</SelectItem>
-                        <SelectItem value="hajj">🕌 Haji</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-                      Kelas Paket
-                    </Label>
-                    <Select value={formData.packageClass} onValueChange={(value: any) => setFormData({ ...formData, packageClass: value })}>
-                      <SelectTrigger className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="reguler">⭐ Reguler</SelectItem>
-                        <SelectItem value="vip">⭐⭐ VIP</SelectItem>
-                        <SelectItem value="vvip">⭐⭐⭐ VVIP</SelectItem>
-                        <SelectItem value="super-vvip">⭐⭐⭐⭐ Super VVIP</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <ShoppingBag className="w-4 h-4 text-[#D4AF37]" />
-                      Kategori Paket
-                    </Label>
-                    <Select value={formData.packageCategory} onValueChange={(value: any) => setFormData({ ...formData, packageCategory: value })}>
-                      <SelectTrigger className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="reguler">📦 Reguler</SelectItem>
-                        <SelectItem value="promo">🏷️ Promo</SelectItem>
-                        <SelectItem value="limited-edition">⏳ Limited Edition</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Pricing & Duration Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
-                    <DollarSign className="w-4 h-4 text-[#D4AF37]" />
-                  </div>
-                  <h4 className="font-semibold text-gray-700">Harga & Jadwal</h4>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                {/* Pricing & Duration Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
                       <DollarSign className="w-4 h-4 text-[#D4AF37]" />
-                      Harga (IDR) <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      type="number"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      required
-                      className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                      placeholder="25000000"
-                    />
+                    </div>
+                    <h4 className="font-semibold text-gray-700">Harga & Jadwal</h4>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-[#D4AF37]" />
-                      Durasi (hari) <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      type="number"
-                      value={formData.duration}
-                      onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-                      required
-                      className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                      placeholder="12"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-[#D4AF37]" />
-                      Tanggal Keberangkatan <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      type="date"
-                      value={formData.departureDate}
-                      onChange={(e) => setFormData({ ...formData, departureDate: e.target.value })}
-                      min={new Date().toISOString().split('T')[0]} // ✅ Tidak bisa pilih tanggal sebelumnya
-                      required
-                      className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-[#D4AF37]" />
-                      Status
-                    </Label>
-                    <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
-                      <SelectTrigger className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="active">✅ Aktif</SelectItem>
-                        <SelectItem value="inactive">⏸️ Tidak Aktif</SelectItem>
-                      </SelectContent>
-                    </Select>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <DollarSign className="w-4 h-4 text-[#D4AF37]" />
+                        Harga (IDR) <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        type="number"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        required
+                        className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
+                        placeholder="25000000"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <Clock className="w-4 h-4 text-[#D4AF37]" />
+                        Durasi (hari) <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        type="number"
+                        value={formData.duration}
+                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                        required
+                        className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
+                        placeholder="12"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <Calendar className="w-4 h-4 text-[#D4AF37]" />
+                        Tanggal Keberangkatan <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        type="date"
+                        value={formData.departureDate}
+                        onChange={(e) => setFormData({ ...formData, departureDate: e.target.value })}
+                        min={new Date().toISOString().split('T')[0]} // ✅ Tidak bisa pilih tanggal sebelumnya
+                        required
+                        className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-[#D4AF37]" />
+                        Status
+                      </Label>
+                      <Select value={formData.status} onValueChange={(value: any) => setFormData({ ...formData, status: value })}>
+                        <SelectTrigger className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">✅ Aktif</SelectItem>
+                          <SelectItem value="inactive">⏸️ Tidak Aktif</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Capacity Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
-                    <Users className="w-4 h-4 text-[#D4AF37]" />
-                  </div>
-                  <h4 className="font-semibold text-gray-700">Manajemen Kapasitas</h4>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                {/* Capacity Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
                       <Users className="w-4 h-4 text-[#D4AF37]" />
-                      Maksimum Peserta <span className="text-red-500">*</span>
+                    </div>
+                    <h4 className="font-semibold text-gray-700">Manajemen Kapasitas</h4>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <Users className="w-4 h-4 text-[#D4AF37]" />
+                        Maksimum Peserta <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        type="number"
+                        value={formData.maxParticipants}
+                        onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
+                        required
+                        className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
+                        placeholder="40"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Features Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
+                      <List className="w-4 h-4 text-[#D4AF37]" />
+                    </div>
+                    <h4 className="font-semibold text-gray-700">Fitur Paket</h4>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                      <List className="w-4 h-4 text-[#D4AF37]" />
+                      Fitur (satu per baris) <span className="text-red-500">*</span>
                     </Label>
-                    <Input
-                      type="number"
-                      value={formData.maxParticipants}
-                      onChange={(e) => setFormData({ ...formData, maxParticipants: e.target.value })}
+                    <Textarea
+                      value={formData.features}
+                      onChange={(e) => setFormData({ ...formData, features: e.target.value })}
                       required
+                      rows={4}
+                      placeholder="✈️ Pesawat Saudi Business Class&#10;🏨 Hotel ⭐5 Depan Masjidil Haram&#10;🍽️ Full Board Meal 3x&#10;🚌 Transportasi Bus AC Terbaru"
                       className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                      placeholder="40"
                     />
+                    <p className="text-xs text-gray-500">Tambahkan emoji agar fitur lebih menarik!</p>
                   </div>
                 </div>
-              </div>
 
-              {/* Features Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
-                    <List className="w-4 h-4 text-[#D4AF37]" />
-                  </div>
-                  <h4 className="font-semibold text-gray-700">Fitur Paket</h4>
-                </div>
-
+                {/* Description Section */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <List className="w-4 h-4 text-[#D4AF37]" />
-                    Fitur (satu per baris) <span className="text-red-500">*</span>
+                    <FileText className="w-4 h-4 text-[#D4AF37]" />
+                    Deskripsi Paket
                   </Label>
                   <Textarea
-                    value={formData.features}
-                    onChange={(e) => setFormData({ ...formData, features: e.target.value })}
-                    required
-                    rows={4}
-                    placeholder="✈️ Direct flight from Jakarta&#10;🏨 5-star hotel in Makkah&#10;🍽️ Full board meals&#10;🚌 Private transportation"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    rows={3}
+                    placeholder="Jelaskan detail paket Anda..."
                     className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
                   />
-                  <p className="text-xs text-gray-500">Tambahkan emoji agar fitur lebih menarik!</p>
-                </div>
-              </div>
-
-              {/* Description Section */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-[#D4AF37]" />
-                  Deskripsi Paket
-                </Label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  rows={3}
-                  placeholder="Jelaskan detail paket Anda..."
-                  className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                />
-              </div>
-
-              {/* Photo Upload Section */}
-              <div className="space-y-2">
-                <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                  <ImageIcon className="w-4 h-4 text-[#D4AF37]" />
-                  Foto Paket
-                </Label>
-                <div className="relative">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    id="package-photo-upload"
-                    className="hidden"
-                  />
-                  <label
-                    htmlFor="package-photo-upload"
-                    className="flex items-center gap-3 p-4 border-2 border-dashed border-[#D4AF37]/30 rounded-xl bg-white/50 backdrop-blur-sm cursor-pointer hover:border-[#D4AF37] hover:bg-[#FFF9F0]/50 transition-all"
-                  >
-                    <ImageIcon className="w-5 h-5 text-[#D4AF37]" />
-                    <div>
-                      <p className="text-sm font-medium text-[#D4AF37] hover:underline">
-                        Pilih file
-                      </p>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        {formData.photo ? '✓ Gambar diunggah' : 'PNG, JPG maks 5 MB'}
-                      </p>
-                    </div>
-                  </label>
-                </div>
-                {formData.photo && (
-                  <div className="mt-4 relative group">
-                    <img
-                      src={formData.photo}
-                      alt="Preview"
-                      className="w-full h-48 object-cover rounded-xl border-2 border-[#D4AF37]/30 shadow-lg"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                      <p className="text-white text-sm">📸 Preview Image</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* New Fields Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
-                    <Sparkles className="w-4 h-4 text-[#D4AF37]" />
-                  </div>
-                  <h4 className="font-semibold text-gray-700">Detail Tambahan</h4>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <Hotel className="w-4 h-4 text-[#D4AF37]" />
-                      Hotel <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      value={formData.hotel}
-                      onChange={(e) => setFormData({ ...formData, hotel: e.target.value })}
-                      required
-                      className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                      placeholder="Hotel bintang 5 di Makkah"
+                {/* Photo Upload Section */}
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4 text-[#D4AF37]" />
+                    Foto Paket
+                  </Label>
+                  <div className="relative">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      id="package-photo-upload"
+                      className="hidden"
                     />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <Plane className="w-4 h-4 text-[#D4AF37]" />
-                      Maskapai <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      value={formData.airline}
-                      onChange={(e) => setFormData({ ...formData, airline: e.target.value })}
-                      required
-                      className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                      placeholder="Penerbangan langsung dari Jakarta"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <List className="w-4 h-4 text-[#D4AF37]" />
-                      Termasuk (satu per baris) <span className="text-red-500">*</span>
-                    </Label>
-                    <Textarea
-                      value={formData.includes}
-                      onChange={(e) => setFormData({ ...formData, includes: e.target.value })}
-                      rows={4}
-                      placeholder="✈️ Direct flight from Jakarta&#10;🏨 5-star hotel in Makkah&#10;🍽️ Full board meals&#10;🚌 Private transportation"
-                      className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                    />
-                    <p className="text-xs text-gray-500">Tambahkan emoji agar terlihat lebih menarik!</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <List className="w-4 h-4 text-[#D4AF37]" />
-                      Tidak Termasuk (satu per baris) <span className="text-red-500">*</span>
-                    </Label>
-                    <Textarea
-                      value={formData.excludes}
-                      onChange={(e) => setFormData({ ...formData, excludes: e.target.value })}
-                      rows={4}
-                      placeholder="Visa fees&#10;Travel insurance"
-                      className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                    />
-                    <p className="text-xs text-gray-500">Tambahkan emoji agar terlihat lebih menarik!</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <List className="w-4 h-4 text-[#D4AF37]" />
-                      Jadwal Perjalanan (satu per baris) <span className="text-red-500">*</span>
-                    </Label>
-                    <Textarea
-                      value={formData.itinerary}
-                      onChange={(e) => setFormData({ ...formData, itinerary: e.target.value })}
-                      rows={4}
-                      placeholder="Hari 1: Tiba di Jeddah&#10;Hari 2: Ziarah ke Masjid Nabawi&#10;Hari 3: Ibadah di Masjidil Haram"
-                      className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                    />
-                    <p className="text-xs text-gray-500">Tambahkan emoji agar terlihat lebih menarik!</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <List className="w-4 h-4 text-[#D4AF37]" />
-                      Highlight (satu per baris) <span className="text-red-500">*</span>
-                    </Label>
-                    <Textarea
-                      value={formData.highlight}
-                      onChange={(e) => setFormData({ ...formData, highlight: e.target.value })}
-                      rows={4}
-                      placeholder="Wisata eksklusif Makkah&#10;Transportasi pribadi ke tempat suci&#10;Makan 3 kali sehari (Full board)"
-                      className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                    />
-                    <p className="text-xs text-gray-500">Tambahkan emoji agar terlihat lebih menarik!</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-[#D4AF37]" />
-                      Syarat & Ketentuan <span className="text-red-500">*</span>
-                    </Label>
-                    <Textarea
-                      value={formData.terms}
-                      onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
-                      rows={4}
-                      placeholder="Syarat dan ketentuan paket"
-                      className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-[#D4AF37]" />
-                      Titik Kumpul <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      value={formData.meetingPoint}
-                      onChange={(e) => setFormData({ ...formData, meetingPoint: e.target.value })}
-                      required
-                      className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                      placeholder="Titik kumpul keberangkatan paket"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <FileText className="w-4 h-4 text-[#D4AF37]" />
-                      Nomor WhatsApp <span className="text-red-500">*</span>
-                    </Label>
-                    <Input
-                      value={formData.whatsappNumber}
-                      onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
-                      required
-                      className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
-                      placeholder="Nomor WhatsApp untuk info paket"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <UserCheck className="w-4 h-4 text-[#D4AF37]" />
-                      Tour Leader Bertugas
-                    </Label>
-                    <Select value={formData.assignedTourLeaderId || 'none'} onValueChange={(value: any) => setFormData({ ...formData, assignedTourLeaderId: value === 'none' ? '' : value })}>
-                      <SelectTrigger className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm">
-                        <SelectValue placeholder="Pilih tour leader (opsional)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Tidak Ada (Tanpa Tour Leader)</SelectItem>
-                        {tourLeaders.length === 0 ? (
-                          <SelectItem value="no-leaders-available" disabled>Tidak ada tour leader yang tersedia</SelectItem>
-                        ) : (
-                          tourLeaders.map((leader: any) => (
-                            <SelectItem key={leader.id} value={leader.id}>
-                              {leader.displayName || leader.email}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-gray-500">
-                      {tourLeaders.length === 0
-                        ? '⚠️ Belum ada tour leader yang disetujui. Setujui di Manajemen Pengguna.'
-                        : `✅ ${tourLeaders.length} tour leader tersedia`
-                      }
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <UserCheck className="w-4 h-4 text-[#D4AF37]" />
-                      Muthawif Bertugas
-                    </Label>
-                    <Select value={formData.assignedMuthawifId || 'none'} onValueChange={(value: any) => setFormData({ ...formData, assignedMuthawifId: value === 'none' ? '' : value })}>
-                      <SelectTrigger className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm">
-                        <SelectValue placeholder="Pilih muthawif (opsional)" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">Tidak Ada (Tanpa Muthawif)</SelectItem>
-                        {muthawifs.length === 0 ? (
-                          <SelectItem value="no-muthawifs-available" disabled>Tidak ada muthawif yang tersedia</SelectItem>
-                        ) : (
-                          muthawifs.map((muthawif: any) => (
-                            <SelectItem key={muthawif.id} value={muthawif.id}>
-                              {muthawif.displayName || muthawif.email}
-                            </SelectItem>
-                          ))
-                        )}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-gray-500">
-                      {muthawifs.length === 0
-                        ? '⚠️ Belum ada muthawif yang disetujui. Setujui di Manajemen Pengguna.'
-                        : `✅ ${muthawifs.length} muthawif tersedia`
-                      }
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* ✅ NEW: Package Items Section */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
-                      <ShoppingBag className="w-4 h-4 text-[#D4AF37]" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-gray-700">Perlengkapan dalam Paket</h4>
-                      <p className="text-xs text-gray-500">Item yang sudah termasuk dalam harga (all-in)</p>
-                    </div>
-                  </div>
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      console.log('➕ Adding new package item...');
-                      setPackageItems([...packageItems, { itemName: '', quantity: '1' }]);
-                      console.log('✅ Package item added');
-                    }}
-                    size="sm"
-                    className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700] hover:from-[#C5A572] hover:to-[#D4AF37] text-white shadow-md"
-                  >
-                    <Plus className="w-4 h-4 mr-1" />
-                    Tambah Item
-                  </Button>
-                </div>
-
-                {packageItems.length === 0 ? (
-                  <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50/50">
-                    <ShoppingBag className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600 font-medium mb-1">Belum Ada Perlengkapan</p>
-                    <p className="text-xs text-gray-500">Klik "Tambah Item" untuk menambah perlengkapan paket</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {packageItems.map((item, index) => (
-                      <div key={index} className="flex gap-3 items-start p-3 bg-white/70 rounded-lg border border-[#D4AF37]/20 hover:border-[#D4AF37] transition-all">
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_120px] gap-3">
-                          <div className="space-y-1">
-                            <Label className="text-xs text-gray-600">Nama Item</Label>
-                            <Input
-                              placeholder="Contoh: Mihrab, Tasbih, Air Zam-zam 5L..."
-                              value={item.itemName}
-                              onChange={(e) => {
-                                const newItems = [...packageItems];
-                                newItems[index].itemName = e.target.value;
-                                setPackageItems(newItems);
-                              }}
-                              className="border-[#D4AF37]/30 focus:border-[#D4AF37] h-9"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <Label className="text-xs text-gray-600">Jumlah</Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              placeholder="1"
-                              value={item.quantity}
-                              onChange={(e) => {
-                                const newItems = [...packageItems];
-                                newItems[index].quantity = e.target.value;
-                                setPackageItems(newItems);
-                              }}
-                              className="border-[#D4AF37]/30 focus:border-[#D4AF37] h-9"
-                            />
-                          </div>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setPackageItems(packageItems.filter((_, i) => i !== index));
-                          }}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-50 mt-5"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
+                    <label
+                      htmlFor="package-photo-upload"
+                      className="flex items-center gap-3 p-4 border-2 border-dashed border-[#D4AF37]/30 rounded-xl bg-white/50 backdrop-blur-sm cursor-pointer hover:border-[#D4AF37] hover:bg-[#FFF9F0]/50 transition-all"
+                    >
+                      <ImageIcon className="w-5 h-5 text-[#D4AF37]" />
+                      <div>
+                        <p className="text-sm font-medium text-[#D4AF37] hover:underline">
+                          Pilih file
+                        </p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {formData.photo ? '✓ Gambar diunggah' : 'PNG, JPG maks 5 MB'}
+                        </p>
                       </div>
-                    ))}
-                    <div className="flex items-start gap-2 p-3 bg-gradient-to-br from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg">
-                      <Sparkles className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-xs text-blue-700">
-                        💡 <strong>Tips:</strong> Item-item ini sudah termasuk dalam harga paket (all-in). Jamaah tidak perlu membayar tambahan untuk perlengkapan ini.
+                    </label>
+                  </div>
+                  {formData.photo && (
+                    <div className="mt-4 relative group">
+                      <img
+                        src={formData.photo}
+                        alt="Preview"
+                        className="w-full h-48 object-cover rounded-xl border-2 border-[#D4AF37]/30 shadow-lg"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                        <p className="text-white text-sm">📸 Preview Image</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* New Fields Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
+                      <Sparkles className="w-4 h-4 text-[#D4AF37]" />
+                    </div>
+                    <h4 className="font-semibold text-gray-700">Detail Tambahan</h4>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <Hotel className="w-4 h-4 text-[#D4AF37]" />
+                        Hotel <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        value={formData.hotel}
+                        onChange={(e) => setFormData({ ...formData, hotel: e.target.value })}
+                        required
+                        className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
+                        placeholder="Contoh: Movenpick Makkah / Madinah Hilton"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <Plane className="w-4 h-4 text-[#D4AF37]" />
+                        Maskapai <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        value={formData.airline}
+                        onChange={(e) => setFormData({ ...formData, airline: e.target.value })}
+                        required
+                        className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
+                        placeholder="Contoh: Saudi Arabian Airlines / Emirates"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <List className="w-4 h-4 text-[#D4AF37]" />
+                        Termasuk (satu per baris) <span className="text-red-500">*</span>
+                      </Label>
+                      <Textarea
+                        value={formData.includes}
+                        onChange={(e) => setFormData({ ...formData, includes: e.target.value })}
+                        rows={4}
+                        placeholder="✈️ Pesawat Saudi Business Class&#10;🏨 Hotel ⭐5 Depan Masjidil Haram&#10;🍽️ Makan Full Board 3x&#10;🚌 Transportasi Bus VIP di Saudi"
+                        className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
+                      />
+                      <p className="text-xs text-gray-500">Tambahkan emoji agar terlihat lebih menarik!</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <List className="w-4 h-4 text-[#D4AF37]" />
+                        Tidak Termasuk (satu per baris) <span className="text-red-500">*</span>
+                      </Label>
+                      <Textarea
+                        value={formData.excludes}
+                        onChange={(e) => setFormData({ ...formData, excludes: e.target.value })}
+                        rows={4}
+                        placeholder="Visa Umrah&#10;Asuransi Perjalanan&#10;Perlengkapan Ibadah"
+                        className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
+                      />
+                      <p className="text-xs text-gray-500">Tambahkan emoji agar terlihat lebih menarik!</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <List className="w-4 h-4 text-[#D4AF37]" />
+                        Jadwal Perjalanan (satu per baris) <span className="text-red-500">*</span>
+                      </Label>
+                      <Textarea
+                        value={formData.itinerary}
+                        onChange={(e) => setFormData({ ...formData, itinerary: e.target.value })}
+                        rows={4}
+                        placeholder="Hari 1: Tiba di Jeddah&#10;Hari 2: Ziarah ke Masjid Nabawi&#10;Hari 3: Ibadah di Masjidil Haram"
+                        className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
+                      />
+                      <p className="text-xs text-gray-500">Tambahkan emoji agar terlihat lebih menarik!</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <List className="w-4 h-4 text-[#D4AF37]" />
+                        Highlight (satu per baris) <span className="text-red-500">*</span>
+                      </Label>
+                      <Textarea
+                        value={formData.highlight}
+                        onChange={(e) => setFormData({ ...formData, highlight: e.target.value })}
+                        rows={4}
+                        placeholder="Wisata eksklusif Makkah&#10;Transportasi pribadi ke tempat suci&#10;Makan 3 kali sehari (Full board)"
+                        className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
+                      />
+                      <p className="text-xs text-gray-500">Tambahkan emoji agar terlihat lebih menarik!</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-[#D4AF37]" />
+                        Syarat & Ketentuan <span className="text-red-500">*</span>
+                      </Label>
+                      <Textarea
+                        value={formData.terms}
+                        onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
+                        rows={4}
+                        placeholder="Syarat dan ketentuan paket"
+                        className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-[#D4AF37]" />
+                        Titik Kumpul <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        value={formData.meetingPoint}
+                        onChange={(e) => setFormData({ ...formData, meetingPoint: e.target.value })}
+                        required
+                        className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
+                        placeholder="Titik kumpul keberangkatan paket"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-[#D4AF37]" />
+                        Nomor WhatsApp <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        value={formData.whatsappNumber}
+                        onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
+                        required
+                        className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm"
+                        placeholder="Nomor WhatsApp untuk info paket"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <UserCheck className="w-4 h-4 text-[#D4AF37]" />
+                        Tour Leader Bertugas
+                      </Label>
+                      <Select value={formData.assignedTourLeaderId || 'none'} onValueChange={(value: any) => setFormData({ ...formData, assignedTourLeaderId: value === 'none' ? '' : value })}>
+                        <SelectTrigger className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm">
+                          <SelectValue placeholder="Pilih tour leader (opsional)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Tidak Ada (Tanpa Tour Leader)</SelectItem>
+                          {tourLeaders.length === 0 ? (
+                            <SelectItem value="no-leaders-available" disabled>Tidak ada tour leader yang tersedia</SelectItem>
+                          ) : (
+                            tourLeaders.map((leader: any) => (
+                              <SelectItem key={leader.id} value={leader.id}>
+                                {leader.displayName || leader.email}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-500">
+                        {tourLeaders.length === 0
+                          ? '⚠️ Belum ada tour leader yang disetujui. Setujui di Manajemen Pengguna.'
+                          : `✅ ${tourLeaders.length} tour leader tersedia`
+                        }
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <UserCheck className="w-4 h-4 text-[#D4AF37]" />
+                        Muthawif Bertugas
+                      </Label>
+                      <Select value={formData.assignedMuthawifId || 'none'} onValueChange={(value: any) => setFormData({ ...formData, assignedMuthawifId: value === 'none' ? '' : value })}>
+                        <SelectTrigger className="border-[#D4AF37]/30 focus:border-[#D4AF37] focus:ring-[#D4AF37]/20 bg-white/50 backdrop-blur-sm">
+                          <SelectValue placeholder="Pilih muthawif (opsional)" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Tidak Ada (Tanpa Muthawif)</SelectItem>
+                          {muthawifs.length === 0 ? (
+                            <SelectItem value="no-muthawifs-available" disabled>Tidak ada muthawif yang tersedia</SelectItem>
+                          ) : (
+                            muthawifs.map((muthawif: any) => (
+                              <SelectItem key={muthawif.id} value={muthawif.id}>
+                                {muthawif.displayName || muthawif.email}
+                              </SelectItem>
+                            ))
+                          )}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-500">
+                        {muthawifs.length === 0
+                          ? '⚠️ Belum ada muthawif yang disetujui. Setujui di Manajemen Pengguna.'
+                          : `✅ ${muthawifs.length} muthawif tersedia`
+                        }
                       </p>
                     </div>
                   </div>
-                )}
-              </div>
-
-              {/* ✅ File Upload Section */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
-                    <File className="w-4 h-4 text-[#D4AF37]" />
-                  </div>
-                  <h4 className="font-semibold text-gray-700">File Upload</h4>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <File className="w-4 h-4 text-[#D4AF37]" />
-                      File Paket
-                    </Label>
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        onChange={handlePackageFileUpload}
-                        id="package-file-upload"
-                        className="hidden"
-                      />
-                      <label
-                        htmlFor="package-file-upload"
-                        className="flex items-center gap-3 p-4 border-2 border-dashed border-[#D4AF37]/30 rounded-xl bg-white/50 backdrop-blur-sm cursor-pointer hover:border-[#D4AF37] hover:bg-[#FFF9F0]/50 transition-all"
-                      >
-                        <File className="w-5 h-5 text-[#D4AF37]" />
-                        <div>
-                          <p className="text-sm font-medium text-[#D4AF37] hover:underline">
-                            Pilih file
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            {packageFile
-                              ? '✓ File dipilih: ' + packageFile.name
-                              : packageFileName
-                                ? '📄 Saat ini: ' + packageFileName
-                                : 'PDF, DOC, DOCX maks 10MB'}
-                          </p>
-                        </div>
-                      </label>
+                {/* ✅ NEW: Package Items Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
+                        <ShoppingBag className="w-4 h-4 text-[#D4AF37]" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-700">Perlengkapan dalam Paket</h4>
+                        <p className="text-xs text-gray-500">Item yang sudah termasuk dalam harga (all-in)</p>
+                      </div>
                     </div>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        console.log('➕ Adding new package item...');
+                        setPackageItems([...packageItems, { itemName: '', quantity: '1' }]);
+                        console.log('✅ Package item added');
+                      }}
+                      size="sm"
+                      className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700] hover:from-[#C5A572] hover:to-[#D4AF37] text-white shadow-md"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Tambah Item
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <File className="w-4 h-4 text-[#D4AF37]" />
-                      File Jadwal
-                    </Label>
-                    <div className="relative">
-                      <input
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        onChange={handleScheduleFileUpload}
-                        id="schedule-file-upload"
-                        className="hidden"
-                      />
-                      <label
-                        htmlFor="schedule-file-upload"
-                        className="flex items-center gap-3 p-4 border-2 border-dashed border-[#D4AF37]/30 rounded-xl bg-white/50 backdrop-blur-sm cursor-pointer hover:border-[#D4AF37] hover:bg-[#FFF9F0]/50 transition-all"
-                      >
-                        <File className="w-5 h-5 text-[#D4AF37]" />
-                        <div>
-                          <p className="text-sm font-medium text-[#D4AF37] hover:underline">
-                            Pilih file
-                          </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
-                            {scheduleFile
-                              ? '✓ File dipilih: ' + scheduleFile.name
-                              : scheduleFileName
-                                ? '📄 Saat ini: ' + scheduleFileName
-                                : 'PDF, DOC, DOCX maks 10MB'}
-                          </p>
-                        </div>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </div>
 
-              {/* Submit Button */}
-              <div className="pt-4 border-t border-[#D4AF37]/20">
-                <Button
-                  type="submit"
-                  disabled={uploadingFiles || (!editingPackage && !isFormValid())} // ✅ Disable saat uploading atau form invalid
-                  className="w-full h-12 bg-gradient-to-r from-[#D4AF37] via-[#FFD700] to-[#D4AF37] hover:from-[#C5A572] hover:via-[#D4AF37] hover:to-[#C5A572] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 bg-[length:200%_auto] hover:bg-right disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {uploadingFiles ? (
-                    <>
-                      <div className="w-5 h-5 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      {editingPackage ? 'Memperbarui...' : 'Membuat...'}
-                    </>
-                  ) : editingPackage ? (
-                    <>
-                      <Edit className="w-5 h-5 mr-2" />
-                      Perbarui Paket
-                    </>
+                  {packageItems.length === 0 ? (
+                    <div className="text-center py-12 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50/50">
+                      <ShoppingBag className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-600 font-medium mb-1">Belum Ada Perlengkapan</p>
+                      <p className="text-xs text-gray-500">Klik "Tambah Item" untuk menambah perlengkapan paket</p>
+                    </div>
                   ) : (
-                    <>
-                      <Plus className="w-5 h-5 mr-2" />
-                      Buat Paket
-                    </>
+                    <div className="space-y-3">
+                      {packageItems.map((item, index) => (
+                        <div key={index} className="flex gap-3 items-start p-3 bg-white/70 rounded-lg border border-[#D4AF37]/20 hover:border-[#D4AF37] transition-all">
+                          <div className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_120px] gap-3">
+                            <div className="space-y-1">
+                              <Label className="text-xs text-gray-600">Nama Item</Label>
+                              <Input
+                                placeholder="Contoh: Mihrab, Tasbih, Air Zam-zam 5L..."
+                                value={item.itemName}
+                                onChange={(e) => {
+                                  const newItems = [...packageItems];
+                                  newItems[index].itemName = e.target.value;
+                                  setPackageItems(newItems);
+                                }}
+                                className="border-[#D4AF37]/30 focus:border-[#D4AF37] h-9"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs text-gray-600">Jumlah</Label>
+                              <Input
+                                type="number"
+                                min="1"
+                                placeholder="1"
+                                value={item.quantity}
+                                onChange={(e) => {
+                                  const newItems = [...packageItems];
+                                  newItems[index].quantity = e.target.value;
+                                  setPackageItems(newItems);
+                                }}
+                                className="border-[#D4AF37]/30 focus:border-[#D4AF37] h-9"
+                              />
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setPackageItems(packageItems.filter((_, i) => i !== index));
+                            }}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 mt-5"
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <div className="flex items-start gap-2 p-3 bg-gradient-to-br from-blue-50 to-indigo-50/50 border border-blue-200 rounded-lg">
+                        <Sparkles className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-blue-700">
+                          💡 <strong>Tips:</strong> Item-item ini sudah termasuk dalam harga paket (all-in). Jamaah tidak perlu membayar tambahan untuk perlengkapan ini.
+                        </p>
+                      </div>
+                    </div>
                   )}
-                </Button>
-                {/* ✅ Helper text showing validation status */}
-                {!editingPackage && !isFormValid() && (
-                  <p className="text-xs text-red-500 mt-2 text-center">
-                    ⚠️ Harap isi semua kolom yang wajib diisi (ditandai dengan *)
-                  </p>
-                )}
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog >
-      </div >
+                </div>
+
+                {/* ✅ File Upload Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#D4AF37]/20 to-[#FFD700]/20 flex items-center justify-center">
+                      <File className="w-4 h-4 text-[#D4AF37]" />
+                    </div>
+                    <h4 className="font-semibold text-gray-700">File Upload</h4>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <File className="w-4 h-4 text-[#D4AF37]" />
+                        File Paket
+                      </Label>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          onChange={handlePackageFileUpload}
+                          id="package-file-upload"
+                          className="hidden"
+                        />
+                        <label
+                          htmlFor="package-file-upload"
+                          className="flex items-center gap-3 p-4 border-2 border-dashed border-[#D4AF37]/30 rounded-xl bg-white/50 backdrop-blur-sm cursor-pointer hover:border-[#D4AF37] hover:bg-[#FFF9F0]/50 transition-all"
+                        >
+                          <File className="w-5 h-5 text-[#D4AF37]" />
+                          <div>
+                            <p className="text-sm font-medium text-[#D4AF37] hover:underline">
+                              Pilih file
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {packageFile
+                                ? '✓ File dipilih: ' + packageFile.name
+                                : packageFileName
+                                  ? '📄 Saat ini: ' + packageFileName
+                                  : 'PDF, DOC, DOCX maks 10MB'}
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+                        <File className="w-4 h-4 text-[#D4AF37]" />
+                        File Jadwal
+                      </Label>
+                      <div className="relative">
+                        <input
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          onChange={handleScheduleFileUpload}
+                          id="schedule-file-upload"
+                          className="hidden"
+                        />
+                        <label
+                          htmlFor="schedule-file-upload"
+                          className="flex items-center gap-3 p-4 border-2 border-dashed border-[#D4AF37]/30 rounded-xl bg-white/50 backdrop-blur-sm cursor-pointer hover:border-[#D4AF37] hover:bg-[#FFF9F0]/50 transition-all"
+                        >
+                          <File className="w-5 h-5 text-[#D4AF37]" />
+                          <div>
+                            <p className="text-sm font-medium text-[#D4AF37] hover:underline">
+                              Pilih file
+                            </p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                              {scheduleFile
+                                ? '✓ File dipilih: ' + scheduleFile.name
+                                : scheduleFileName
+                                  ? '📄 Saat ini: ' + scheduleFileName
+                                  : 'PDF, DOC, DOCX maks 10MB'}
+                            </p>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <div className="pt-4 border-t border-[#D4AF37]/20">
+                  <Button
+                    type="submit"
+                    disabled={uploadingFiles || (!editingPackage && !isFormValid())} // ✅ Disable saat uploading atau form invalid
+                    className="w-full h-12 bg-gradient-to-r from-[#D4AF37] via-[#FFD700] to-[#D4AF37] hover:from-[#C5A572] hover:via-[#D4AF37] hover:to-[#C5A572] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 bg-[length:200%_auto] hover:bg-right disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {uploadingFiles ? (
+                      <>
+                        <div className="w-5 h-5 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        {editingPackage ? 'Memperbarui...' : 'Membuat...'}
+                      </>
+                    ) : editingPackage ? (
+                      <>
+                        <Edit className="w-5 h-5 mr-2" />
+                        Perbarui Paket
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-5 h-5 mr-2" />
+                        Buat Paket
+                      </>
+                    )}
+                  </Button>
+                  {/* ✅ Helper text showing validation status */}
+                  {!editingPackage && !isFormValid() && (
+                    <p className="text-xs text-red-500 mt-2 text-center">
+                      ⚠️ Harap isi semua kolom yang wajib diisi (ditandai dengan *)
+                    </p>
+                  )}
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
 
       <div className="flex justify-between items-center mb-4 bg-gray-50 p-2 rounded-xl border border-gray-200">
         <div className="flex gap-1 items-center">

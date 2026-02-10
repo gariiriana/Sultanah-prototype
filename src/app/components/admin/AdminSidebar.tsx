@@ -51,6 +51,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChange }) =
       items: [
         { id: 'packages', label: 'Paket', icon: Package },
         { id: 'payments', label: 'Pembayaran', icon: CreditCard },
+        { id: 'assisted-jamaah', label: 'Jamaah Binaan', icon: Users }, // ✅ NEW: Track assisted registrations
         { id: 'itineraries', label: 'Jadwal Pemberangkatan', icon: Calendar },
       ]
     },
