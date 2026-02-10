@@ -20,7 +20,7 @@ import { collection, getDocs, getDoc, doc, updateDoc, Timestamp, query, orderBy 
 import { db } from '../../../config/firebase';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/dialog';
-import { processReferralCommission } from '../../../utils/referralProcessor'; // ✅ Import commission processor
+import { processReferralProfit } from '../../../utils/referralProcessor'; // ✅ Import profit processor
 
 interface Payment {
   id: string;
@@ -156,12 +156,12 @@ const PaymentManagement: React.FC = () => {
       setShowDetailDialog(false);
       setShowApproveDialog(false);
 
-      // ✅ NEW: Process referral commission (if user was referred)
+      // ✅ NEW: Process referral profit (if user was referred)
       if (payment.userId) {
-        console.log('💰 Processing referral commission for userId:', payment.userId);
-        const commissionProcessed = await processReferralCommission(payment.userId, payment.id);
-        if (commissionProcessed) {
-          console.log('✅ Referral commission activated successfully!');
+        console.log('💰 Processing referral profit for userId:', payment.userId);
+        const profitProcessed = await processReferralProfit(payment.userId, payment.id);
+        if (profitProcessed) {
+          console.log('✅ Referral profit activated successfully!');
         }
       }
     } catch (error) {

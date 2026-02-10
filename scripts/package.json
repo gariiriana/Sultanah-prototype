@@ -1,0 +1,12 @@
+{
+    "name": "sultanah-scripts",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Scripts for Sultanah Umroh",
+    "scripts": {
+        "populate-dummy": "node populateDummyData.js"
+    },
+    "dependencies": {
+        "firebase": "^11.1.0"
+    }
+}

@@ -21,6 +21,7 @@ import { toast } from 'sonner';
 import { collection, getDocs, query, updateDoc, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../../../config/firebase';
 import { User as UserType, UserRole } from '../../../../types';
+import { useAuth } from '../../../../contexts/AuthContext';
 import VerificationRequestModal from './VerificationRequestModal';
 import UserProfileDetailModal from './UserProfileDetailModal'; // ✅ NEW: Import profile detail modal
 import { autoCreateReferralCode } from '../../../../utils/autoCreateReferralCode'; // ✅ NEW: Auto-create referral code
@@ -36,7 +37,12 @@ interface UserWithVerification extends UserType {
   };
 }
 
-export default function UserManagementNew() {
+interface UserManagementNewProps {
+  initialRoleFilter?: string | null;
+}
+
+export default function UserManagementNew({ initialRoleFilter }: UserManagementNewProps = {}) {
+  const { userProfile } = useAuth();
   const [users, setUsers] = useState<UserWithVerification[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRole, setSelectedRole] = useState<UserRole | 'all'>('all');
@@ -52,6 +58,10 @@ export default function UserManagementNew() {
   const [showProfileDetail, setShowProfileDetail] = useState(false);
   const [profileDetailUser, setProfileDetailUser] = useState<{ userId: string; email: string; role: string; name: string } | null>(null);
 
+  // ✅ NEW: State for filtering and statistics
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'active' | 'inactive'>('all');
+  const [roleStats, setRoleStats] = useState<any>({});
+
   // ✅ NEW: State for deletion confirmation
   const [deleteConfirm, setDeleteConfirm] = useState<{ isOpen: boolean; userId: string | null; email: string | null }>({
     isOpen: false,
@@ -66,6 +76,10 @@ export default function UserManagementNew() {
 
   useEffect(() => {
     fetchUsers();
+    // Apply initial role filter if provided
+    if (initialRoleFilter) {
+      setSelectedRole(initialRoleFilter as UserRole);
+    }
   }, []); // ✅ FIX: Only fetch once on mount, not on selectedRole change
 
   const fetchUsers = async () => {
@@ -104,8 +118,29 @@ export default function UserManagementNew() {
         other: usersData.filter(u => !['prospective-jamaah', 'current-jamaah', 'alumni', 'agen', 'tour-leader', 'mutawwif', 'admin'].includes(u.role || '')).length
       });
 
-      // ✅ Filter out admin users and store ALL users
-      setUsers(usersData.filter(u => u.role !== 'admin'));
+      // ✅ Calculate Stats per Role
+      const stats: any = {};
+      const rolesToTrack = ['brand_ambassador', 'admin', 'mutawwif', 'affiliator', 'influencer', 'agen', 'tour-leader'];
+
+      rolesToTrack.forEach(role => {
+        const roleUsers = usersData.filter(u => u.role === role || (role === 'influencer' && u.role === 'agen'));
+        const active = roleUsers.filter(u =>
+          u.approvalStatus === 'approved' ||
+          u.role === 'current-jamaah' ||
+          u.role === 'alumni' ||
+          (u.role === 'prospective-jamaah' && u.profileComplete === true)
+        ).length;
+
+        stats[role === 'agen' ? 'influencer' : role] = {
+          total: roleUsers.length,
+          active: active,
+          inactive: roleUsers.length - active
+        };
+      });
+      setRoleStats(stats);
+
+      // Store ALL users (including admin for visibility)
+      setUsers(usersData);
     } catch (error) {
       console.error('Error fetching users:', error);
       toast.error('Failed to fetch users');
@@ -212,36 +247,6 @@ export default function UserManagementNew() {
     }
   };
 
-  const purgeAgenUsers = async () => {
-    // Hidden functionality - can be manually triggered if needed from console, but removed from UI button
-    const agenUsers = users.filter(u => u.role === 'agen');
-    if (agenUsers.length === 0) {
-      toast.info('No legacy "Agen" users to purge');
-      return;
-    }
-
-    if (!confirm(`Are you sure you want to delete ALL ${agenUsers.length} users with "agen" role? This cannot be undone.`)) {
-      return;
-    }
-
-    let successCount = 0;
-    let failCount = 0;
-
-    toast.info(`Purging ${agenUsers.length} "Agen" users...`);
-
-    for (const user of agenUsers) {
-      try {
-        await deleteDoc(doc(db, 'users', user.id));
-        successCount++;
-      } catch (error) {
-        console.error(`Failed to delete user ${user.email}:`, error);
-        failCount++;
-      }
-    }
-
-    toast.success(`Purge completed: ${successCount} deleted, ${failCount} failed`);
-    fetchUsers();
-  };
 
   // ✅ NEW: Bulk Selection Handlers
   const handleSelectAll = (checked: boolean) => {
@@ -273,7 +278,6 @@ export default function UserManagementNew() {
 
     // Convert Set to Array for iteration
     const usersToDelete = Array.from(selectedUserIds);
-    const usersToDeleteDetails = users.filter(u => selectedUserIds.has(u.id));
 
     console.log(`🗑️ Starting bulk delete for ${usersToDelete.length} users...`);
 
@@ -313,18 +317,33 @@ export default function UserManagementNew() {
   };
 
   const filteredUsers = users.filter(user => {
-    // ✅ FIX: Filter by role - if influencer is selected, show both influencer and agen
+    // Current user shouldn't manage themselves (optional but safer)
+    // if (user.id === currentAuthUser?.uid) return false;
+
+    // ✅ Role Filter
     const matchesRole =
       selectedRole === 'all' ||
       (selectedRole === 'influencer' && (user.role === 'influencer' || user.role === 'agen' || user.role === 'reseller_agen')) ||
       user.role === selectedRole;
+
+    // ✅ Status Filter
+    const isActive =
+      user.approvalStatus === 'approved' ||
+      user.role === 'current-jamaah' ||
+      user.role === 'alumni' ||
+      (user.role === 'prospective-jamaah' && user.profileComplete === true);
+
+    const matchesStatus =
+      selectedStatus === 'all' ||
+      (selectedStatus === 'active' && isActive) ||
+      (selectedStatus === 'inactive' && !isActive);
 
     const matchesSearch =
       user.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.phoneNumber?.includes(searchQuery);
 
-    return matchesRole && matchesSearch;
+    return matchesRole && matchesStatus && matchesSearch;
   });
 
   const getRoleBadge = (role: UserRole) => {
@@ -384,6 +403,33 @@ export default function UserManagementNew() {
   };
 
   const getVerificationBadge = (user: UserWithVerification) => {
+    // ✅ NEW: For admin, influencer, affiliator, brand_ambassador, mutawwif - show Aktif/Tidak Aktif status
+    const rolesWithActiveStatus = ['admin', 'influencer', 'agen', 'affiliator', 'brand_ambassador', 'mutawwif'];
+
+    if (rolesWithActiveStatus.includes(user.role)) {
+      const isActive = user.approvalStatus === 'approved';
+
+      return (
+        <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${isActive
+          ? 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+          : 'bg-rose-100 text-rose-700 border border-rose-300'
+          }`}>
+          {isActive ? (
+            <>
+              <CheckCircle className="w-3 h-3" />
+              Aktif
+            </>
+          ) : (
+            <>
+              <XCircle className="w-3 h-3" />
+              Tidak Aktif
+            </>
+          )}
+        </span>
+      );
+    }
+
+    // For other roles, show verification request badge
     if (!user.verificationRequest) return null;
 
     const { status, type } = user.verificationRequest;
@@ -411,9 +457,11 @@ export default function UserManagementNew() {
     { value: 'all', label: '👥 All Users', count: users.length },
     { value: 'current-jamaah', label: '✈️ Jamaah Umroh', count: users.filter(u => u.role === 'current-jamaah').length },
     { value: 'alumni', label: '🏆 Alumni Jamaah', count: users.filter(u => u.role === 'alumni').length },
+    { value: 'admin', label: '🛡️ Admin', count: users.filter(u => u.role === 'admin').length },
     { value: 'tour-leader', label: '🧑‍✈️ Tour Leader', count: users.filter(u => u.role === 'tour-leader').length },
     { value: 'mutawwif', label: '📿 Mutawwif', count: users.filter(u => u.role === 'mutawwif').length },
     { value: 'brand_ambassador', label: '💠 Brand Ambassador', count: users.filter(u => u.role === 'brand_ambassador').length },
+    { value: 'affiliator', label: '🤝 Affiliator', count: users.filter(u => u.role === 'affiliator').length },
     { value: 'influencer', label: '🤳 Influencer', count: users.filter(u => u.role === 'influencer' || u.role === 'agen').length },
   ];
 
@@ -426,25 +474,51 @@ export default function UserManagementNew() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 pb-12">
+      {/* Role Statistics Cards - Scrollable on Mobile */}
+      <div className="flex xl:grid xl:grid-cols-5 gap-4 overflow-x-auto pb-4 xl:pb-0 scrollbar-hide -mx-4 px-4 xl:mx-0 xl:px-0">
+        {[
+          { role: 'brand_ambassador', label: 'Brand Ambassador', icon: Shield, color: 'amber' },
+          { role: 'admin', label: 'Admin Sultanah', icon: Shield, color: 'red' },
+          { role: 'mutawwif', label: 'Mutawwif', icon: Award, color: 'teal' },
+          { role: 'affiliator', label: 'Affiliator', icon: Users, color: 'blue' },
+          { role: 'influencer', label: 'Influencer', icon: Users, color: 'indigo' },
+        ].map((item) => {
+          const data = roleStats[item.role] || { total: 0, active: 0, inactive: 0 };
+          return (
+            <div key={item.role} className="min-w-[240px] xl:min-w-0 bg-white border border-gray-100 rounded-3xl p-5 shadow-sm hover:shadow-md transition-all group">
+              <div className="flex items-start justify-between mb-4">
+                <div className={`p-3 rounded-2xl bg-${item.color}-50 text-${item.color}-600 group-hover:scale-110 transition-transform`}>
+                  <item.icon className="w-6 h-6" />
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.label}</p>
+                  <h4 className="text-2xl font-black text-gray-900 leading-none mt-1">{data.total}</h4>
+                </div>
+              </div>
+              <div className="flex items-center gap-4 pt-4 border-t border-gray-50 mt-auto">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span className="text-[10px] font-bold text-gray-500">{data.active} Aktif</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+                  <span className="text-[10px] font-bold text-gray-500">{data.inactive} Tidak Aktif</span>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-2xl font-bold text-gray-900">User Management</h3>
-          <p className="text-sm text-gray-600 mt-1">Manage all users and approval requests</p>
+          <h3 className="text-xl md:text-2xl font-bold text-gray-900">User Management</h3>
+          <p className="text-xs md:text-sm text-gray-600 mt-1">Manage all users and approval requests</p>
         </div>
 
-        {/* ✅ NEW: Refresh & Utility Buttons */}
         <div className="flex gap-2">
-          <Button
-            onClick={() => {
-              console.log('🔄 Manual refresh triggered');
-              fetchUsers();
-            }}
-            className="bg-gradient-to-r from-[#D4AF37] to-[#FFD700] hover:opacity-90 text-white"
-          >
-            🔄 Refresh Data
-          </Button>
 
           {/* ✅ NEW: Bulk Delete Button */}
           {selectedUserIds.size > 0 && (
@@ -474,15 +548,30 @@ export default function UserManagementNew() {
             />
           </div>
 
-          {/* Role Filter */}
+          {/* Status Filter */}
           <div className="relative">
             <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
+            <select
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value as any)}
+              className="pl-10 pr-4 h-12 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#D4AF37] focus:ring-[#D4AF37]/30 focus:outline-none appearance-none cursor-pointer min-w-[150px]"
+            >
+              <option value="all">⚡ Semua Status</option>
+              <option value="active">🟢 Aktif</option>
+              <option value="inactive">🔴 Tidak Aktif</option>
+            </select>
+          </div>
+
+          {/* Role Filter */}
+          <div className="relative">
+            <Users className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none z-10" />
             <select
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value as any)}
               className="pl-10 pr-4 h-12 bg-gray-50 border border-gray-300 rounded-xl focus:border-[#D4AF37] focus:ring-[#D4AF37]/30 focus:outline-none appearance-none cursor-pointer min-w-[220px]"
             >
-              {roleOptions.map(option => (
+              <option value="all">👥 Semua Peran</option>
+              {roleOptions.slice(1).map(option => (
                 <option key={option.value} value={option.value}>
                   {option.label} ({option.count})
                 </option>
@@ -492,9 +581,126 @@ export default function UserManagementNew() {
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <div className="overflow-x-auto">
+      {/* Users Table / Mobile Cards */}
+      <div className="bg-transparent md:bg-white md:rounded-xl md:border md:border-gray-200 overflow-hidden">
+        {/* Mobile View: Cards */}
+        <div className="grid grid-cols-1 gap-4 md:hidden">
+          {filteredUsers.length === 0 ? (
+            <div className="bg-white rounded-2xl p-12 text-center border border-gray-100">
+              <Users className="w-12 h-12 text-gray-300 mx-auto" />
+              <p className="text-gray-500 font-medium mt-2">No users found</p>
+            </div>
+          ) : (
+            filteredUsers.map((user, index) => {
+              const isActive = user.approvalStatus === 'approved' ||
+                user.role === 'current-jamaah' ||
+                user.role === 'alumni' ||
+                (user.role === 'prospective-jamaah' && user.profileComplete === true);
+
+              return (
+                <motion.div
+                  key={user.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                  className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm relative overflow-hidden"
+                >
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-[#C5A572] to-[#D4AF37] rounded-full flex items-center justify-center text-white font-bold shrink-0">
+                      {user.displayName?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <h4 className="font-bold text-gray-900 truncate">{user.displayName || 'No Name'}</h4>
+                        <div className="flex items-center gap-2">
+                          <Checkbox
+                            checked={selectedUserIds.has(user.id)}
+                            onCheckedChange={(checked) => handleSelectUser(user.id, !!checked)}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {getRoleBadge(user.role as UserRole)}
+                        {/* Status logic */}
+                        {(user.role === 'tour-leader' || user.role === 'mutawwif' || user.role === 'agen' || user.role === 'influencer' || user.role === 'brand_ambassador') ? (
+                          !user.approvalStatus ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700">Set Up</span>
+                          ) : (
+                            getApprovalStatusBadge(user.approvalStatus)
+                          )
+                        ) : (
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                            {isActive ? 'Aktif' : 'Tidak Aktif'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {user.verificationRequest && (
+                    <div className="mb-4 p-3 bg-amber-50 rounded-xl border border-amber-100">
+                      <p className="text-[10px] font-bold text-amber-700 uppercase tracking-widest mb-1">Permintaan Verifikasi</p>
+                      {getVerificationBadge(user)}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-50">
+                    <Button
+                      onClick={() => {
+                        setProfileDetailUser({ userId: user.id, email: user.email, role: user.role, name: user.displayName || 'User' });
+                        setShowProfileDetail(true);
+                      }}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 h-9 rounded-xl text-xs"
+                    >
+                      <Eye className="w-3 h-3 mr-1" /> Detail
+                    </Button>
+
+                    {/* Conditional Actions */}
+                    {user.verificationRequest && user.verificationRequest.status === 'pending' && (
+                      <Button
+                        onClick={() => handleViewVerification(user)}
+                        size="sm"
+                        className="flex-1 h-9 rounded-xl text-xs bg-blue-600 hover:bg-blue-700"
+                      >
+                        Review
+                      </Button>
+                    )}
+
+                    {(user.role === 'tour-leader' || user.role === 'mutawwif' || user.role === 'agen' || user.role === 'influencer' || user.role === 'brand_ambassador') && user.approvalStatus === 'pending' && (
+                      <Button
+                        onClick={() => {
+                          setUserToApprove({ id: user.id, email: user.email, name: user.displayName || 'User', role: user.role });
+                          setShowApprovalConfirm(true);
+                        }}
+                        size="sm"
+                        className="flex-1 h-9 rounded-xl text-xs bg-green-600 hover:bg-green-700"
+                      >
+                        Approve
+                      </Button>
+                    )}
+
+                    {user.id !== userProfile?.uid && (
+                      <Button
+                        onClick={() => setDeleteConfirm({ isOpen: true, userId: user.id, email: user.email })}
+                        variant="outline"
+                        size="sm"
+                        className="w-10 h-9 p-0 rounded-xl text-red-500 border-red-100 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop View: Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
@@ -718,16 +924,18 @@ export default function UserManagementNew() {
                           Detail
                         </Button>
 
-                        {/* ✅ NEW: Delete User Button */}
-                        <Button
-                          onClick={() => setDeleteConfirm({ isOpen: true, userId: user.id, email: user.email })}
-                          size="sm"
-                          variant="outline"
-                          className="h-8 px-3 border-red-300 text-red-600 hover:bg-red-50"
-                        >
-                          <Trash2 className="w-4 h-4 mr-1" />
-                          Delete
-                        </Button>
+                        {/* ✅ NEW: Delete User Button - Prevent self-deletion */}
+                        {user.id !== userProfile?.uid && (
+                          <Button
+                            onClick={() => setDeleteConfirm({ isOpen: true, userId: user.id, email: user.email })}
+                            size="sm"
+                            variant="outline"
+                            className="h-8 px-3 border-red-300 text-red-600 hover:bg-red-50"
+                          >
+                            <Trash2 className="w-4 h-4 mr-1" />
+                            Delete
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </motion.tr>

@@ -132,9 +132,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   // ✅ Check if user is admin
   const isAdmin = userProfile?.role === 'admin';
 
-  // ✅ NEW: Check if user has management access (Staff, Admin, Supervisor, Direktur)
+  // ✅ NEW: Check if user has management access (Staff, Admin, Supervisor, Direktur, Owner)
   const isManagement = userProfile?.role
-    ? ['staff', 'admin', 'supervisor', 'direktur'].includes(userProfile.role)
+    ? ['staff', 'admin', 'supervisor', 'direktur', 'owner'].includes(userProfile.role)
     : false;
 
   // ✅ NEW: Get role display name

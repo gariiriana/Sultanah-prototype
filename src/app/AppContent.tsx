@@ -20,6 +20,7 @@ import SavingsManagement from './pages/current-jamaah/SavingsManagement'; // ✅
 // ❌ REMOVED: MarketplaceOrderTracking - Now using unified PesananPage instead
 import PesananPage from './pages/current-jamaah/PesananPage'; // ✅ NEW - Unified Pesanan Page (Payments + Marketplace)
 import AffiliatorDashboard from './pages/affiliator/AffiliatorDashboardNew'; // ✅ NEW - Premium Affiliator Dashboard
+import OwnerDashboard from './pages/owner/OwnerDashboard'; // ✅ NEW - Owner Dashboard
 import AgentProfilePage from './pages/agent/AgentProfilePage'; // ✅ NEW - Agent Profile
 import { LoginPage, RegisterPage } from './pages/auth'; // ✅ Centralized import
 import WaitingApprovalPage from './pages/auth/WaitingApprovalPage'; // ✅ NEW - Waiting Approval Page
@@ -158,6 +159,8 @@ const AppContent = () => {
         destination = 'CURRENT JAMAAH DASHBOARD';
       } else if (userProfile.role === 'alumni') {
         destination = 'ALUMNI DASHBOARD';
+      } else if (userProfile.role === 'owner') {
+        destination = 'OWNER DASHBOARD';
       } else if (userProfile.role === 'brand_ambassador' || userProfile.role === 'agen') {
         destination = 'BRAND AMBASSADOR DASHBOARD';
       }
@@ -205,10 +208,15 @@ const AppContent = () => {
       {/* ✅ ALLOW BOOKING & PUBLIC PAGES TO RENDER WITHOUT REDIRECT */}
       {(window.location.pathname.startsWith('/booking') || window.location.pathname.startsWith('/gallery') || window.location.pathname.startsWith('/family-tracking')) ? (
         <AppRoutes />
+      ) : userProfile?.role === 'owner' ? (
+        <>
+          {console.log('👑 Standalone Mode: Dedicated Owner Dashboard')}
+          <OwnerDashboard />
+        </>
       ) : shouldStayInAdminDashboard ? (
         <>
           {console.log('✅ ROUTING: Management role detected → Admin Dashboard')}
-          {console.log('📋 Management roles: admin, staff, supervisor, direktur')}
+          {console.log('📋 Management roles: admin, staff, supervisor, direktur, owner')}
           {console.log('🔒 LOCKED: Admin will ALWAYS stay in Admin Dashboard')}
           <AdminDashboard />
         </>

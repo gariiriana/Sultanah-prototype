@@ -3,17 +3,20 @@ import { Facebook, Instagram, Twitter, Mail, Phone } from 'lucide-react';
 
 interface FooterProps {
   onNavigate: (section: string) => void;
+  customLinks?: { label: string; section: string }[];
 }
 
-const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
+const Footer: React.FC<FooterProps> = ({ onNavigate, customLinks }) => {
   const currentYear = new Date().getFullYear();
 
-  const quickLinks = [
+  const defaultLinks = [
     { label: 'Beranda', section: 'home' },
     { label: 'Paket', section: 'packages' },
     { label: 'Edukasi', section: 'education' },
     { label: 'Kontak', section: 'contact' },
   ];
+
+  const quickLinks = customLinks || defaultLinks;
 
   const socialLinks = [
     { icon: Facebook, link: '#', label: 'Facebook' },

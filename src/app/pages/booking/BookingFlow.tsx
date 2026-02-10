@@ -200,7 +200,26 @@ const BookingFlow: React.FC = () => {
             const userId = await handleAutoRegister();
             if (!userId) throw new Error("Gagal mendaftar user");
 
-            // 2. Save booking
+            // 2. Check if current user is admin (for tracking)
+            let registeredByAdmin = null;
+            const currentUser = auth.currentUser;
+            if (currentUser) {
+                try {
+                    const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                    if (userDoc.exists() && userDoc.data().role === 'admin') {
+                        registeredByAdmin = {
+                            adminId: currentUser.uid,
+                            adminEmail: userDoc.data().email || currentUser.email,
+                            adminName: userDoc.data().displayName || 'Admin',
+                            registeredAt: new Date().toISOString()
+                        };
+                    }
+                } catch (err) {
+                    console.log('Non-admin or guest user, no tracking needed');
+                }
+            }
+
+            // 3. Save booking
             await setDoc(doc(db, 'bookings', orderId), {
                 id: orderId,
                 userId: userId,
@@ -219,7 +238,8 @@ const BookingFlow: React.FC = () => {
                 midtransOrderId: orderId,
                 midtransData: paymentData,
                 voucherCode: formData.voucherCode || null,
-                referralCode: formData.referralCode || null
+                referralCode: formData.referralCode || null,
+                registeredByAdmin: registeredByAdmin // ✅ NEW: Track admin-registered jamaah
             });
 
             // For dashboard welcome logic

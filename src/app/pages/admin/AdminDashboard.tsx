@@ -17,7 +17,6 @@ import MarketplaceManagement from './components/MarketplaceManagement'; // ✅ M
 import AdminReferralManagement from './AdminReferralManagement'; // ✅ NEW: Referral Management
 import CommissionWithdrawalManagement from './components/CommissionWithdrawalManagement'; // ✅ NEW: Commission Withdrawal
 import SavingsApprovalPage from './SavingsApprovalPage'; // ✅ NEW: Savings Approval
-// import ReferralMigrationTool from './ReferralMigrationTool'; // ❌ REMOVED: File not found or deleted
 import AdminSidebar from '../../components/admin/AdminSidebar';
 import AdminTopbar from '../../components/admin/AdminTopbar';
 

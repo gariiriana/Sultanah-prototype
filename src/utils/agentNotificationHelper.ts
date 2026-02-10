@@ -56,26 +56,26 @@ export const createPaymentApprovedNotification = async (
 };
 
 /**
- * Create notification for agent when commission is earned
+ * Create notification for agent when profit is earned
  */
-export const createCommissionEarnedNotification = async (
+export const createProfitEarnedNotification = async (
   agentId: string,
   referralName: string,
-  commissionAmount: number
+  profitAmount: number
 ) => {
   try {
     await addDoc(collection(db, 'agentNotifications'), {
       agentId,
-      type: 'commission_earned',
+      type: 'profit_earned',
       title: '✨ Profit Diperoleh!',
       message: `Selamat! Anda mendapatkan profit dari referral ${referralName}`,
       referralName,
-      amount: commissionAmount,
+      amount: profitAmount,
       isRead: false,
       createdAt: Timestamp.now(),
     });
-    console.log('✅ Commission earned notification created for agent:', agentId);
+    console.log('✅ Profit earned notification created for agent:', agentId);
   } catch (error) {
-    console.error('❌ Error creating commission earned notification:', error);
+    console.error('❌ Error creating profit earned notification:', error);
   }
 };

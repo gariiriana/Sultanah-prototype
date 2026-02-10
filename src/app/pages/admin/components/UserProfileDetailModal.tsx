@@ -25,11 +25,13 @@ interface UserStats {
   totalSpent: number;
   referralCode: string;
   totalReferrals: number;
-  pendingCommission: number;
-  totalCommissionEarned: number;
+  pendingProfit: number;
+  totalProfitEarned: number;
   joinedDate: string;
   lastLogin: string;
   verificationStatus: 'verified' | 'unverified' | 'pending';
+  totalGroups?: number; // For tour-leader and mutawwif
+  totalJamaahGuided?: number; // For tour-leader and mutawwif
 }
 
 interface UserProfileData {
@@ -210,9 +212,9 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
         // Continue with default values
       }
 
-      // Get commissions
-      let pendingCommission = 0;
-      let totalCommissionEarned = 0;
+      // Get profit data
+      let pendingProfit = 0;
+      let totalProfitEarned = 0;
 
       if (userRole === 'alumni' || userRole === 'agen') {
         try {
@@ -220,12 +222,35 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
           const balanceDoc = await getDoc(doc(db, 'referralBalances', userId));
           if (balanceDoc.exists()) {
             const balanceData = balanceDoc.data();
-            pendingCommission = balanceData?.balance || 0;
-            totalCommissionEarned = balanceData?.totalEarned || 0;
+            pendingProfit = balanceData?.balance || 0;
+            totalProfitEarned = balanceData?.totalEarned || 0;
           }
-        } catch (commissionError) {
-          console.warn('Could not load commission data:', commissionError);
+        } catch (profitError) {
+          console.warn('Could not load profit data:', profitError);
           // Continue with default values
+        }
+      }
+
+      // ✅ NEW: For tour-leader and mutawwif, count groups and jamaah they've guided
+      let totalGroups = 0;
+      let totalJamaahGuided = 0;
+
+      if (userRole === 'tour-leader' || userRole === 'mutawwif') {
+        try {
+          // Query bookings where this user is assigned as tour-leader or mutawwif
+          const roleField = userRole === 'tour-leader' ? 'tourLeaderId' : 'mutawwifId';
+          const guidanceQuery = query(
+            collection(db, 'bookings'),
+            where(roleField, '==', userId)
+          );
+          const guidanceSnapshot = await getDocs(guidanceQuery);
+
+          totalGroups = guidanceSnapshot.docs.length;
+          totalJamaahGuided = guidanceSnapshot.docs.reduce((sum, doc) => {
+            return sum + (doc.data().paxCount || 0);
+          }, 0);
+        } catch (error) {
+          console.warn('Could not load guidance data:', error);
         }
       }
 
@@ -237,12 +262,14 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
         totalSpent,
         referralCode,
         totalReferrals,
-        pendingCommission,
-        totalCommissionEarned,
+        pendingProfit,
+        totalProfitEarned,
         joinedDate: userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString('id-ID') : '-',
         lastLogin: userData?.updatedAt ? new Date(userData.updatedAt).toLocaleDateString('id-ID') : '-',
         verificationStatus: userData?.approvalStatus === 'approved' ? 'verified' :
           userData?.approvalStatus === 'pending' ? 'pending' : 'unverified',
+        totalGroups,
+        totalJamaahGuided,
       });
 
     } catch (error: any) {
@@ -714,42 +741,65 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
                 </div>
               )}
 
-              {/* Order Statistics */}
-              <div className="bg-gradient-to-br from-green-50 to-white rounded-xl p-6 border border-green-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-                  <Award className="w-5 h-5 text-green-600" />
-                  Order Statistics
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="bg-white rounded-lg p-4 border border-gray-200">
-                    <p className="text-sm text-gray-600 mb-1">Total Orders</p>
-                    <p className="text-2xl font-bold text-gray-800">{stats.totalOrders}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 border border-green-200">
-                    <p className="text-sm text-gray-600 mb-1">Completed</p>
-                    <p className="text-2xl font-bold text-green-600">{stats.completedOrders}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 border border-yellow-200">
-                    <p className="text-sm text-gray-600 mb-1">Pending</p>
-                    <p className="text-2xl font-bold text-yellow-600">{stats.pendingOrders}</p>
-                  </div>
-                  <div className="bg-white rounded-lg p-4 border border-red-200">
-                    <p className="text-sm text-gray-600 mb-1">Cancelled</p>
-                    <p className="text-2xl font-bold text-red-600">{stats.cancelledOrders}</p>
+              {/* Statistics Section - Conditional based on role */}
+              {userRole === 'tour-leader' || userRole === 'mutawwif' ? (
+                // ✅ NEW: Guidance History for Tour Leader and Mutawwif
+                <div className="bg-gradient-to-br from-teal-50 to-white rounded-xl p-6 border border-teal-200">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <Award className="w-5 h-5 text-teal-600" />
+                    Riwayat Bimbingan {userRole === 'tour-leader' ? 'Tour Leader' : 'Mutawwif'}
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-white rounded-lg p-6 border border-teal-200">
+                      <p className="text-sm text-gray-600 mb-2">Total Group yang Dibimbing</p>
+                      <p className="text-4xl font-black text-teal-600">{stats.totalGroups || 0}</p>
+                      <p className="text-xs text-gray-500 mt-2">Kelompok jamaah</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-6 border border-emerald-200">
+                      <p className="text-sm text-gray-600 mb-2">Total Jamaah yang Dibimbing</p>
+                      <p className="text-4xl font-black text-emerald-600">{stats.totalJamaahGuided || 0}</p>
+                      <p className="text-xs text-gray-500 mt-2">Jamaah</p>
+                    </div>
                   </div>
                 </div>
-                <div className="mt-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-lg p-4">
-                  <p className="text-sm text-amber-100 mb-1">Total Spending</p>
-                  <p className="text-2xl font-bold">{formatCurrency(stats.totalSpent)}</p>
+              ) : (
+                // Order Statistics for other roles
+                <div className="bg-gradient-to-br from-green-50 to-white rounded-xl p-6 border border-green-200">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                    <Award className="w-5 h-5 text-green-600" />
+                    Order Statistics
+                  </h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-white rounded-lg p-4 border border-gray-200">
+                      <p className="text-sm text-gray-600 mb-1">Total Orders</p>
+                      <p className="text-2xl font-bold text-gray-800">{stats.totalOrders}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 border border-green-200">
+                      <p className="text-sm text-gray-600 mb-1">Completed</p>
+                      <p className="text-2xl font-bold text-green-600">{stats.completedOrders}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 border border-yellow-200">
+                      <p className="text-sm text-gray-600 mb-1">Pending</p>
+                      <p className="text-2xl font-bold text-yellow-600">{stats.pendingOrders}</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-4 border border-red-200">
+                      <p className="text-sm text-gray-600 mb-1">Cancelled</p>
+                      <p className="text-2xl font-bold text-red-600">{stats.cancelledOrders}</p>
+                    </div>
+                  </div>
+                  <div className="mt-4 bg-gradient-to-r from-amber-500 to-amber-600 text-white rounded-lg p-4">
+                    <p className="text-sm text-amber-100 mb-1">Total Spending</p>
+                    <p className="text-2xl font-bold">{formatCurrency(stats.totalSpent)}</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Referral & Commission (if applicable) */}
-              {(userRole === 'alumni_jamaah' || userRole === 'reseller_agen' || stats.referralCode !== '-') && (
+              {/* Referral & Profit (if applicable) - Special handling for Influencer */}
+              {userRole !== 'admin' && (userRole === 'alumni_jamaah' || userRole === 'reseller_agen' || stats.referralCode !== '-') && (
                 <div className="bg-gradient-to-br from-emerald-50 to-white rounded-xl p-6 border border-emerald-200">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
                     <Users className="w-5 h-5 text-emerald-600" />
-                    Referral & Commission
+                    {userRole === 'influencer' ? 'Profit Voucher Diskon' : 'Referral & Profit'}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="bg-white rounded-lg p-4 border border-gray-200">
@@ -766,12 +816,12 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
                     {(userRole === 'alumni_jamaah' || userRole === 'reseller_agen') && (
                       <>
                         <div className="bg-white rounded-lg p-4 border border-yellow-200">
-                          <p className="text-sm text-gray-600 mb-1">Pending Commission</p>
-                          <p className="text-xl font-bold text-yellow-600">{formatCurrency(stats.pendingCommission)}</p>
+                          <p className="text-sm text-gray-600 mb-1">Pending Profit</p>
+                          <p className="text-xl font-bold text-yellow-600">{formatCurrency(stats.pendingProfit)}</p>
                         </div>
                         <div className="bg-white rounded-lg p-4 border border-green-200">
                           <p className="text-sm text-gray-600 mb-1">Total Earned</p>
-                          <p className="text-xl font-bold text-green-600">{formatCurrency(stats.totalCommissionEarned)}</p>
+                          <p className="text-xl font-bold text-green-600">{formatCurrency(stats.totalProfitEarned)}</p>
                         </div>
                       </>
                     )}
