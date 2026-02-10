@@ -55,8 +55,10 @@ const FinancialManagement: React.FC = () => {
         marketplace: 0,
         total: 0
     });
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-    const selectedYear = new Date().getFullYear();
+    const [selectedMonth, setSelectedMonth] = useState<number>(new Date().getMonth());
+    const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+
+    const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i);
 
     const months = [
         "Januari", "Februari", "Maret", "April", "Mei", "Juni",
@@ -82,7 +84,10 @@ const FinancialManagement: React.FC = () => {
                     (data.createdAt instanceof Timestamp ? data.createdAt.toDate() : new Date(data.createdAt))
                     : new Date();
 
-                if (createdAt.getMonth() === selectedMonth && createdAt.getFullYear() === selectedYear) {
+                const matchesMonth = selectedMonth === -1 || createdAt.getMonth() === selectedMonth;
+                const matchesYear = createdAt.getFullYear() === selectedYear;
+
+                if (matchesMonth && matchesYear) {
                     packageRecords.push({
                         id: doc.id,
                         date: createdAt.toLocaleDateString('id-ID'),
@@ -105,7 +110,10 @@ const FinancialManagement: React.FC = () => {
                 const createdAt = data.createdAt ? new Date(data.createdAt) : new Date();
 
                 if (['paid', 'success', 'confirmed'].includes(data.status)) {
-                    if (createdAt.getMonth() === selectedMonth && createdAt.getFullYear() === selectedYear) {
+                    const matchesMonth = selectedMonth === -1 || createdAt.getMonth() === selectedMonth;
+                    const matchesYear = createdAt.getFullYear() === selectedYear;
+
+                    if (matchesMonth && matchesYear) {
                         marketplaceRecords.push({
                             id: doc.id,
                             date: createdAt.toLocaleDateString('id-ID'),
@@ -153,8 +161,9 @@ const FinancialManagement: React.FC = () => {
     const exportToPDF = () => {
         try {
             const doc = new jsPDF() as any;
-            const reportTitle = `LAPORAN REKAP KEUANGAN BULANAN`;
-            const reportSubtitle = `${months[selectedMonth]} ${selectedYear}`;
+            const isAllMonths = selectedMonth === -1;
+            const reportTitle = isAllMonths ? `LAPORAN REKAP KEUANGAN TAHUNAN` : `LAPORAN REKAP KEUANGAN BULANAN`;
+            const reportSubtitle = isAllMonths ? `Tahun ${selectedYear}` : `${months[selectedMonth]} ${selectedYear}`;
 
             // Add Header Background
             doc.setFillColor(15, 23, 42); // slate-900
@@ -232,7 +241,11 @@ const FinancialManagement: React.FC = () => {
             doc.text("Owner Sultanah Travel", 150, finalY, { align: 'center' });
             doc.text("___________________", 150, finalY + 20, { align: 'center' });
 
-            doc.save(`Laporan_Keuangan_Sultanah_${months[selectedMonth]}_${selectedYear}.pdf`);
+            const fileName = isAllMonths
+                ? `Laporan_Keuangan_Sultanah_Tahun_${selectedYear}.pdf`
+                : `Laporan_Keuangan_Sultanah_${months[selectedMonth]}_${selectedYear}.pdf`;
+
+            doc.save(fileName);
             toast.success("Laporan PDF berhasil di-generate!");
         } catch (error) {
             console.error("PDF Export Error:", error);
@@ -254,10 +267,22 @@ const FinancialManagement: React.FC = () => {
                         onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
                         className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500/20 transition-all shadow-sm"
                     >
+                        <option value={-1}>Semua Bulan</option>
                         {months.map((m, i) => (
                             <option key={i} value={i}>{m}</option>
                         ))}
                     </select>
+
+                    <select
+                        value={selectedYear}
+                        onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                        className="bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:ring-2 focus:ring-amber-500/20 transition-all shadow-sm"
+                    >
+                        {years.map(y => (
+                            <option key={y} value={y}>{y}</option>
+                        ))}
+                    </select>
+
                     <Button
                         onClick={exportToPDF}
                         className="bg-slate-900 hover:bg-slate-800 text-white rounded-xl px-6 py-6 h-auto font-bold shadow-lg shadow-slate-200 transition-all"
