@@ -3,11 +3,9 @@ import { ShoppingCart } from 'lucide-react';
 import { db } from '../../../config/firebase';
 import { collection, query, getDocs, orderBy } from 'firebase/firestore';
 import { toast } from 'sonner';
-import { useAuth } from '../../../contexts/AuthContext';
 import MarketplaceOrdersSection from './components/MarketplaceOrdersSection';
 
 const AdminItemRequestsManager: React.FC = () => {
-  const { userProfile } = useAuth();
   const [marketplaceOrders, setMarketplaceOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 

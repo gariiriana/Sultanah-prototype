@@ -28,11 +28,8 @@ import {
     YAxis,
     CartesianGrid,
     Tooltip,
-    ResponsiveContainer,
-    Cell
+    ResponsiveContainer
 } from 'recharts';
-
-// Chart imports removed as they are currently unused in JSX
 
 const sultanahLogo = '/images/logo.png';
 
@@ -47,7 +44,6 @@ interface FinancialRecord {
 }
 
 const FinancialManagement: React.FC = () => {
-    const [loading, setLoading] = useState(true);
     const [records, setRecords] = useState<FinancialRecord[]>([]);
     const [monthlyStats, setMonthlyStats] = useState<any[]>([]);
     const [currentMonthTotal, setCurrentMonthTotal] = useState({
@@ -71,8 +67,6 @@ const FinancialManagement: React.FC = () => {
 
     const fetchFinancialData = async () => {
         try {
-            setLoading(true);
-
             // 1. Fetch Package Payments (Approved)
             const paymentsQuery = query(collection(db, 'payments'), where('status', '==', 'approved'));
             const paymentSnap = await getDocs(paymentsQuery);
@@ -153,8 +147,6 @@ const FinancialManagement: React.FC = () => {
         } catch (error) {
             console.error("Error fetching financial data:", error);
             toast.error("Gagal mengambil data keuangan");
-        } finally {
-            setLoading(false);
         }
     };
 

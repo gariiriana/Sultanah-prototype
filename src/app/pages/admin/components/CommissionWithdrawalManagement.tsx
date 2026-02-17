@@ -53,7 +53,7 @@ const CommissionWithdrawalManagement: React.FC = () => {
   // ✅ File upload states
   const [transferProofFile, setTransferProofFile] = useState<File | null>(null);
   const [transferProofPreview, setTransferProofPreview] = useState<string | null>(null);
-  const [uploadingFile, setUploadingFile] = useState(false);
+  const [uploadingFile] = useState(false);
 
   // ✅ Fix balance state
   const [fixingBalance, setFixingBalance] = useState(false);

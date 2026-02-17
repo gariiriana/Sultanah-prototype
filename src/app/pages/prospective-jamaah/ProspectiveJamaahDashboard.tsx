@@ -24,7 +24,6 @@ import {
   FileText,
   User,
   Calendar,
-  Package,
   Newspaper,
   TrendingUp,
   Phone,
@@ -39,7 +38,6 @@ import {
   ThumbsUp,
   Check,
 
-  Sparkles,
   Send,
   Clock3,
   Facebook,

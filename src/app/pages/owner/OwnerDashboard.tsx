@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
     Users,
-    Calendar,
-    Activity,
-    LayoutDashboard,
-    TrendingUp,
     LogOut,
     MapPin,
     ShieldCheck,
@@ -17,14 +13,15 @@ import {
     Menu,
     X,
     Wallet,
-    FileText
+    LayoutDashboard,
+    TrendingUp,
+    Activity
 } from 'lucide-react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
 import { useAuth } from '../../../contexts/AuthContext';
 import { Button } from '../../components/ui/button';
 import FloatingAnnouncementWidget from '../../components/FloatingAnnouncementWidget';
-import { toast } from 'sonner';
 
 // Assets
 import kaabaBg from '../../../assets/images/kaaba-family.jpg';

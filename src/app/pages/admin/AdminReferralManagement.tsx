@@ -19,7 +19,7 @@ import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Label } from '../../components/ui/label';
 import { db } from '../../../config/firebase';
-import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, writeBatch } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 interface ReferralData {
@@ -251,37 +251,6 @@ const AdminReferralManagement: React.FC = () => {
     }
   };
 
-  const handleDeleteAllData = async () => {
-    if (!window.confirm('APAKAH ANDA YAKIN? Tindakan ini akan menghapus SEMUA data affiliator, referral, dan profit. Data yang sudah dihapus TIDAK BISA dikembalikan.')) {
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const batch = writeBatch(db);
-      const snapshot = await getDocs(collection(db, 'alumniReferrals'));
-
-      if (snapshot.empty) {
-        toast.info('Tidak ada data yang perlu dihapus.');
-        setLoading(false);
-        return;
-      }
-
-      snapshot.docs.forEach((doc) => {
-        batch.delete(doc.ref);
-      });
-
-      await batch.commit();
-
-      toast.success('Semua data berhasil dihapus!');
-      fetchAllReferrals(); // Refresh to empty state
-    } catch (error) {
-      console.error("Error deleting all data:", error);
-      toast.error("Gagal menghapus data.");
-    } finally {
-      setLoading(false);
-    }
-  };
 
 
   return (
