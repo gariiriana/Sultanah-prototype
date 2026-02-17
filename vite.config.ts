@@ -5,89 +5,8 @@ import react from '@vitejs/plugin-react'
 
 // ✅ Plugin to handle figma:asset imports (replace with placeholder images)
 import jsPDF from 'jspdf'; // Ensure jsPDF is available or remove if not needed for this config
-import midtransClient from 'midtrans-client';
 import { loadEnv } from 'vite';
 
-// ✅ Plugin to handle Midtrans API requests locally
-function midtransApiPlugin() {
-  return {
-    name: 'midtrans-api-middleware',
-    configureServer(server: any) {
-      server.middlewares.use('/api/midtrans/create-transaction', async (req: any, res: any, next: any) => {
-        if (req.method !== 'POST') {
-          res.statusCode = 405;
-          res.end(JSON.stringify({ error: 'Method Not Allowed' }));
-          return;
-        }
-
-        try {
-          // Parse Body
-          const buffers = [];
-          for await (const chunk of req) {
-            buffers.push(chunk);
-          }
-          const body = JSON.parse(Buffer.concat(buffers).toString());
-          const { orderId, grossAmount, customerDetails, paymentType, bank } = body;
-
-          // Load Env (Vite loads envs into process.env differently in config, use loadEnv)
-          const env = loadEnv(process.env.NODE_ENV || 'development', process.cwd(), '');
-          const SERVER_KEY = env.MIDTRANS_SERVER_KEY;
-          const CLIENT_KEY = env.VITE_MIDTRANS_CLIENT_KEY;
-
-          if (!SERVER_KEY || !CLIENT_KEY) {
-            console.error('Missing Midtrans Keys in Env');
-            res.statusCode = 500;
-            res.end(JSON.stringify({ error: 'Server Config Error: Missing Keys' }));
-            return;
-          }
-
-          // Initialize Midtrans Core
-          // ✅ AUTO-DETECT Environment: If key starts with "SB-", it's Sandbox. Otherwise, it's Production.
-          const isSandbox = SERVER_KEY.startsWith('SB-');
-          const isProduction = !isSandbox;
-
-          console.log(`[Midtrans Middleware] Environment: ${isProduction ? 'PRODUCTION 🔴' : 'SANDBOX 🟢'}`);
-
-          let snap = new midtransClient.Snap({
-            isProduction: isProduction,
-            serverKey: SERVER_KEY,
-            clientKey: CLIENT_KEY
-          });
-
-          // Construct Parameters
-          let parameter = {
-            transaction_details: {
-              order_id: orderId,
-              gross_amount: grossAmount
-            },
-            credit_card: {
-              secure: true
-            },
-            customer_details: {
-              first_name: customerDetails.name,
-              email: customerDetails.email,
-              phone: customerDetails.phone
-            }
-          };
-
-          console.log('[Midtrans Middleware] Creating Snap transaction:', orderId);
-          const transaction = await snap.createTransaction(parameter);
-          console.log('[Midtrans Middleware] Response:', transaction);
-
-          res.setHeader('Content-Type', 'application/json');
-          res.statusCode = 200;
-          res.end(JSON.stringify(transaction));
-
-        } catch (error: any) {
-          console.error('[Midtrans Middleware] Error:', error);
-          res.setHeader('Content-Type', 'application/json');
-          res.statusCode = 500;
-          res.end(JSON.stringify({ error: error.message || 'Internal Server Error' }));
-        }
-      });
-    }
-  };
-}
 
 function figmaAssetPlugin() {
   return {
@@ -253,31 +172,6 @@ function figmaAssetPlugin() {
   };
 }
 
-function htmlPlugin() {
-  return {
-    name: 'html-transform',
-    transformIndexHtml(html: string) {
-      // 1. Get Env
-      const env = loadEnv(process.env.NODE_ENV || 'development', process.cwd(), '');
-      const SERVER_KEY = (env.MIDTRANS_SERVER_KEY || '').trim();
-
-      // 2. Detect Mode
-      // If starts with SB-, it is Sandbox.
-      const isSandbox = SERVER_KEY.startsWith('SB-');
-      const snapUrl = isSandbox
-        ? 'https://app.sandbox.midtrans.com/snap/snap.js'
-        : 'https://app.midtrans.com/snap/snap.js';
-
-      console.log(`[HTML Transform] Injecting Snap URL: ${snapUrl} (${isSandbox ? 'Sandbox' : 'Production'})`);
-
-      // 3. Replace the hardcoded Sandbox URL with the dynamic one
-      // If the file already has the dynamic one, this might fail if we don't handle it,
-      // but assuming consistent index.html state.
-      // We'll replace the Sandbox URL if found.
-      return html.replace('https://app.sandbox.midtrans.com/snap/snap.js', snapUrl);
-    }
-  };
-}
 
 export default defineConfig({
   plugins: [
@@ -286,8 +180,6 @@ export default defineConfig({
     react(),
     tailwindcss(),
     figmaAssetPlugin(), // ✅ Add figma asset handler
-    midtransApiPlugin(), // ✅ Add Midtrans API Middleware
-    htmlPlugin(), // ✅ Add Dynamic HTML Plugin
   ],
   resolve: {
     alias: {
