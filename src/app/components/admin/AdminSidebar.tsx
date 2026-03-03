@@ -15,7 +15,9 @@ import {
   ShoppingCart,
   Store,
   Gift,
-  Wallet
+  Wallet,
+  UserPlus,
+  MessageSquare
 } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import ConfirmDialog from '../ConfirmDialog';
@@ -51,15 +53,16 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ activeTab, onTabChange }) =
       items: [
         { id: 'packages', label: 'Paket', icon: Package },
         { id: 'payments', label: 'Pembayaran', icon: CreditCard },
-        { id: 'assisted-jamaah', label: 'Jamaah Binaan', icon: Users }, // ✅ NEW: Track assisted registrations
+        { id: 'guest-registration', label: 'Daftarkan Calon Jamaah', icon: UserPlus }, // ✅ NEW: Feature 2
         { id: 'itineraries', label: 'Jadwal Pemberangkatan', icon: Calendar },
       ]
     },
     {
       title: 'Permintaan',
       items: [
-        { id: 'item-requests', label: 'Pesanan Marketplace', icon: ShoppingCart }, // ✅ Menu untuk approval pesanan marketplace
-        { id: 'savings-approval', label: 'Tabungan', icon: Wallet }, // Updated label
+        { id: 'marketplace-orders', label: 'Pesanan Via WA', icon: MessageSquare }, // ✅ NEW: Feature 3
+        { id: 'item-requests', label: 'Pesanan Marketplace', icon: ShoppingCart },
+        { id: 'savings-approval', label: 'Tabungan', icon: Wallet },
       ]
     },
     {

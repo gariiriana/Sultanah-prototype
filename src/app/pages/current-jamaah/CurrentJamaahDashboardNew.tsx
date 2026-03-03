@@ -826,6 +826,108 @@ const CurrentJamaahDashboard = () => {
 
 
 
+      {/* ✅ NEW: Dokumen Perjalanan (Passport & Visa) Section */}
+      <section className="py-10 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#D4AF37] to-[#C5A572] flex items-center justify-center shadow">
+              <User className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Dokumen Perjalanan</h2>
+              <p className="text-sm text-gray-500">Data paspor &amp; visa Anda</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Passport Card */}
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
+                  <MapPin className="w-4 h-4 text-emerald-700" />
+                </div>
+                <h3 className="font-bold text-gray-800">Paspor</h3>
+              </div>
+              {(userProfile as any)?.passportData?.passportNumber ? (
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Nomor Paspor</span>
+                    <span className="text-sm font-semibold text-gray-900">{(userProfile as any).passportData.passportNumber}</span>
+                  </div>
+                  {(userProfile as any).passportData.passportName && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">Nama di Paspor</span>
+                      <span className="text-sm font-semibold text-gray-900">{(userProfile as any).passportData.passportName}</span>
+                    </div>
+                  )}
+                  {(userProfile as any).passportData.passportExpiry && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">Kedaluwarsa</span>
+                      <span className="text-sm font-semibold text-gray-900">{(userProfile as any).passportData.passportExpiry}</span>
+                    </div>
+                  )}
+                  {(userProfile as any).passportData.nationality && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">Negara</span>
+                      <span className="text-sm font-semibold text-gray-900">{(userProfile as any).passportData.nationality}</span>
+                    </div>
+                  )}
+                  <div className="mt-3 pt-3 border-t border-emerald-100">
+                    <span className="inline-flex items-center gap-1 text-xs text-emerald-700 bg-emerald-100 px-2 py-1 rounded-full">
+                      <Check className="w-3 h-3" /> Data diinput oleh Admin
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <Clock className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">Dokumen paspor sedang diproses oleh admin</p>
+                </div>
+              )}
+            </div>
+
+            {/* Visa Card */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+                  <Star className="w-4 h-4 text-blue-700" />
+                </div>
+                <h3 className="font-bold text-gray-800">Visa</h3>
+              </div>
+              {(userProfile as any)?.visaData?.visaNumber ? (
+                <div className="space-y-3">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-gray-500">Nomor Visa</span>
+                    <span className="text-sm font-semibold text-gray-900">{(userProfile as any).visaData.visaNumber}</span>
+                  </div>
+                  {(userProfile as any).visaData.visaExpiry && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">Kedaluwarsa</span>
+                      <span className="text-sm font-semibold text-gray-900">{(userProfile as any).visaData.visaExpiry}</span>
+                    </div>
+                  )}
+                  {(userProfile as any).visaData.visaType && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-500">Tipe Visa</span>
+                      <span className="text-sm font-semibold text-gray-900">{(userProfile as any).visaData.visaType}</span>
+                    </div>
+                  )}
+                  <div className="mt-3 pt-3 border-t border-blue-100">
+                    <span className="inline-flex items-center gap-1 text-xs text-blue-700 bg-blue-100 px-2 py-1 rounded-full">
+                      <Check className="w-3 h-3" /> Data diinput oleh Admin
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-4">
+                  <Clock className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm text-gray-500">Dokumen visa sedang diproses oleh admin</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Education Section */}
       <section

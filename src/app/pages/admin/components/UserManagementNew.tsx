@@ -346,8 +346,25 @@ export default function UserManagementNew({ initialRoleFilter }: UserManagementN
     return matchesRole && matchesStatus && matchesSearch;
   });
 
+  // ✅ NEW: Upgrade guest → current-jamaah
+  const handleUpgradeGuestToJamaah = async (userId: string, userEmail: string) => {
+    try {
+      await updateDoc(doc(db, 'users', userId), {
+        role: 'current-jamaah',
+        upgradedAt: new Date().toISOString(),
+        upgradedFrom: 'guest',
+      });
+      toast.success(`✅ ${userEmail} berhasil di-upgrade ke Jamaah Umroh!`);
+      fetchUsers();
+    } catch (error: any) {
+      console.error('Error upgrading guest:', error);
+      toast.error('Gagal upgrade akun: ' + (error.message || 'Unknown error'));
+    }
+  };
+
   const getRoleBadge = (role: UserRole) => {
     const config = {
+      'guest': { label: 'Calon Jamaah (Guest)', color: 'bg-orange-100 text-orange-700', icon: User },
       'prospective-jamaah': { label: 'Calon Jamaah', color: 'bg-blue-100 text-blue-700', icon: User },
       'current-jamaah': { label: 'Jamaah Umroh', color: 'bg-green-100 text-green-700', icon: Users },
       'alumni': { label: 'Alumni Jamaah', color: 'bg-purple-100 text-purple-700', icon: Award },
@@ -658,6 +675,17 @@ export default function UserManagementNew({ initialRoleFilter }: UserManagementN
                       <Eye className="w-3 h-3 mr-1" /> Detail
                     </Button>
 
+                    {/* ✅ NEW: Upgrade guest → Jamaah Umroh (mobile) */}
+                    {user.role === 'guest' && (
+                      <Button
+                        onClick={() => handleUpgradeGuestToJamaah(user.id, user.email)}
+                        size="sm"
+                        className="flex-1 h-9 rounded-xl text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                      >
+                        <CheckCircle className="w-3 h-3 mr-1" /> Upgrade ke Jamaah
+                      </Button>
+                    )}
+
                     {/* Conditional Actions */}
                     {user.verificationRequest && user.verificationRequest.status === 'pending' && (
                       <Button
@@ -907,6 +935,18 @@ export default function UserManagementNew({ initialRoleFilter }: UserManagementN
                           >
                             <Eye className="w-4 h-4 mr-1" />
                             Review
+                          </Button>
+                        )}
+
+                        {/* ✅ NEW: Upgrade Guest → Jamaah Umroh (desktop) */}
+                        {user.role === 'guest' && (
+                          <Button
+                            onClick={() => handleUpgradeGuestToJamaah(user.id, user.email)}
+                            size="sm"
+                            className="h-8 px-3 bg-emerald-600 hover:bg-emerald-700 text-white"
+                          >
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                            Upgrade ke Jamaah
                           </Button>
                         )}
 

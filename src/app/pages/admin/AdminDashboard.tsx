@@ -17,12 +17,16 @@ import MarketplaceManagement from './components/MarketplaceManagement'; // ✅ M
 import AdminReferralManagement from './AdminReferralManagement'; // ✅ NEW: Referral Management
 import CommissionWithdrawalManagement from './components/CommissionWithdrawalManagement'; // ✅ NEW: Commission Withdrawal
 import SavingsApprovalPage from './SavingsApprovalPage'; // ✅ NEW: Savings Approval
-import AssistedBookingsSection from './components/AssistedBookingsSection'; // ✅ NEW: Assisted Bookings List
+import GuestRegistrationModal from './components/GuestRegistrationModal'; // ✅ Feature 2 - Daftarkan Calon Jamaah
+import GuestRegistrationPage from './components/GuestRegistrationPage'; // ✅ Feature 2 - Guest List
+import MarketplaceOrdersManagement from './MarketplaceOrdersManagement'; // ✅ NEW: Feature 3 - Pesanan Via WA
 import AdminSidebar from '../../components/admin/AdminSidebar';
 import AdminTopbar from '../../components/admin/AdminTopbar';
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('packages');
+  const [showGuestModal, setShowGuestModal] = useState(false);
+  const [guestRefreshKey, setGuestRefreshKey] = useState(0);
   const [stats, setStats] = useState({
     totalUsers: 0,
     activePackages: 0,
@@ -170,13 +174,15 @@ const AdminDashboard = () => {
                   activeTab === 'education' ? 'Manajemen Edukasi' :
                     activeTab === 'articles' ? 'Manajemen Artikel' :
                       activeTab === 'itineraries' ? 'Manajemen Jadwal Pemberangkatan' :
-                        activeTab === 'item-requests' ? 'Pesanan Marketplace' : // ✅ RENAMED: Only Marketplace Orders
+                        activeTab === 'item-requests' ? 'Pesanan Marketplace' :
                           activeTab === 'marketplace' ? 'Manajemen Marketplace' :
                             activeTab === 'referrals' ? 'Referral & Voucher Program' :
                               activeTab === 'commission-withdrawals' ? 'Pencairan Profit' :
-                                activeTab === 'savings-approval' ? 'Tabungan' : // Updated title
-                                  activeTab === 'assisted-jamaah' ? 'Jamaah Binaan' : // ✅ NEW: Assisted Bookings
-                                    'Dashboard'}
+                                activeTab === 'savings-approval' ? 'Tabungan' :
+                                  activeTab === 'assisted-jamaah' ? 'Jamaah Binaan' :
+                                    activeTab === 'guest-registration' ? 'Daftarkan Calon Jamaah' :
+                                      activeTab === 'marketplace-orders' ? 'Pesanan Via WhatsApp' :
+                                        'Dashboard'}
           pageSubtitle="Kelola bisnis perjalanan Anda dengan mudah"
           stats={stats}
           onNotificationClick={(type, _itemId) => {
@@ -205,16 +211,32 @@ const AdminDashboard = () => {
               {activeTab === 'articles' && <ArticleManagement />}
               {activeTab === 'announcements' && <AnnouncementManagement />}
               {activeTab === 'itineraries' && <ItineraryManagement />}
-              {activeTab === 'marketplace' && <MarketplaceManagement />} {/* ✅ Marketplace Management */}
-              {activeTab === 'referrals' && <AdminReferralManagement />} {/* ✅ NEW: Referral Management */}
-              {activeTab === 'commission-withdrawals' && <CommissionWithdrawalManagement />} {/* ✅ NEW: Commission Withdrawal */}
-              {activeTab === 'savings-approval' && <SavingsApprovalPage />} {/* ✅ NEW: Savings Approval */}
-              {activeTab === 'item-requests' && <AdminItemRequestsManager />} {/* ✅ RESTORED: Pesanan Marketplace */}
-              {activeTab === 'assisted-jamaah' && <AssistedBookingsSection />} {/* ✅ NEW: Assisted Bookings */}
+              {activeTab === 'marketplace' && <MarketplaceManagement />}
+              {activeTab === 'referrals' && <AdminReferralManagement />}
+              {activeTab === 'commission-withdrawals' && <CommissionWithdrawalManagement />}
+              {activeTab === 'savings-approval' && <SavingsApprovalPage />}
+              {activeTab === 'item-requests' && <AdminItemRequestsManager />}
+
+              {/* ✅ NEW: Feature 3 - Pesanan Marketplace Via WA */}
+              {activeTab === 'marketplace-orders' && <MarketplaceOrdersManagement />}
+              {/* ✅ Daftarkan Calon Jamaah - full page with guest list */}
+              {activeTab === 'guest-registration' && (
+                <GuestRegistrationPage
+                  onOpenModal={() => setShowGuestModal(true)}
+                  refreshKey={guestRefreshKey}
+                />
+              )}
             </div>
           </div>
         </div>
       </div>
+
+      {/* ✅ Guest Registration Modal */}
+      <GuestRegistrationModal
+        open={showGuestModal}
+        onClose={() => setShowGuestModal(false)}
+        onSuccess={() => { setShowGuestModal(false); setGuestRefreshKey(k => k + 1); }}
+      />
     </div>
   );
 };

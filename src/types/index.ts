@@ -217,6 +217,7 @@ export interface Announcement {
 export type UserRole =
   | 'admin'
   | 'super_admin'        // ✅ ADDED: Super Admin role
+  | 'guest'              // ✅ NEW: Guest/Calon Jamaah registered by Admin (manual payment flow)
   | 'prospective-jamaah'
   | 'current-jamaah'
   | 'alumni'             // ✅ Alumni Jamaah (eligible for referral commission)
@@ -365,6 +366,33 @@ export interface User {
   createdAt: string;
   // ✅ NEW: Family Members (One account for multiple pax)
   familyMembers?: FamilyMember[];
+  // ✅ NEW: Passport & Visa data (input by Admin for jamaah)
+  passportData?: {
+    passportNumber?: string;
+    passportName?: string;
+    passportExpiry?: string;
+    passportIssuedDate?: string;
+    nationality?: string;
+    inputtedByAdmin?: string; // Admin ID
+    inputtedAt?: string;
+  };
+  visaData?: {
+    visaNumber?: string;
+    visaExpiry?: string;
+    visaIssuedDate?: string;
+    visaType?: string;
+    inputtedByAdmin?: string; // Admin ID
+    inputtedAt?: string;
+  };
+  // ✅ NEW: Guest account info (created by admin)
+  guestInfo?: {
+    registeredByAdmin?: string; // Admin ID
+    tempPassword?: string; // Initial password hint shown to admin
+    followUpNotes?: string;
+    paymentStatus?: 'belum_bayar' | 'dp' | 'lunas';
+    assignedPackageId?: string;
+    assignedPackageName?: string;
+  };
 }
 
 // ========== NEW: FAMILY MEMBER SYSTEM ==========
@@ -503,4 +531,33 @@ export interface ChecklistItem {
   notes?: string;
   supplier?: string;
   estimatedCost?: number;
+}
+
+// ========== NEW: MARKETPLACE ORDER (WA-based, tracked in Firestore) ==========
+export interface MarketplaceOrderItem {
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  price: number;
+  totalPrice: number;
+  image?: string;
+  category?: string;
+}
+
+export interface MarketplaceOrder {
+  id: string;
+  orderNumber: string; // MO-001, MO-002, etc.
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userPhone?: string;
+  items: MarketplaceOrderItem[];
+  totalAmount: number;
+  status: 'pending' | 'bayar' | 'selesai';
+  waMessage?: string; // Pesan WA yang dikirim
+  notes?: string;
+  adminNotes?: string;
+  updatedByAdmin?: string;
+  createdAt: string;
+  updatedAt: string;
 }

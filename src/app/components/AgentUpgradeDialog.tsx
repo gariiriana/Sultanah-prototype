@@ -57,15 +57,16 @@ const AgentUpgradeDialog: React.FC<AgentUpgradeDialogProps> = ({ open, onOpenCha
     try {
       setLoading(true);
 
-      // ✅ Upgrade user role to agen
+      // ✅ Upgrade user role to brand_ambassador (waiting for admin approval)
       const userRef = doc(db, 'users', currentUser.uid);
       await setDoc(userRef, {
-        role: 'agen',
-        upgradedToAgenAt: new Date(),
+        role: 'brand_ambassador',
+        approvalStatus: 'pending',
+        upgradedToBrandAmbassadorAt: new Date(),
         updatedAt: new Date(),
       }, { merge: true });
 
-      // ✅ Create agent referral document (code will be auto-created)
+      // ✅ Create ambassador request document
       const success = await autoCreateReferralCode(
         currentUser.uid,
         currentUser.email || 'unknown@sultanah.com'
@@ -77,13 +78,13 @@ const AgentUpgradeDialog: React.FC<AgentUpgradeDialogProps> = ({ open, onOpenCha
         return;
       }
 
-      toast.success('🎉 Selamat! Anda sekarang menjadi Agen Syiar!', {
-        description: 'Dashboard Anda akan dimuat ulang untuk menampilkan fitur agen.',
-        duration: 4000,
+      toast.success('🎉 Selamat! Permohonan Brand Ambassador Anda sedang diproses!', {
+        description: 'Admin akan segera meninjau permohonan Anda dan menghubungi via WhatsApp.',
+        duration: 5000,
       });
 
       // ✅ Mark as seen in localStorage so dialog doesn't show again
-      localStorage.setItem(`agent-upgrade-seen-${currentUser.uid}`, 'true');
+      localStorage.setItem(`brand-ambassador-seen-${currentUser.uid}`, 'true');
 
       // ✅ Close dialog
       onOpenChange(false);
@@ -110,10 +111,10 @@ const AgentUpgradeDialog: React.FC<AgentUpgradeDialogProps> = ({ open, onOpenCha
               <Shield className="w-8 h-8 text-white" />
             </div>
             <DialogTitle className="text-center text-2xl">
-              🎉 Selamat! Anda Telah Menjadi Alumni Jamaah Umroh
+              🌟 Bergabunglah sebagai Brand Ambassador Sultanah!
             </DialogTitle>
             <DialogDescription className="text-center text-base">
-              Alhamdulillah, perjalanan spiritual Anda telah selesai. Apakah Anda siap untuk membantu orang lain merasakan pengalaman yang sama dengan menjadi <span className="font-bold text-[#D4AF37]">Agen Syiar</span>?
+              Alhamdulillah, Anda telah menyelesaikan perjalanan umroh bersama kami. Bagikan pengalaman Anda dan bantu orang lain merasakannya sebagai <span className="font-bold text-[#D4AF37]">Brand Ambassador Sultanah Travel</span>.
             </DialogDescription>
           </DialogHeader>
 
@@ -122,24 +123,28 @@ const AgentUpgradeDialog: React.FC<AgentUpgradeDialogProps> = ({ open, onOpenCha
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-6">
               <h3 className="font-semibold text-green-900 text-lg mb-3 flex items-center gap-2">
                 <CheckCircle className="w-5 h-5" />
-                Keuntungan Menjadi Agen Syiar:
+                Keuntungan Menjadi Brand Ambassador:
               </h3>
               <ul className="space-y-2 text-sm text-green-800">
                 <li className="flex items-start gap-2">
                   <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
-                  <span>Dapatkan <span className="font-bold">profit Rp500.000</span> untuk setiap jamaah yang berhasil mendaftar dan membayar menggunakan kode referral Anda</span>
+                  <span>Dapatkan <span className="font-bold">profit Rp200.000</span> untuk setiap jamaah yang berhasil mendaftar melalui referral Anda</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
-                  <span>Kode referral otomatis dibuat sistem (SULTANAH-XXXXX)</span>
+                  <span>Kode referral eksklusif otomatis dibuat sistem (SULTANAH-XXXXX)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
-                  <span>Dashboard khusus untuk tracking referral dan profit real-time</span>
+                  <span>Dashboard khusus untuk tracking referral dan keuntungan real-time</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
-                  <span>Bersyiar sambil beramal dan mendapat penghasilan tambahan</span>
+                  <span>Berkontribusi menyebarkan kebaikan sambil mendapatkan rezeki halal</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <ChevronRight className="w-4 h-4 mt-0.5 flex-shrink-0 text-green-600" />
+                  <span>Badge eksklusif & pengakuan sebagai Brand Ambassador resmi Sultanah Travel</span>
                 </li>
               </ul>
             </div>
@@ -212,7 +217,7 @@ const AgentUpgradeDialog: React.FC<AgentUpgradeDialogProps> = ({ open, onOpenCha
               disabled={!acceptedTerms || loading}
               className="flex-1 bg-gradient-to-r from-[#C5A572] via-[#D4AF37] to-[#F4D03F] hover:opacity-90 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {acceptedTerms ? '✓ Siap Menjadi Agen!' : 'Baca Syarat & Ketentuan Dulu'}
+              {acceptedTerms ? '✓ Daftar Sekarang sebagai Brand Ambassador!' : 'Baca Syarat & Ketentuan Dulu'}
             </Button>
           </div>
         </DialogContent>
@@ -224,10 +229,10 @@ const AgentUpgradeDialog: React.FC<AgentUpgradeDialogProps> = ({ open, onOpenCha
           <DialogHeader>
             <DialogTitle className="text-xl flex items-center gap-2">
               <FileText className="w-6 h-6 text-[#D4AF37]" />
-              Syarat & Ketentuan Agen Syiar
+              Syarat & Ketentuan Brand Ambassador
             </DialogTitle>
             <DialogDescription>
-              Harap baca dengan seksama sebelum menjadi Agen Syiar
+              Harap baca dengan seksama sebelum mendaftar sebagai Brand Ambassador Sultanah Travel
             </DialogDescription>
           </DialogHeader>
 

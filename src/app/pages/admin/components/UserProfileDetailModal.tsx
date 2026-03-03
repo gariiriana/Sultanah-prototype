@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react';
 import {
   X, User, Mail, Shield, Calendar, Hash, Award, Users,
   CheckCircle, XCircle, AlertCircle, Phone, MapPin,
-  FileText, CreditCard, Image as ImageIcon, Heart, Tag
+  FileText, CreditCard, Image as ImageIcon, Heart, Tag, Download
 } from 'lucide-react';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../../../../config/firebase';
 import { UserRole } from '../../../../types';
+import PassportVisaAdminPanel from './PassportVisaAdminPanel';
+import { exportGuestInvoicePDF } from './GuestInvoicePDF';
 
 interface UserProfileDetailModalProps {
   userId: string;
@@ -85,6 +87,16 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
   const [profileData, setProfileData] = useState<UserProfileData | null>(null);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const [guestInfo, setGuestInfo] = useState<{
+    packageId?: string;
+    packageName?: string;
+    paxCount?: number;
+    totalInvoice?: number;
+    paymentStatus?: string;
+    registeredAt?: string;
+    phoneNumber?: string;
+  } | null>(null);
 
   useEffect(() => {
     if (isOpen && userId) {
@@ -106,6 +118,19 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
       }
 
       const userData = userDoc.data();
+
+      // ✅ Load guest info for invoice export
+      if (userRole === 'guest' || userRole === 'prospective-jamaah') {
+        setGuestInfo({
+          packageId: userData?.guestInfo?.packageId || userData?.interestedPackageId,
+          packageName: userData?.guestInfo?.packageName || userData?.interestedPackageName,
+          paxCount: userData?.guestInfo?.paxCount || userData?.paxCount,
+          totalInvoice: userData?.guestInfo?.totalInvoice || userData?.totalInvoice,
+          paymentStatus: userData?.guestInfo?.paymentStatus || userData?.paymentStatus,
+          registeredAt: userData?.createdAt,
+          phoneNumber: userData?.phoneNumber,
+        });
+      }
 
       // ✅ NEW: Fetch documents from userDocuments collection (where actual base64 images are stored)
       let documentsData = null;
@@ -318,6 +343,7 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
 
   const getRoleLabel = (role: UserRole): string => {
     const roleMap: Record<UserRole, string> = {
+      guest: 'Calon Jamaah (Guest)',
       travel_consultant: 'Travel Consultant',
       content_creator: 'Content Creator',
       'tour-leader': 'Tour Leader',
@@ -347,6 +373,7 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
 
   const getRoleBadgeColor = (role: UserRole): string => {
     const colorMap: Record<UserRole, string> = {
+      guest: 'bg-orange-100 text-orange-800',
       travel_consultant: 'bg-teal-100 text-teal-800',
       content_creator: 'bg-rose-100 text-rose-800',
       'tour-leader': 'bg-amber-100 text-amber-800',
@@ -426,12 +453,44 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
               <h2 className="text-2xl font-bold">Profile Detail</h2>
               <p className="text-amber-100 text-sm mt-1">Informasi lengkap user termasuk biodata & dokumen</p>
             </div>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-white/20 rounded-lg transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
+            <div className="flex items-center gap-2">
+              {/* ✅ Invoice PDF Export — only for guest/prospective-jamaah */}
+              {(userRole === 'guest' || userRole === 'prospective-jamaah') && !loading && (
+                <button
+                  onClick={async () => {
+                    setExportingPdf(true);
+                    await exportGuestInvoicePDF({
+                      userId,
+                      userName,
+                      userEmail,
+                      phoneNumber: guestInfo?.phoneNumber,
+                      packageId: guestInfo?.packageId,
+                      packageName: guestInfo?.packageName,
+                      paxCount: guestInfo?.paxCount,
+                      totalInvoice: guestInfo?.totalInvoice,
+                      paymentStatus: guestInfo?.paymentStatus,
+                      registeredAt: guestInfo?.registeredAt,
+                    });
+                    setExportingPdf(false);
+                  }}
+                  disabled={exportingPdf}
+                  className="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 text-white text-sm font-semibold px-4 py-2 rounded-xl transition-all disabled:opacity-60"
+                >
+                  {exportingPdf ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <Download className="w-4 h-4" />
+                  )}
+                  Export Invoice PDF
+                </button>
+              )}
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-white/20 rounded-lg transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
           </div>
 
           {loading ? (
@@ -772,6 +831,13 @@ const UserProfileDetailModal: React.FC<UserProfileDetailModalProps> = ({
                       </div>
                     )}
                   </div>
+                </div>
+              )}
+
+              {/* ✅ NEW: Passport & Visa Admin Panel - only for jamaah/guest */}
+              {(userRole === 'current-jamaah' || userRole === 'prospective-jamaah' || (userRole as string) === 'guest') && (
+                <div className="bg-gradient-to-br from-emerald-50 to-white rounded-xl p-6 border border-emerald-200">
+                  <PassportVisaAdminPanel userId={userId} userName={profileData.displayName || userName} />
                 </div>
               )}
 

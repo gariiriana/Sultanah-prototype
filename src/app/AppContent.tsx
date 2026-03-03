@@ -29,6 +29,7 @@ import ProfilePage from './pages/user/ProfilePage';
 import ReviewPage from './pages/user/ReviewPage';
 import PackageReviewsPage from './pages/user/PackageReviewsPage';
 import TestimonialFormPage from './pages/user/TestimonialFormPage';
+import InvoiceView from './pages/invoice/InvoiceView';
 
 // Wrapper component to use navigate inside Routes
 const AppRoutes = () => {
@@ -119,6 +120,7 @@ const AppRoutes = () => {
       <Route path="/gallery" element={<GuestGallery />} /> {/* ✅ NEW: Public Gallery */}
       <Route path="/family-tracking" element={<FamilyTrackingPage />} /> {/* ✅ NEW: Family Tracking */}
       <Route path="/booking/:packageId" element={<BookingFlow />} /> {/* ✅ NEW: Booking Flow Route */}
+      <Route path="/invoice/:bookingId" element={<InvoiceView />} /> {/* ✅ NEW: Online Invoice View */}
 
       {/* Catch all - redirect to home */}
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -206,7 +208,7 @@ const AppContent = () => {
   return (
     <BrowserRouter>
       {/* ✅ ALLOW BOOKING & PUBLIC PAGES TO RENDER WITHOUT REDIRECT */}
-      {(window.location.pathname.startsWith('/booking') || window.location.pathname.startsWith('/gallery') || window.location.pathname.startsWith('/family-tracking')) ? (
+      {(window.location.pathname.startsWith('/booking') || window.location.pathname.startsWith('/invoice') || window.location.pathname.startsWith('/gallery') || window.location.pathname.startsWith('/family-tracking')) ? (
         <AppRoutes />
       ) : userProfile?.role === 'owner' ? (
         <>
@@ -257,6 +259,11 @@ const AppContent = () => {
       ) : userProfile?.role === 'prospective-jamaah' ? (
         <>
           {console.log('✅ Rendering Prospective Jamaah Dashboard')}
+          <ProspectiveJamaahDashboard />
+        </>
+      ) : userProfile?.role === 'guest' ? (
+        <>
+          {console.log('✅ Rendering Guest (Calon Jamaah) Dashboard')}
           <ProspectiveJamaahDashboard />
         </>
       ) : userProfile?.role === 'current-jamaah' ? (

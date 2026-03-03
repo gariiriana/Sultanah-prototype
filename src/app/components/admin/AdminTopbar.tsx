@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // ✅ NEW: For navigation
-import { Bell, Search, Users, Package, BookOpen, CreditCard, Newspaper, Calendar, X, AlertCircle, Clock, FileText, CheckCircle, Store, Gift, ShoppingCart } from 'lucide-react';
+import { Bell, Search, Users, Package, CreditCard, Newspaper, X, AlertCircle, Clock, FileText, CheckCircle, Gift, ShoppingCart } from 'lucide-react';
 import { useAuth } from '../../../contexts/AuthContext';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
@@ -16,33 +16,14 @@ interface PendingItem {
   link?: string;
 }
 
-interface StatCard {
-  title: string;
-  value: string | number;
-  icon: React.ElementType;
-  gradient: string;
-  iconBg: string;
-}
 
 interface AdminTopbarProps {
   pageTitle: string;
   pageSubtitle?: string;
-  stats?: {
-    totalUsers: number;
-    activePackages: number;
-    netFlow: number;
-    totalEducation: number;
-
-    totalArticles: number;
-    totalItineraries: number;
-    totalMarketplaceItems: number;
-    totalReferrals: number;
-    // ❌ REMOVED: totalItemRequests - Card sudah dihapus
-  };
   onNotificationClick?: (type: 'payment' | 'booking' | 'request', itemId?: string) => void;
 }
 
-const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stats, onNotificationClick }) => {
+const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, onNotificationClick }) => {
   const { userProfile } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [pendingItems, setPendingItems] = useState<PendingItem[]>([]);
@@ -416,80 +397,6 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
     }
   };
 
-  // Default stats if not provided
-  const statsData = stats || {
-    totalUsers: 0,
-    activePackages: 0,
-    netFlow: 0,
-    totalEducation: 0,
-
-    totalArticles: 0,
-    totalItineraries: 0,
-    totalMarketplaceItems: 0,
-    totalReferrals: 0,
-    // ❌ REMOVED: totalItemRequests - Card sudah dihapus
-  };
-
-  const statCards: StatCard[] = [
-    {
-      title: 'Total Users',
-      value: statsData.totalUsers,
-      icon: Users,
-      gradient: 'from-blue-500 to-blue-600',
-      iconBg: 'from-blue-100 to-blue-200'
-    },
-    {
-      title: 'Active Packages',
-      value: statsData.activePackages,
-      icon: Package,
-      gradient: 'from-green-500 to-emerald-600',
-      iconBg: 'from-green-100 to-emerald-200'
-    },
-    {
-      title: 'Net Flow',
-      value: `Rp ${statsData.netFlow.toLocaleString('id-ID')}`,
-      icon: CreditCard,
-      gradient: 'from-purple-500 to-purple-600',
-      iconBg: 'from-purple-100 to-purple-200'
-    },
-    {
-      title: 'Total Education',
-      value: statsData.totalEducation,
-      icon: BookOpen,
-      gradient: 'from-orange-500 to-orange-600',
-      iconBg: 'from-orange-100 to-orange-200'
-    },
-
-    {
-      title: 'Total Articles',
-      value: statsData.totalArticles,
-      icon: Newspaper,
-      gradient: 'from-gray-500 to-gray-600',
-      iconBg: 'from-gray-100 to-gray-200'
-    },
-    {
-      title: 'Total Jadwal',
-      value: statsData.totalItineraries,
-      icon: Calendar,
-      gradient: 'from-indigo-500 to-indigo-600',
-      iconBg: 'from-indigo-100 to-indigo-200'
-    },
-    {
-      title: 'Total Marketplace Items',
-      value: statsData.totalMarketplaceItems,
-      icon: Store,
-      gradient: 'from-red-500 to-red-600',
-      iconBg: 'from-red-100 to-red-200'
-    },
-    {
-      title: 'Total Referrals',
-      value: statsData.totalReferrals,
-      icon: Gift,
-      gradient: 'from-yellow-500 to-yellow-600',
-      iconBg: 'from-yellow-100 to-yellow-200'
-    },
-    // ❌ REMOVED: Card "Total Item Requests" - tidak diperlukan lagi
-  ];
 
   return (
     <div className="sticky top-0 z-20 bg-white/95 backdrop-blur-xl border-b border-gray-200 shadow-sm">
@@ -665,56 +572,6 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ pageTitle, pageSubtitle, stat
               </div>
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="px-6 py-4 bg-gradient-to-br from-gray-50/50 to-white border-b border-gray-100">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-10 gap-3">
-          {statCards.map((stat, index) => {
-            const Icon = stat.icon;
-            return (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.03 }}
-                className="group relative overflow-hidden rounded-xl bg-white border border-gray-200 hover:border-[#D4AF37]/40 transition-all duration-200 hover:shadow-md cursor-pointer"
-              >
-                {/* Gradient Background - appears on hover */}
-                <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-3 transition-opacity duration-200`} />
-
-                <div className="relative p-3.5">
-                  <div className="flex items-center gap-3 mb-2">
-                    {/* Icon */}
-                    <div className={`w-9 h-9 rounded-lg bg-gradient-to-br ${stat.iconBg} flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform duration-200`}>
-                      <Icon className="w-4.5 h-4.5" style={{
-                        color: stat.gradient === 'from-blue-500 to-blue-600' ? '#3B82F6' :
-                          stat.gradient === 'from-green-500 to-emerald-600' ? '#10B981' :
-                            stat.gradient === 'from-purple-500 to-purple-600' ? '#A855F7' :
-                              stat.gradient === 'from-orange-500 to-orange-600' ? '#F97316' :
-                                stat.gradient === 'from-pink-500 to-pink-600' ? '#EC4899' :
-                                  stat.gradient === 'from-gray-500 to-gray-600' ? '#6B7280' :
-                                    stat.gradient === 'from-indigo-500 to-indigo-600' ? '#6366F1' :
-                                      '#D4AF37'
-                      }} />
-                    </div>
-                  </div>
-
-                  {/* Text */}
-                  <div>
-                    <p className="text-xs font-medium text-gray-600 mb-1.5 leading-tight">{stat.title}</p>
-                    <p className={`text-lg font-bold bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent group-hover:scale-105 transition-transform duration-200 inline-block leading-tight`}>
-                      {stat.value}
-                    </p>
-                  </div>
-
-                  {/* Bottom accent line */}
-                  <div className={`absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r ${stat.gradient} transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200 origin-left`} />
-                </div>
-              </motion.div>
-            );
-          })}
         </div>
       </div>
     </div>

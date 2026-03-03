@@ -16,7 +16,7 @@ const JamaahMarketplacePage = () => {
   const [filteredItems, setFilteredItems] = useState<MarketplaceItem[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [cart, setCart] = useState<{[key: string]: number}>({});
+  const [cart, setCart] = useState<{ [key: string]: number }>({});
   const [showCart, setShowCart] = useState(false);
   const navigate = useNavigate();
 
@@ -44,18 +44,18 @@ const JamaahMarketplacePage = () => {
 
   const filterItems = () => {
     let filtered = items;
-    
+
     if (selectedCategory !== 'all') {
       filtered = filtered.filter(item => item.category === selectedCategory);
     }
-    
+
     if (searchQuery) {
-      filtered = filtered.filter(item => 
+      filtered = filtered.filter(item =>
         item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.description.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
-    
+
     setFilteredItems(filtered);
   };
 
@@ -90,26 +90,71 @@ const JamaahMarketplacePage = () => {
     return Object.values(cart).reduce((sum, qty) => sum + qty, 0);
   };
 
-  const handleCheckout = () => {
-    // Prepare cart items with full item data
+  const handleOrderViaWA = async () => {
+    if (Object.keys(cart).length === 0) return;
+
     const cartItems = Object.entries(cart).map(([itemId, quantity]) => {
       const item = items.find(i => i.id === itemId);
-      return {
-        item: item!,
-        quantity
-      };
+      return { item: item!, quantity };
     });
 
     const totalAmount = getTotalAmount();
 
-    // Navigate to checkout page with cart data
-    navigate('/marketplace/checkout', {
-      state: {
-        cartItems,
-        totalAmount
-      }
-    });
-    
+    // Build WhatsApp message
+    const userName = userProfile?.displayName || 'Jamaah';
+    const userEmail = userProfile?.email || '';
+    const lines = cartItems.map(
+      ({ item, quantity }) =>
+        `- ${item.name} x${quantity} = Rp ${(item.price * quantity).toLocaleString('id-ID')}`
+    );
+    const waMessage = [
+      `Assalamu'alaikum, saya ingin memesan item berikut:`,
+      ...lines,
+      ``,
+      `*Total: Rp ${totalAmount.toLocaleString('id-ID')}*`,
+      ``,
+      `Nama: ${userName}`,
+      `Email: ${userEmail}`,
+    ].join('\n');
+
+    // Save order to Firestore
+    try {
+      const { addDoc, collection: fsCollection } = await import('firebase/firestore');
+      const { db: fsDb } = await import('../../../config/firebase');
+      const orderNum = `MO-${Date.now().toString().slice(-6)}`;
+      await addDoc(fsCollection(fsDb, 'marketplaceOrders'), {
+        orderNumber: orderNum,
+        userId: userProfile?.id || '',
+        userName,
+        userEmail,
+        userPhone: userProfile?.phoneNumber || '',
+        items: cartItems.map(({ item, quantity }) => ({
+          itemId: item.id,
+          itemName: item.name,
+          quantity,
+          price: item.price,
+          totalPrice: item.price * quantity,
+          image: item.image || '',
+          category: item.category || '',
+        })),
+        totalAmount,
+        status: 'pending',
+        waMessage,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+      toast.success('Pesanan tercatat! WhatsApp sedang dibuka...');
+    } catch (err) {
+      console.error('Gagal menyimpan pesanan:', err);
+      toast.error('Gagal menyimpan pesanan, tapi WhatsApp tetap dibuka.');
+    }
+
+    // Open WhatsApp
+    const adminWANumber = '6281573635143'; // Nomor WA admin Sultanah
+    const encodedMsg = encodeURIComponent(waMessage);
+    window.open(`https://wa.me/${adminWANumber}?text=${encodedMsg}`, '_blank');
+
+    setCart({});
     setShowCart(false);
   };
 
@@ -126,7 +171,7 @@ const JamaahMarketplacePage = () => {
       {/* Clean Header with Subtle Islamic Design */}
       <div className="relative bg-white border-b-2 border-emerald-100 overflow-hidden">
         {/* Subtle Islamic Pattern Background */}
-        <div 
+        <div
           className="absolute inset-0 opacity-5"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%230F766E' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
@@ -148,7 +193,7 @@ const JamaahMarketplacePage = () => {
               >
                 <ArrowLeft className="w-5 h-5" />
               </Button>
-              
+
               <div>
                 <h1 className="text-3xl md:text-4xl font-bold text-gray-900 flex items-center gap-3">
                   <ShoppingBag className="w-8 h-8 text-emerald-600" />
@@ -196,11 +241,10 @@ const JamaahMarketplacePage = () => {
               <button
                 key={cat.id}
                 onClick={() => setSelectedCategory(cat.id)}
-                className={`px-5 py-2.5 rounded-lg font-semibold whitespace-nowrap transition-all border-2 ${
-                  selectedCategory === cat.id 
-                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-md' 
-                    : cat.color
-                }`}
+                className={`px-5 py-2.5 rounded-lg font-semibold whitespace-nowrap transition-all border-2 ${selectedCategory === cat.id
+                  ? 'bg-emerald-600 text-white border-emerald-600 shadow-md'
+                  : cat.color
+                  }`}
               >
                 {cat.label}
               </button>
@@ -224,26 +268,26 @@ const JamaahMarketplacePage = () => {
               // Determine if item is "Best Seller" or "Recommended" (mock logic)
               const isBestSeller = index % 5 === 0; // Every 5th item
               const isRecommended = index % 7 === 0; // Every 7th item
-              
+
               return (
-                <div 
-                  key={item.id} 
+                <div
+                  key={item.id}
                   className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-gray-100 hover:border-emerald-200 group"
                 >
                   {/* Image Container with Badge Overlay */}
                   <div className="relative overflow-hidden bg-gray-50">
                     {item.image ? (
-                      <img 
-                        src={item.image} 
-                        alt={item.name} 
-                        className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300" 
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                     ) : (
                       <div className="w-full h-56 bg-gradient-to-br from-emerald-50 to-teal-50 flex items-center justify-center">
                         <PackageIcon className="w-16 h-16 text-emerald-300" />
                       </div>
                     )}
-                    
+
                     {/* Subtle Gradient Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent"></div>
 
@@ -265,16 +309,15 @@ const JamaahMarketplacePage = () => {
 
                     {/* Stock Badge - Smaller and Cleaner */}
                     <div className="absolute bottom-3 right-3">
-                      <Badge 
-                        className={`${
-                          item.stock > 10 
-                            ? 'bg-emerald-600 text-white' 
-                            : item.stock > 5
-                              ? 'bg-amber-500 text-white' 
-                              : item.stock > 0 
-                                ? 'bg-orange-500 text-white' 
-                                : 'bg-red-600 text-white'
-                        } font-semibold shadow-md border-0 px-2.5 py-1 text-xs`}
+                      <Badge
+                        className={`${item.stock > 10
+                          ? 'bg-emerald-600 text-white'
+                          : item.stock > 5
+                            ? 'bg-amber-500 text-white'
+                            : item.stock > 0
+                              ? 'bg-orange-500 text-white'
+                              : 'bg-red-600 text-white'
+                          } font-semibold shadow-md border-0 px-2.5 py-1 text-xs`}
                       >
                         Stok: {item.stock}
                       </Badge>
@@ -308,8 +351,8 @@ const JamaahMarketplacePage = () => {
                     {/* Add to Cart Section */}
                     {inCart > 0 ? (
                       <div className="flex items-center justify-between bg-emerald-50 rounded-lg p-2.5 border-2 border-emerald-200">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           onClick={() => removeFromCart(item.id)}
                           className="h-8 w-8 p-0 bg-white hover:bg-gray-50 text-emerald-700 border border-emerald-300 shadow-sm"
                         >
@@ -318,9 +361,9 @@ const JamaahMarketplacePage = () => {
                         <span className="font-bold text-emerald-800 text-sm px-2">
                           {inCart} item
                         </span>
-                        <Button 
-                          size="sm" 
-                          onClick={() => addToCart(item.id)} 
+                        <Button
+                          size="sm"
+                          onClick={() => addToCart(item.id)}
                           disabled={inCart >= item.stock}
                           className="h-8 w-8 p-0 bg-emerald-600 hover:bg-emerald-700 text-white disabled:bg-gray-300 shadow-sm"
                         >
@@ -328,8 +371,8 @@ const JamaahMarketplacePage = () => {
                         </Button>
                       </div>
                     ) : (
-                      <Button 
-                        onClick={() => addToCart(item.id)} 
+                      <Button
+                        onClick={() => addToCart(item.id)}
                         disabled={item.stock === 0}
                         className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all font-semibold disabled:bg-gray-300 disabled:text-gray-500"
                       >
@@ -357,9 +400,9 @@ const JamaahMarketplacePage = () => {
                   <ShoppingCart className="w-6 h-6" />
                   Keranjang Belanja
                 </h2>
-                <Button 
-                  size="sm" 
-                  variant="ghost" 
+                <Button
+                  size="sm"
+                  variant="ghost"
                   onClick={() => setShowCart(false)}
                   className="text-white hover:bg-emerald-700 h-8 w-8 p-0"
                 >
@@ -403,10 +446,10 @@ const JamaahMarketplacePage = () => {
                               Rp {item.price.toLocaleString('id-ID')}
                             </p>
                             <div className="flex items-center gap-2 mt-2">
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                onClick={() => removeFromCart(itemId)} 
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => removeFromCart(itemId)}
                                 className="h-7 w-7 p-0 border-emerald-300 text-emerald-700 hover:bg-emerald-50"
                               >
                                 <Minus className="w-3 h-3" />
@@ -414,11 +457,11 @@ const JamaahMarketplacePage = () => {
                               <span className="text-sm font-semibold text-gray-700 min-w-[24px] text-center">
                                 {quantity}
                               </span>
-                              <Button 
-                                size="sm" 
-                                variant="outline" 
-                                onClick={() => addToCart(itemId)} 
-                                disabled={quantity >= item.stock} 
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => addToCart(itemId)}
+                                disabled={quantity >= item.stock}
                                 className="h-7 w-7 p-0 border-emerald-300 text-emerald-700 hover:bg-emerald-50 disabled:opacity-50"
                               >
                                 <Plus className="w-3 h-3" />
@@ -447,12 +490,12 @@ const JamaahMarketplacePage = () => {
                   </div>
 
                   {/* Checkout Button */}
-                  <Button 
-                    onClick={handleCheckout}
+                  <Button
+                    onClick={handleOrderViaWA}
                     className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg hover:shadow-xl font-semibold text-base"
                   >
                     <Send className="w-5 h-5 mr-2" />
-                    Checkout Sekarang
+                    Pesan via WhatsApp
                   </Button>
                 </>
               )}

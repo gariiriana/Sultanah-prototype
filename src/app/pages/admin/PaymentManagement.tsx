@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../../contexts/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   CreditCard,
@@ -16,11 +17,13 @@ import { Button } from '../../components/ui/button';
 import { Badge } from '../../components/ui/badge';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
-import { collection, getDocs, getDoc, doc, updateDoc, Timestamp, query, orderBy } from 'firebase/firestore';
+import { collection, getDocs, getDoc, doc, updateDoc, addDoc, Timestamp, query, orderBy } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '../../components/ui/dialog';
 import { processReferralProfit } from '../../../utils/referralProcessor'; // ✅ Import profit processor
+import { Label } from '../../components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 
 interface Payment {
   id: string;
@@ -68,8 +71,27 @@ const PaymentManagement: React.FC = () => {
   const [processing, setProcessing] = useState(false);
   const [expandedPaymentId, setExpandedPaymentId] = useState<string | null>(null);
 
+  // ✅ NEW: Manual Payment Entry state
+  const { userProfile } = useAuth();
+  const [availablePackages, setAvailablePackages] = useState<{ id: string; name: string; price: number; departureDate?: string }[]>([]);
+  const [showManualModal, setShowManualModal] = useState(false);
+  const [manualForm, setManualForm] = useState({
+    userName: '',
+    userEmail: '',
+    amount: '',
+    method: 'Transfer Bank',
+    note: '',
+    status: 'approved' as 'approved' | 'pending',
+    date: new Date().toISOString().split('T')[0],
+    packageId: '',
+    packageName: '',
+    paxCount: '1',
+  });
+  const [savingManual, setSavingManual] = useState(false);
+
   useEffect(() => {
     fetchPayments();
+    fetchAvailablePackages();
   }, []);
 
   useEffect(() => {
@@ -96,6 +118,123 @@ const PaymentManagement: React.FC = () => {
       toast.error('Failed to fetch payments');
     } finally {
       setLoading(false);
+    }
+  };
+
+  // ✅ NEW: Fetch packages for the dropdown
+  const fetchAvailablePackages = async () => {
+    try {
+      const snap = await getDocs(collection(db, 'packages'));
+      const pkgs = snap.docs.map(d => ({
+        id: d.id,
+        name: d.data().name || 'Paket Tanpa Nama',
+        price: d.data().price || 0,
+        departureDate: d.data().departureDate || '',
+      }));
+      setAvailablePackages(pkgs);
+    } catch (err) {
+      console.warn('Could not fetch packages:', err);
+    }
+  };
+
+  // ✅ UPDATED: Handle Manual Payment Entry — now creates a booking in Jamaah Binaan
+  const handleManualPayment = async () => {
+    if (!manualForm.userName || !manualForm.userEmail || !manualForm.amount) {
+      toast.error('Harap isi nama jamaah, email, dan jumlah pembayaran');
+      return;
+    }
+    const amount = parseInt(manualForm.amount.replace(/\D/g, ''), 10);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Jumlah pembayaran tidak valid');
+      return;
+    }
+    const paxCount = parseInt(manualForm.paxCount, 10) || 1;
+    setSavingManual(true);
+    try {
+      const now = new Date();
+      const paymentNumber = `PAY-MANUAL-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${Date.now().toString().slice(-4)}`;
+
+      // 1. Find user doc to get userId
+      const usersSnap = await getDocs(collection(db, 'users'));
+      const userDoc = usersSnap.docs.find(d => d.data().email === manualForm.userEmail);
+      const userId = userDoc?.id || manualForm.userEmail;
+      const userRole = userDoc?.data().role || 'prospective-jamaah';
+
+      // 2. Save payment record
+      const paymentData: any = {
+        paymentNumber,
+        userId,
+        userEmail: manualForm.userEmail,
+        userName: manualForm.userName,
+        amount,
+        paymentMethod: manualForm.method,
+        bankName: 'Manual',
+        accountNumber: '-',
+        accountName: manualForm.userName,
+        ewalletProvider: '-',
+        phoneNumber: '-',
+        transferDateTime: Timestamp.now(),
+        proofOfPayment: '',
+        proofFileName: '',
+        status: manualForm.status,
+        rejectionReason: '',
+        note: manualForm.note,
+        submittedAt: Timestamp.now(),
+        reviewedAt: Timestamp.now(),
+        reviewedBy: 'Admin (Manual Entry)',
+        paymentType: 'full',
+        manualEntry: true,
+        packageId: manualForm.packageId || '',
+        packageName: manualForm.packageName || '',
+        paxCount,
+      };
+      await addDoc(collection(db, 'payments'), paymentData);
+
+      // 3. Create booking in Jamaah Binaan (bookings collection)
+      const bookingStatus = manualForm.status === 'approved' ? 'approved' : 'pending_payment';
+      await addDoc(collection(db, 'bookings'), {
+        userId,
+        userEmail: manualForm.userEmail,
+        userName: manualForm.userName,
+        packageId: manualForm.packageId || '',
+        packageName: manualForm.packageName || 'Paket Manual',
+        paxCount,
+        totalAmount: amount,
+        status: bookingStatus,
+        paymentStatus: manualForm.status,
+        paymentMethod: manualForm.method,
+        note: manualForm.note,
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+        registeredByAdmin: {
+          adminId: userProfile?.uid || 'admin',
+          adminEmail: userProfile?.email || 'admin',
+          adminName: userProfile?.displayName || 'Admin',
+          registeredAt: Timestamp.now(),
+        },
+        manualEntry: true,
+      });
+
+      // 4. Upgrade role if approved
+      if (manualForm.status === 'approved' && userDoc && (userRole === 'guest' || userRole === 'prospective-jamaah')) {
+        await updateDoc(doc(db, 'users', userDoc.id), {
+          role: 'current-jamaah',
+          upgradedAt: new Date().toISOString(),
+          upgradedFrom: userRole,
+        });
+        toast.success(`✅ Pembayaran + booking tersimpan! Akun ${manualForm.userEmail} di-upgrade ke Jamaah Umroh!`);
+      } else {
+        toast.success('✅ Pembayaran & data jamaah binaan berhasil disimpan!');
+      }
+
+      setShowManualModal(false);
+      setManualForm({ userName: '', userEmail: '', amount: '', method: 'Transfer Bank', note: '', status: 'approved', date: new Date().toISOString().split('T')[0], packageId: '', packageName: '', paxCount: '1' });
+      fetchPayments();
+    } catch (error) {
+      console.error('Error saving manual payment:', error);
+      toast.error('Gagal menyimpan pembayaran manual');
+    } finally {
+      setSavingManual(false);
     }
   };
 
@@ -372,7 +511,7 @@ const PaymentManagement: React.FC = () => {
             </div>
 
             {/* Status Filter */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {(['all', 'pending', 'approved', 'rejected'] as const).map((status) => (
                 <Button
                   key={status}
@@ -807,6 +946,165 @@ const PaymentManagement: React.FC = () => {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ✅ NEW: Modal Input Pembayaran Manual */}
+      <Dialog open={showManualModal} onOpenChange={setShowManualModal}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-amber-700">
+              <FileText className="w-5 h-5" />
+              Input Pembayaran Manual
+            </DialogTitle>
+            <DialogDescription>
+              Admin memasukkan data pembayaran jamaah secara manual. Jika status "Approved", akun guest/calon jamaah otomatis di-upgrade ke Jamaah Umroh.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Label htmlFor="manual-name">Nama Jamaah *</Label>
+                <Input
+                  id="manual-name"
+                  placeholder="Nama lengkap jamaah"
+                  value={manualForm.userName}
+                  onChange={e => setManualForm(f => ({ ...f, userName: e.target.value }))}
+                  className="mt-1"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="manual-email">Email Jamaah *</Label>
+                <Input
+                  id="manual-email"
+                  type="email"
+                  placeholder="email@example.com"
+                  value={manualForm.userEmail}
+                  onChange={e => setManualForm(f => ({ ...f, userEmail: e.target.value }))}
+                  className="mt-1"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="manual-amount">Jumlah Pembayaran (Rp) *</Label>
+                <Input
+                  id="manual-amount"
+                  placeholder="Contoh: 5000000"
+                  value={manualForm.amount}
+                  onChange={e => setManualForm(f => ({ ...f, amount: e.target.value }))}
+                  className="mt-1"
+                />
+              </div>
+
+              {/* ✅ NEW: Package Selector */}
+              <div className="col-span-2">
+                <Label>Paket Umroh</Label>
+                <select
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                  value={manualForm.packageId}
+                  onChange={e => {
+                    const pkg = availablePackages.find(p => p.id === e.target.value);
+                    setManualForm(f => ({
+                      ...f,
+                      packageId: e.target.value,
+                      packageName: pkg?.name || '',
+                      amount: pkg ? String(pkg.price * (parseInt(f.paxCount, 10) || 1)) : f.amount,
+                    }));
+                  }}
+                >
+                  <option value="">-- Pilih Paket (opsional) --</option>
+                  {availablePackages.map(pkg => (
+                    <option key={pkg.id} value={pkg.id}>
+                      {pkg.name}{pkg.departureDate ? ` (${pkg.departureDate})` : ''} — Rp {pkg.price.toLocaleString('id-ID')}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* ✅ NEW: Jumlah Orang */}
+              <div>
+                <Label htmlFor="manual-pax">Jumlah Orang *</Label>
+                <Input
+                  id="manual-pax"
+                  type="number"
+                  min="1"
+                  placeholder="1"
+                  value={manualForm.paxCount}
+                  onChange={e => {
+                    const n = e.target.value;
+                    setManualForm(f => {
+                      const pkg = availablePackages.find(p => p.id === f.packageId);
+                      return {
+                        ...f,
+                        paxCount: n,
+                        amount: pkg ? String(pkg.price * (parseInt(n, 10) || 1)) : f.amount,
+                      };
+                    });
+                  }}
+                  className="mt-1"
+                />
+              </div>
+
+              <div>
+                <Label>Metode Pembayaran</Label>
+                <select
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                  value={manualForm.method}
+                  onChange={e => setManualForm(f => ({ ...f, method: e.target.value }))}
+                >
+                  <option>Transfer Bank</option>
+                  <option>Tunai</option>
+                  <option>QRIS</option>
+                  <option>GoPay</option>
+                  <option>OVO</option>
+                </select>
+              </div>
+              <div>
+                <Label>Status Pembayaran</Label>
+                <select
+                  className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white"
+                  value={manualForm.status}
+                  onChange={e => setManualForm(f => ({ ...f, status: e.target.value as 'approved' | 'pending' }))}
+                >
+                  <option value="approved">Approved (Lunas)</option>
+                  <option value="pending">Pending (Menunggu)</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="manual-note">Catatan</Label>
+                <Textarea
+                  id="manual-note"
+                  placeholder="Catatan tambahan (opsional)"
+                  value={manualForm.note}
+                  onChange={e => setManualForm(f => ({ ...f, note: e.target.value }))}
+                  className="mt-1"
+                  rows={2}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setShowManualModal(false)}
+                className="flex-1"
+                disabled={savingManual}
+              >
+                Batal
+              </Button>
+              <Button
+                onClick={handleManualPayment}
+                disabled={savingManual}
+                className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white"
+              >
+                {savingManual ? (
+                  <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />Menyimpan...</>
+                ) : (
+                  <><CheckCircle className="w-4 h-4 mr-2" />Simpan Pembayaran</>
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

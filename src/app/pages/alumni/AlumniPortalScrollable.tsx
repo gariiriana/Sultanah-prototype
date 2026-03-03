@@ -226,8 +226,8 @@ const AlumniPortalScrollable: React.FC<AlumniPortalScrollableProps> = ({
       fetchAlumni();
       fetchArticles();
       fetchTestimonials();
-      // ✅ NEW: Show agent upgrade dialog for first-time alumni (check local storage)
-      const hasSeenAgentUpgrade = localStorage.getItem(`agent-upgrade-seen-${currentUser.uid}`);
+      // ✅ NEW: Show brand ambassador dialog for first-time alumni (check local storage)
+      const hasSeenAgentUpgrade = localStorage.getItem(`brand-ambassador-seen-${currentUser.uid}`);
       if (!hasSeenAgentUpgrade) {
         setShowAgentUpgradeDialog(true);
       }
