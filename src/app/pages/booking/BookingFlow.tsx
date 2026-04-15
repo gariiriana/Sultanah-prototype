@@ -104,9 +104,9 @@ const BookingFlow: React.FC = () => {
             });
 
             // Jika di localhost, kita arahkan ke domain produksi agar Admin bisa buka linknya.
-            // Gunakan window.location.origin jika sudah di produksi (Vercel).
+            // Gunakan window.location.origin jika sudah di produksi (Firebase Hosting).
             const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-            const productionUrl = 'https://sultanahtravel.id';
+            const productionUrl = 'https://sultanah-travel-6a382.web.app';
             const invoiceUrl = `${isLocal ? productionUrl : window.location.origin}/invoice/${orderId}`;
             const waNumber = '6281234700116';
             const message = `Assalamu'alaikum Sultanah Travel, saya ingin memesan paket:

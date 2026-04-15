@@ -1,8 +1,8 @@
-﻿rules_version = '2';
+rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // ✅ DEVELOPMENT BYPASS: Allow all read and write operations until June 1, 2026
+    // âœ… DEVELOPMENT BYPASS: Allow all read and write operations until June 1, 2026
     // This is added temporarily to allow dummy data population scripts to run.
     match /{document=**} {
       allow read, write: if request.time < timestamp.date(2026, 6, 1);
@@ -16,19 +16,19 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // ✅ OPTIMIZED: Single read, no exists() check
+    // âœ… OPTIMIZED: Single read, no exists() check
     function getUserRole() {
       return isSignedIn() 
         ? get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role 
         : null;
     }
     
-    // ✅ Direct role checks
+    // âœ… Direct role checks
     function isAdmin() {
       return isSignedIn() && getUserRole() == 'admin';
     }
 
-    // ✅ NEW: OWNER ROLE (GOD MODE)
+    // âœ… NEW: OWNER ROLE (GOD MODE)
     function isSiteOwner() {
       return isSignedIn() && getUserRole() == 'owner';
     }
@@ -45,7 +45,7 @@ service cloud.firestore {
       return isSignedIn() && (getUserRole() == 'direktur' || getUserRole() == 'owner');
     }
 
-    // ✅ NEW: MARKETING ROLES
+    // âœ… NEW: MARKETING ROLES
     function isAffiliator() {
       return isSignedIn() && getUserRole() == 'affiliator';
     }
@@ -74,12 +74,12 @@ service cloud.firestore {
       return isSignedIn() && getUserRole() == 'prospective-jamaah';
     }
     
-    // ✅ NEW: Agent role checker
+    // âœ… NEW: Agent role checker
     function isAgent() {
       return isSignedIn() && getUserRole() == 'agen';
     }
     
-    // ✅ NEW: Check if user can access referral program (Alumni, Agent, Affiliator, BA, Influencer)
+    // âœ… NEW: Check if user can access referral program (Alumni, Agent, Affiliator, BA, Influencer)
     function canAccessReferral() {
       return isSignedIn() && getUserRole() in ['alumni', 'agen', 'affiliator', 'brand_ambassador', 'influencer'];
     }
@@ -105,20 +105,20 @@ service cloud.firestore {
     // USERS COLLECTION
     // ========================================
     match /users/{userId} {
-      // ✅ Everyone can read (needed for getUserRole())
+      // âœ… Everyone can read (needed for getUserRole())
       allow read: if true;
       
       allow create: if isSignedIn() && request.auth.uid == userId;
       
-      // ✅ ENHANCED: Allow alumni to self-upgrade to agen
+      // âœ… ENHANCED: Allow alumni to self-upgrade to agen
       allow update: if isSignedIn() && (
         isOwner(userId) ||
-        hasManagementAccess() || // ✅ Admin can update all user fields including commissionBalance
-        // ✅ NEW: Alumni can upgrade themselves to agen
+        hasManagementAccess() || // âœ… Admin can update all user fields including commissionBalance
+        // âœ… NEW: Alumni can upgrade themselves to agen
         (isOwner(userId) && 
          resource.data.role == 'alumni' && 
          request.resource.data.role == 'agen') ||
-        // ✅ Prospective can upgrade to current-jamaah
+        // âœ… Prospective can upgrade to current-jamaah
         (isOwner(userId) && 
          resource.data.role == 'prospective-jamaah' && 
          request.resource.data.role == 'current-jamaah')
@@ -143,7 +143,7 @@ service cloud.firestore {
         resource.data.userId == request.auth.uid || 
         hasManagementAccess() ||
         (isTourLeader() && resource.data.tourLeaderId == request.auth.uid) ||
-        isMutawwif() // ✅ NEW: Muthawif can read all bookings (to count jamaah in their packages)
+        isMutawwif() // âœ… NEW: Muthawif can read all bookings (to count jamaah in their packages)
       );
       
       allow create: if isSignedIn() && 
@@ -211,7 +211,7 @@ service cloud.firestore {
     match /articles/{articleId} {
       allow read: if true;
       
-      // ✅ FIXED: Admin can create articles with any status (including 'approved')
+      // âœ… FIXED: Admin can create articles with any status (including 'approved')
       // Regular users can only create 'draft' or 'pending'
       allow create: if isSignedIn() && 
         request.resource.data.author.id == request.auth.uid && (
@@ -354,13 +354,13 @@ service cloud.firestore {
     // ITINERARIES COLLECTION (plural)
     // ========================================
     match /itineraries/{itineraryId} {
-      // ✅ PUBLIC READ: Keluarga jamaah bisa pantau tanpa login
+      // âœ… PUBLIC READ: Keluarga jamaah bisa pantau tanpa login
       allow read: if true;
       
-      // ✅ Admin/Management → Full Write Access
+      // âœ… Admin/Management â†’ Full Write Access
       allow write: if hasManagementAccess();
       
-      // ✅ Tour Leaders → Can UPDATE their assigned itineraries (for marking days complete, upload photos)
+      // âœ… Tour Leaders â†’ Can UPDATE their assigned itineraries (for marking days complete, upload photos)
       allow update: if isSignedIn() && isTourLeader() && (
         resource.data.tourLeaderId == request.auth.uid ||
         resource.data.tourLeaderId == request.auth.token.email
@@ -476,7 +476,7 @@ service cloud.firestore {
         hasManagementAccess()
       );
       
-      // ✅ UPDATED: Added 'agen' to allowed roles
+      // âœ… UPDATED: Added 'agen' to allowed roles
       allow create: if isSignedIn() && 
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.requestedRole in ['tour-leader', 'mutawwif', 'agen'] &&
@@ -529,14 +529,14 @@ service cloud.firestore {
     }
 
     // ========================================
-    // PAYMENTS COLLECTION - ✅ HYBRID FIX!
+    // PAYMENTS COLLECTION - âœ… HYBRID FIX!
     // ========================================
     match /payments/{paymentId} {
-      // ✅ ALL authenticated users can list/query payments
+      // âœ… ALL authenticated users can list/query payments
       // (They can only READ documents they own via the 'get' rule)
       allow list: if isSignedIn();
       
-      // ✅ HYBRID: Support BOTH userId AND userEmail
+      // âœ… HYBRID: Support BOTH userId AND userEmail
       allow get: if isSignedIn() && (
         resource.data.userId == request.auth.uid || 
         resource.data.userEmail == request.auth.token.email ||
@@ -544,18 +544,18 @@ service cloud.firestore {
         isTourLeader()
       );
       
-      // ✅ Users can create their own payments (both initial and installment payments)
+      // âœ… Users can create their own payments (both initial and installment payments)
       allow create: if isSignedIn() && (
         request.resource.data.userId == request.auth.uid ||
         request.resource.data.userEmail == request.auth.token.email ||
         hasManagementAccess()
       );
         
-      // ✅ SECURITY FIX: Only management can update payments (for approve/reject)
+      // âœ… SECURITY FIX: Only management can update payments (for approve/reject)
       // Users should NOT be able to modify payment data after submission
       allow update: if hasManagementAccess();
       
-      // ✅ Only management can delete
+      // âœ… Only management can delete
       allow delete: if hasManagementAccess();
     }
 
@@ -733,23 +733,23 @@ service cloud.firestore {
     // ALUMNI REFERRALS COLLECTION
     // ========================================
     match /alumniReferrals/{referralId} {
-      // ✅ PUBLIC READ: Allow anyone to read (needed for referral code lookup during registration)
+      // âœ… PUBLIC READ: Allow anyone to read (needed for referral code lookup during registration)
       allow read: if true;
       
-      // ✅ SECURE CREATE: User can create their own referral document OR admin can create for others
+      // âœ… SECURE CREATE: User can create their own referral document OR admin can create for others
       // Document ID = userId, contains fields: { alumniId, userId, referralCode, ... }
       allow create: if isSignedIn() && (
-        referralId == request.auth.uid || // ✅ User creating for self (docId = userId)
-        hasManagementAccess() // ✅ Admin creating for others during approval
+        referralId == request.auth.uid || // âœ… User creating for self (docId = userId)
+        hasManagementAccess() // âœ… Admin creating for others during approval
       );
       
-      // ✅ ENHANCED UPDATE: Owner, Admin, OR referral tracking system (for incrementing stats)
+      // âœ… ENHANCED UPDATE: Owner, Admin, OR referral tracking system (for incrementing stats)
       // Allow authenticated users to increment totalReferrals ONLY (read-only for other fields)
       allow update: if isSignedIn() && (
-        referralId == request.auth.uid || // ✅ Owner can update all fields
-        hasManagementAccess() || // ✅ Admin can update all fields
+        referralId == request.auth.uid || // âœ… Owner can update all fields
+        hasManagementAccess() || // âœ… Admin can update all fields
         (
-          // ✅ Referral tracking: Any authenticated user can increment totalReferrals
+          // âœ… Referral tracking: Any authenticated user can increment totalReferrals
           // This happens when someone registers with a referral code
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalReferrals', 'updatedAt']) &&
           request.resource.data.totalReferrals > resource.data.totalReferrals // Only increment, not decrement
@@ -764,23 +764,23 @@ service cloud.firestore {
     // AGEN REFERRALS COLLECTION (NEW!)
     // ========================================
     match /agenReferrals/{referralId} {
-      // ✅ PUBLIC READ: Allow anyone to read (needed for referral code lookup during registration)
+      // âœ… PUBLIC READ: Allow anyone to read (needed for referral code lookup during registration)
       allow read: if true;
       
-      // ✅ SECURE CREATE: User can create their own referral document OR admin can create for others
+      // âœ… SECURE CREATE: User can create their own referral document OR admin can create for others
       // Document ID = userId, contains fields: { agenId, userId, referralCode, ... }
       allow create: if isSignedIn() && (
-        referralId == request.auth.uid || // ✅ User creating for self (docId = userId)
-        hasManagementAccess() // ✅ Admin creating for others during approval
+        referralId == request.auth.uid || // âœ… User creating for self (docId = userId)
+        hasManagementAccess() // âœ… Admin creating for others during approval
       );
       
-      // ✅ ENHANCED UPDATE: Owner, Admin, OR referral tracking system (for incrementing stats)
+      // âœ… ENHANCED UPDATE: Owner, Admin, OR referral tracking system (for incrementing stats)
       // Allow authenticated users to increment totalReferrals ONLY (read-only for other fields)
       allow update: if isSignedIn() && (
-        referralId == request.auth.uid || // ✅ Owner can update all fields
-        hasManagementAccess() || // ✅ Admin can update all fields
+        referralId == request.auth.uid || // âœ… Owner can update all fields
+        hasManagementAccess() || // âœ… Admin can update all fields
         (
-          // ✅ Referral tracking: Any authenticated user can increment totalReferrals
+          // âœ… Referral tracking: Any authenticated user can increment totalReferrals
           // This happens when someone registers with a referral code
           request.resource.data.diff(resource.data).affectedKeys().hasOnly(['totalReferrals', 'updatedAt']) &&
           request.resource.data.totalReferrals > resource.data.totalReferrals // Only increment, not decrement
@@ -815,22 +815,22 @@ service cloud.firestore {
     // AGENT NOTIFICATIONS COLLECTION (NEW!)
     // ========================================
     match /agentNotifications/{notificationId} {
-      // ✅ Agents can read their own notifications, admin can read all
+      // âœ… Agents can read their own notifications, admin can read all
       // IMPORTANT: 'list' permission allows queries with where()
       allow list: if isSignedIn() && (
         isAgent() || hasManagementAccess()
       );
       
-      // ✅ Get individual notification
+      // âœ… Get individual notification
       allow get: if isSignedIn() && (
         resource.data.agentId == request.auth.uid ||
         hasManagementAccess()
       );
       
-      // ✅ System can create notifications (during referral usage and commission activation)
+      // âœ… System can create notifications (during referral usage and commission activation)
       allow create: if isSignedIn();
       
-      // ✅ Agents can update their own notifications (mark as read)
+      // âœ… Agents can update their own notifications (mark as read)
       // Admin can update all
       allow update: if isSignedIn() && (
         resource.data.agentId == request.auth.uid ||
@@ -851,7 +851,7 @@ service cloud.firestore {
         hasManagementAccess()
       );
 
-      // ✅ FIXED: Allow listing for Admin/Management
+      // âœ… FIXED: Allow listing for Admin/Management
       allow list: if hasManagementAccess();
       
       // Only system/admin can create/update balance (crucial for security)
@@ -897,7 +897,7 @@ service cloud.firestore {
         hasManagementAccess()
       );
       
-      // ✅ UPDATED: Anyone can create tracking records during registration
+      // âœ… UPDATED: Anyone can create tracking records during registration
       // (System creates this during user registration with referral code)
       allow create: if true;
             
@@ -938,23 +938,23 @@ service cloud.firestore {
     // REFERRAL CODES MASTER COLLECTION (O(1) LOOKUP) - SECURE!
     // ========================================
     match /referralCodes/{referralCode} {
-      // ✅ PUBLIC READ: Allow anyone to read for O(1) validation during registration
+      // âœ… PUBLIC READ: Allow anyone to read for O(1) validation during registration
       // Document ID = uppercase referral code (e.g., "SULTANAH-ABC123")
       // Data: { ownerId, ownerEmail, ownerName, ownerRole, commissionPerPaidUser, isActive, createdAt }
       allow read: if true;
       
-      // ✅ SECURE CREATE: User can create their own referral code OR admin can create for others
+      // âœ… SECURE CREATE: User can create their own referral code OR admin can create for others
       // Prevents User A from creating referral codes for User B (unless admin)
       allow create: if isSignedIn() && (
-        request.resource.data.ownerId == request.auth.uid || // ✅ User creating for self
-        hasManagementAccess() // ✅ Admin creating for others during approval
+        request.resource.data.ownerId == request.auth.uid || // âœ… User creating for self
+        hasManagementAccess() // âœ… Admin creating for others during approval
       );
       
-      // ✅ IMMUTABLE: Referral codes cannot be modified after creation
+      // âœ… IMMUTABLE: Referral codes cannot be modified after creation
       // Only admin can update (for rare edge cases like typos)
       allow update: if hasManagementAccess();
       
-      // ✅ Only admin can delete (for cleanup or data correction)
+      // âœ… Only admin can delete (for cleanup or data correction)
       allow delete: if hasManagementAccess();
     }
 
@@ -962,31 +962,31 @@ service cloud.firestore {
     // REFERRAL BALANCES COLLECTION - SECURE!
     // ========================================
     match /referralBalances/{userId} {
-      // ✅ READ: Users can read their own balance, admin can read all
+      // âœ… READ: Users can read their own balance, admin can read all
       allow read: if isSignedIn() && (
         userId == request.auth.uid ||
         hasManagementAccess()
       );
       
-      // ✅ SECURE CREATE: User can create THEIR OWN balance OR admin can create for others during commission processing
+      // âœ… SECURE CREATE: User can create THEIR OWN balance OR admin can create for others during commission processing
       allow create: if isSignedIn() && (
         userId == request.auth.uid ||
-        hasManagementAccess() // ✅ Admin can create balance for agents during first commission
+        hasManagementAccess() // âœ… Admin can create balance for agents during first commission
       );
       
-      // ✅ SECURE UPDATE: 
+      // âœ… SECURE UPDATE: 
       // - Admin can update all fields (during commission processing)
       // - User can ONLY DECREMENT their own balance (during withdrawal request)
       allow update: if isSignedIn() && (
         hasManagementAccess() ||
         (
           userId == request.auth.uid &&
-          // ✅ SECURITY: Only allow decrement (balance must decrease or updatedAt change only)
+          // âœ… SECURITY: Only allow decrement (balance must decrease or updatedAt change only)
           request.resource.data.balance <= resource.data.balance
         )
       );
       
-      // ✅ Only admin can delete
+      // âœ… Only admin can delete
       allow delete: if hasManagementAccess();
     }
 
@@ -994,13 +994,13 @@ service cloud.firestore {
     // TOUR LEADER FEEDBACKS COLLECTION (RATING TL)
     // ========================================
     match /tourLeaderFeedbacks/{feedbackId} {
-      // ✅ READ: All authenticated users can read feedbacks
+      // âœ… READ: All authenticated users can read feedbacks
       // - Alumni/Jamaah: Read their own + all feedbacks (to see TL ratings)
       // - Tour Leaders: Read feedbacks about them
       // - Admin/Management: Read all
       allow read: if isSignedIn();
       
-      // ✅ CREATE: Only Alumni can submit feedback
+      // âœ… CREATE: Only Alumni can submit feedback
       // - Must be alumni role
       // - Can only create with their own userId
       // - Status must be 'submitted'
@@ -1009,11 +1009,11 @@ service cloud.firestore {
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.status == 'submitted';
       
-      // ✅ UPDATE: Feedbacks are IMMUTABLE after submission
+      // âœ… UPDATE: Feedbacks are IMMUTABLE after submission
       // - No one can update (except admin for moderation)
       allow update: if hasManagementAccess();
       
-      // ✅ DELETE: Only admin can delete (for moderation)
+      // âœ… DELETE: Only admin can delete (for moderation)
       allow delete: if hasManagementAccess();
     }
 
@@ -1021,25 +1021,25 @@ service cloud.firestore {
     // USER DOCUMENTS COLLECTION (SEPARATE STORAGE FOR BASE64 IMAGES)
     // ========================================
     match /userDocuments/{userId} {
-      // ✅ READ: Users can read their own documents, admin can read all
+      // âœ… READ: Users can read their own documents, admin can read all
       allow read: if isSignedIn() && (
         userId == request.auth.uid ||
         hasManagementAccess()
       );
       
-      // ✅ CREATE: User can create THEIR OWN documents OR admin can create for others
+      // âœ… CREATE: User can create THEIR OWN documents OR admin can create for others
       allow create: if isSignedIn() && (
         userId == request.auth.uid ||
         hasManagementAccess()
       );
       
-      // ✅ UPDATE: User can update their own documents OR admin can update
+      // âœ… UPDATE: User can update their own documents OR admin can update
       allow update: if isSignedIn() && (
         userId == request.auth.uid ||
         hasManagementAccess()
       );
       
-      // ✅ DELETE: Only admin can delete
+      // âœ… DELETE: Only admin can delete
       allow delete: if hasManagementAccess();
     }
 

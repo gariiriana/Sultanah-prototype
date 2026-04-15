@@ -1,317 +1,212 @@
-# 🕋 Sultanah - Umrah & Halal Travel Platform
+# 🕋 Sultanah — Umrah & Halal Travel Platform
 
-Modern web application untuk manajemen Umrah & Halal Travel dengan Firebase integration dan role-based access control.
+![React](https://img.shields.io/badge/React-18.3-61DAFB?style=flat-square&logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=flat-square&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-6.3-646CFF?style=flat-square&logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/Tailwind_CSS-4.1-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)
+![Firebase](https://img.shields.io/badge/Firebase-Auth_·_Firestore_·_Storage-FFCA28?style=flat-square&logo=firebase&logoColor=black)
+![Midtrans](https://img.shields.io/badge/Midtrans-Payment_Gateway-00A5CF?style=flat-square&logo=data:image/svg+xml;base64,&logoColor=white)
+![Vercel](https://img.shields.io/badge/Vercel-Deployment-000000?style=flat-square&logo=vercel&logoColor=white)
 
-## 🎉 **LATEST UPDATE: IMAGES ISSUE FIXED!**
+**Sultanah** adalah platform full-stack untuk manajemen **Umrah & Halal Travel** yang dibangun dengan arsitektur modern. Aplikasi ini menyediakan ekosistem lengkap mulai dari **booking paket Umrah**, **manajemen jamaah**, **sistem pembayaran**, hingga **portal alumni** — seluruhnya terintegrasi secara real-time melalui web app dengan tampilan **premium responsive** dan backend yang aman dengan **Firebase Authentication** serta **Role-Based Access Control (RBAC)** untuk 10+ role pengguna.
 
-✅ **Problem:** `figma:asset` imports causing errors in localhost  
-✅ **Solution:** Vite plugin auto-replaces with Unsplash placeholders  
-✅ **Status:** READY TO RUN!  
-
-**Read more:** [`/FIX-IMAGES-EXPLAINED.md`](/FIX-IMAGES-EXPLAINED.md)
-
----
-
-## 🚀 QUICK START - RUNNING LOCALHOST
-
-### **STEP 1: Deploy Firestore Rules** (WAJIB!)
-
-1. **Buka Firebase Console**: https://console.firebase.google.com/
-2. **Pilih project** "Sultanah"
-3. **Klik** "Firestore Database" → Tab "Rules"
-4. **COPY semua isi** dari file `/firestore.rules`
-5. **PASTE** ke Firebase Console → Klik **"Publish"**
-6. **TUNGGU 1-2 menit**
-
-### **STEP 2: Install & Run**
-
-```bash
-# Install dependencies
-npm install
-
-# Run development server
-npm run dev
-
-# Buka browser: http://localhost:5173/
-```
-
-**✅ Done! Website akan muncul di browser!**
-
-**📖 Detailed Guide:** [`CARA-RUNNING-LOCALHOST.md`](/CARA-RUNNING-LOCALHOST.md)
+> ⚠️ **Repository ini bersifat private.** Seluruh credentials, API keys, dan konfigurasi sensitif dikecualikan dari version control melalui `.gitignore`.
 
 ---
 
-## 🔥 CRITICAL UPDATES
+## 📋 Table of Contents
 
-### January 10, 2026 - Permission Error Fix
-**Issue:** "Missing or insufficient permissions" error on user data load  
-**Cause:** Firestore Rules belum ter-deploy  
-**Status:** ✅ FIXED - Use `/DEPLOY-RULES-NOW.html` tool  
-**Action Required:** Deploy Firestore rules ke Firebase Console
-
-### January 6, 2026 - Referral Code Fix Applied
-**Issue:** Kode referral Alumni tidak bisa digunakan  
-**Status:** ✅ FIXED - Ready for deployment  
-**Action Required:** Deploy updated Firestore rules
-
-**Quick Deploy:**
-```bash
-# Windows:
-deploy-referral-fix.bat
-
-# Mac/Linux:
-./deploy-referral-fix.sh
-```
-
-**Documentation:**
-- **START HERE:** [`REFERRAL_FIX_MASTER_INDEX.md`](/REFERRAL_FIX_MASTER_INDEX.md) 🎯
-- Quick Deploy: [`QUICK_ACTION_CHECKLIST.md`](/QUICK_ACTION_CHECKLIST.md) ⚡
-- Detailed Fix: [`REFERRAL_CODE_FIX_CRITICAL.md`](/REFERRAL_CODE_FIX_CRITICAL.md)
-- Testing Guide: [`TESTING_GUIDE_REFERRAL.md`](/TESTING_GUIDE_REFERRAL.md)
+- [Tech Stack](#️-tech-stack)
+- [Architecture](#️-architecture)
+- [Features](#-features)
+- [Getting Started](#-getting-started)
+- [Environment Variables](#-environment-variables)
+- [Deployment](#-deployment)
+- [Scripts](#-scripts)
+- [License](#-license)
 
 ---
 
-## 🚀 Quick Deploy to Vercel
+## 🛠️ Tech Stack
 
-### Prerequisites
-- Akun Vercel (free tier OK)
-- Akun GitHub
-- Firebase project sudah setup
+| Layer | Technology |
+| ----- | ---------- |
+| **Frontend** | React 18 · TypeScript 5.7 |
+| **Styling** | Tailwind CSS v4 · Radix UI · shadcn/ui |
+| **Build Tool** | Vite 6 |
+| **Backend** | Firebase Auth · Cloud Firestore · Cloud Storage |
+| **Payment** | Midtrans Payment Gateway |
+| **Routing** | React Router v7 |
+| **Animation** | Framer Motion (motion) |
+| **Charts** | Recharts |
+| **PDF Export** | jsPDF · jspdf-autotable |
+| **Deployment** | Vercel · Firebase Hosting |
 
-### Deploy Steps (5 menit)
+---
 
-1. **Upload ke GitHub**
-   ```bash
-   # Atau upload manual via GitHub web interface
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git branch -M main
-   git remote add origin https://github.com/YOUR_USERNAME/sultanah-travel.git
-   git push -u origin main
-   ```
+## 🏗️ Architecture
 
-2. **Import ke Vercel**
-   - Login ke https://vercel.com
-   - Klik "Add New Project"
-   - Import GitHub repository
-   - Vercel auto-detect Vite settings ✅
-
-3. **Add Environment Variables**
-   
-   Di Vercel Project Settings → Environment Variables, tambahkan:
-   
-   ```
-   VITE_FIREBASE_API_KEY=AIzaSyBm80jrty9X28t90CsuJmwIwSKju2WStyc
-   VITE_FIREBASE_AUTH_DOMAIN=sultanah-travel-6a382.firebaseapp.com
-   VITE_FIREBASE_PROJECT_ID=sultanah-travel-6a382
-   VITE_FIREBASE_STORAGE_BUCKET=sultanah-travel-6a382.firebasestorage.app
-   VITE_FIREBASE_MESSAGING_SENDER_ID=696046595036
-   VITE_FIREBASE_APP_ID=1:696046595036:web:394daa46627958b1487d19
-   VITE_FIREBASE_MEASUREMENT_ID=G-PQEJ18JS64
-   ```
-
-4. **Deploy!**
-   - Klik "Deploy"
-   - Tunggu 2-5 menit
-   - ✅ DONE! Website live!
-
-5. **Authorize Domain di Firebase**
-   - Buka: https://console.firebase.google.com/project/sultanah-travel-6a382/authentication/settings
-   - Add domain: `your-app.vercel.app`
-   - Klik "Add"
-
-## 📦 Tech Stack
-
-- **Frontend:** React 18 + TypeScript
-- **Styling:** Tailwind CSS v4
-- **Build:** Vite 6
-- **Backend:** Firebase (Auth, Firestore, Storage)
-- **Routing:** React Router v7
-- **UI Components:** Radix UI + shadcn/ui
-- **Deployment:** Vercel
-
-## 🏗️ Project Structure
-
-```
-sultanah-travel/
+```text
+sultanah/
 ├── src/
 │   ├── app/
-│   │   ├── components/     # Reusable components
-│   │   ├── pages/          # Page components by role
-│   │   └── App.tsx         # Main app component
-│   ├── config/
-│   │   └── firebase.ts     # Firebase configuration
-│   ├── contexts/
-│   │   └── AuthContext.tsx # Auth state management
-│   ├── styles/             # Global styles
-│   ├── types/              # TypeScript types
-│   └── utils/              # Utility functions
-├── public/                 # Static assets
-├── index.html             # Entry HTML
-├── vite.config.ts         # Vite configuration
-├── tsconfig.json          # TypeScript config
-└── vercel.json            # Vercel deployment config
+│   │   ├── components/          # Reusable UI components
+│   │   └── pages/               # Page components organized by role
+│   │       ├── admin/           # Admin dashboard & management
+│   │       ├── owner/           # Owner oversight panel
+│   │       ├── agent/           # Agent referral portal
+│   │       ├── affiliator/      # Affiliator management
+│   │       ├── influencer/      # Influencer dashboard
+│   │       ├── tour-leader/     # Tour Leader operations
+│   │       ├── mutawwif/        # Mutawwif guidance tools
+│   │       ├── current-jamaah/  # Active Jamaah portal
+│   │       ├── alumni/          # Alumni community
+│   │       ├── guest/           # Public-facing pages
+│   │       ├── auth/            # Authentication flows
+│   │       ├── booking/         # Booking & reservation
+│   │       └── invoice/         # Invoice & billing
+│   ├── config/                  # Firebase & app configuration
+│   ├── constants/               # Application constants
+│   ├── contexts/                # React Context providers (Auth, Theme)
+│   ├── styles/                  # Global styles & design tokens
+│   ├── types/                   # TypeScript type definitions
+│   └── utils/                   # Utility functions & helpers
+├── api/                         # Serverless API functions (Vercel)
+├── scripts/                     # Build & data scripts
+├── public/                      # Static assets
+├── firestore.rules              # Firestore security rules
+├── firestore.indexes.json       # Firestore composite indexes
+├── vite.config.ts               # Vite build configuration
+├── vercel.json                  # Vercel deployment config
+└── tsconfig.json                # TypeScript configuration
 ```
+
+---
 
 ## 🎯 Features
 
-### 1. Role-Based Access Control (10 Roles)
-- Admin
-- Staff
-- Supervisor
-- Direktur
-- Tour Leader
-- Mutawwif/Muthawif
-- Prospective Jamaah (Calon Jamaah)
-- Current Jamaah (Jamaah Aktif)
-- Alumni Jamaah
-- Agent (Agen Referral)
+### Role-Based Access Control (RBAC)
 
-### 2. Portal Berita & Artikel
-- Article management
-- News feed
-- Category filtering
+Platform mendukung **10+ role** dengan hak akses terkontrol secara granular:
 
-### 3. Sistem Referral
-- Agent dashboard
-- Commission tracking
-- Referral analytics
+| Role | Deskripsi |
+| ---- | --------- |
+| **Owner** | Oversight penuh seluruh operasional |
+| **Admin** | Manajemen sistem, data jamaah, dan keuangan |
+| **Tour Leader** | Manajemen grup perjalanan, komunikasi jamaah |
+| **Mutawwif** | Bimbingan ibadah dan koordinasi di tanah suci |
+| **Agent** | Portal referral, tracking komisi |
+| **Affiliator** | Program afiliasi dan konversi |
+| **Influencer** | Dashboard kolaborasi marketing |
+| **Calon Jamaah** | Pendaftaran, booking, dan pembayaran |
+| **Jamaah Aktif** | Informasi perjalanan real-time |
+| **Alumni** | Komunitas alumni dan testimoni |
 
-### 4. Banner Management
-- Dynamic banner uploads
-- Position management
-- Active/inactive toggle
+### Core Modules
 
-### 5. WhatsApp Customer Service
-- Floating widget
-- Auto-generated messages
-- Role-specific templates
+- **📦 Booking & Paket Umrah** — Pemilihan paket, penjadwalan keberangkatan, dan reservasi
+- **💳 Sistem Pembayaran** — Integrasi Midtrans, cicilan, tracking pembayaran, dan invoice otomatis
+- **📊 Dashboard Analytics** — Visualisasi data dengan Recharts untuk setiap role
+- **📰 Portal Berita & Artikel** — CMS untuk konten edukasi dan informasi
+- **🎯 Sistem Referral & Afiliasi** — Multi-tier referral dengan tracking komisi real-time
+- **🖼️ Banner Management** — Dynamic banner dengan drag & drop positioning
+- **💬 WhatsApp Integration** — Floating widget dengan template pesan per role
+- **🎓 Education Center** — Materi belajar, video konten, dan progress tracking
+- **🏅 Alumni Portal** — Direktori alumni, testimoni, dan networking
+- **🛒 Marketplace** — Listing produk, order management, dan payment tracking
+- **📄 PDF Export** — Generate invoice dan laporan dalam format PDF
+- **🖼️ User Frames** — Badge visual per role dengan integrasi profil
 
-### 6. User Frames (Role Badges)
-- Visual role indicators
-- Custom frames per role
-- Profile page integration
+---
 
-### 7. Marketplace System
-- Product listings
-- Order management
-- Payment tracking
+## 🚀 Getting Started
 
-### 8. Payment System
-- Installment tracking
-- Payment history
-- Status updates
+### Prerequisites
 
-### 9. Education Management
-- Course materials
-- Video content
-- Progress tracking
+- **Node.js** ≥ 18.x
+- **npm** ≥ 9.x
+- Firebase project (Auth, Firestore, Storage enabled)
+- Midtrans merchant account (untuk payment gateway)
 
-### 10. Alumni Portal
-- Alumni directory
-- Testimonials
-- Networking features
+### Installation
 
-## 🛠️ Development
-
-### Install Dependencies
 ```bash
+# 1. Clone repository
+git clone <repository-url>
+cd sultanah
+
+# 2. Install dependencies
 npm install
-```
 
-### Run Development Server
-```bash
+# 3. Setup environment variables
+cp .env.example .env.local
+# Edit .env.local dengan konfigurasi Firebase & Midtrans Anda
+
+# 4. Deploy Firestore security rules
+# Buka Firebase Console → Firestore → Rules
+# Copy-paste isi file firestore.rules → Publish
+
+# 5. Run development server
 npm run dev
 ```
 
-### Build for Production
+Aplikasi akan berjalan di `http://localhost:5173/`
+
+---
+
+## 🔐 Environment Variables
+
+Buat file `.env.local` di root project dan isi dengan variabel berikut:
+
+```env
+# Firebase Configuration
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.firebasestorage.app
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_FIREBASE_MEASUREMENT_ID=your_measurement_id
+
+# Midtrans Configuration
+VITE_MIDTRANS_CLIENT_KEY=your_midtrans_client_key
+MIDTRANS_SERVER_KEY=your_midtrans_server_key
+VITE_MIDTRANS_IS_PRODUCTION=false
+```
+
+> 🔒 **Jangan pernah commit file `.env` atau `.env.local` ke repository.** File ini sudah tercantum dalam `.gitignore`.
+
+---
+
+## 🚢 Deployment
+
+### Vercel (Recommended)
+
+1. Push repository ke GitHub
+2. Import project di [Vercel Dashboard](https://vercel.com)
+3. Tambahkan semua environment variables di **Project Settings → Environment Variables**
+4. Deploy — Vercel akan auto-detect konfigurasi Vite
+5. Authorize domain di **Firebase Console → Authentication → Settings**
+
+### Firebase Hosting (Alternative)
+
 ```bash
-npm run build
+npm run deploy
 ```
 
-### Preview Production Build
-```bash
-npm run preview
-```
+---
 
-## 🔧 Configuration
-
-### Environment Variables
-
-Create `.env.local` file (copy from `.env.example`):
-
-```bash
-cp .env.example .env.local
-```
-
-### Firebase Setup
-
-1. Create Firebase project
-2. Enable Authentication (Email/Password)
-3. Create Firestore database
-4. Enable Storage
-5. Copy config to `.env.local`
-
-### Firestore Rules (Development)
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.time < timestamp.date(2025, 3, 1);
-    }
-  }
-}
-```
-
-**⚠️ WARNING:** This is for DEVELOPMENT only! Update rules for production!
-
-## 📝 Available Scripts
+## 📝 Scripts
 
 | Command | Description |
-|---------|-------------|
-| `npm run dev` | Start dev server |
-| `npm run build` | Build for production |
-| `npm run preview` | Preview production build |
+| ------- | ----------- |
+| `npm run dev` | Start development server |
+| `npm run build` | Build production bundle |
+| `npm run preview` | Preview production build locally |
+| `npm run deploy` | Build & deploy ke Firebase Hosting |
 
-## 🔐 Admin Access
-
-Default admin credentials are auto-created on first run:
-
-```
-Email: admin@sultanah.com
-Password: admin123456
-Role: admin
-```
-
-**⚠️ IMPORTANT:** Change this in production!
-
-## 📚 Documentation
-
-- [QUICK-DEPLOY.md](./QUICK-DEPLOY.md) - Detailed deployment guide
-- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common issues & fixes
-- [DEPLOYMENT-PACKAGE-README.md](./DEPLOYMENT-PACKAGE-README.md) - Full deployment docs
-
-## 🤝 Support
-
-For issues or questions:
-1. Check TROUBLESHOOTING.md
-2. Review Firebase console logs
-3. Check Vercel deployment logs
+---
 
 ## 📄 License
 
-Private - All rights reserved
-
-## 🎉 Deploy Status
-
-- ✅ Code ready for deployment
-- ✅ All dependencies installed
-- ✅ TypeScript configured
-- ✅ Vite build tested
-- ✅ Firebase integrated
-- ✅ Vercel configuration ready
-
-**Deploy now!** 🚀
+**Private** — All rights reserved. Unauthorized distribution is prohibited.
